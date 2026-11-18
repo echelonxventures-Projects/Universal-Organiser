@@ -122,8 +122,10 @@ class Layout:
         return self.fill(self.sc.get("media_template", "{group:Media}/{media_folder}/{year}/{month}"), r), "media by date"
 
 
-def build_plan(cfg, cat, include_medium=False, extra_sources=None, include_plan=True, tidy=False, archive_old=False):
-    """Read-only. Returns {moves:[...], stays:{reason: n}, sources, warnings}."""
+def build_plan(cfg, cat, include_medium=False, extra_sources=None, include_plan=True, tidy=False, archive_old=False, rename=False):
+    """Read-only. Returns {moves:[...], stays:{reason: n}, sources, warnings}. rename: also give moved documents a clear
+    name (naming.py); the new name is part of the plan, so it is seen before anything happens."""
+    from . import naming as NM
     sc, L = _sc(cfg), Layout(cfg, cat)
     srcs = sources(cfg) + [s for s in (extra_sources or []) if s]
     auto, ask = set(sc.get("owner_confidence", {}).get("auto", ["high", "you"])), set(sc.get("owner_confidence", {}).get("ask", ["medium"]))
@@ -132,21 +134,32 @@ def build_plan(cfg, cat, include_medium=False, extra_sources=None, include_plan=
     moves, stays = [], Counter()
     planned = {r[0]: r[1] for r in cat.db.execute("SELECT file_id, action FROM plan")}
     seen = set()
-    cols = "id,path,name,kind,unit,size,mtime,date,year,entity,entity_conf,topic,doc_type,cloud_only,sensitive,protected"
+    cols = "id,path,name,kind,unit,size,mtime,date,year,entity,entity_conf,topic,doc_type,title,cloud_only,sensitive,protected"
+    taken = defaultdict(set)  # destination folder -> names (lower case) the plan already uses there
+    text_of = lambda fid: (cat.db.execute("SELECT body FROM fts WHERE rowid=?", (fid,)).fetchone() or [""])[0]
 
     def add(r, dest_dir, action, why, needs_ok=False):
-        dst = os.path.join(dest_dir, r["name"])
+        new = NM.new_name(cfg, r, text_of) if rename and action == "file" else None
+        dst = os.path.join(dest_dir, new or r["name"])
         if os.path.dirname(r["path"]) == dest_dir:
             stays["already in the right folder"] += 1; return
         if _under(dest_dir, cfg.protect):
             stays["destination is protected"] += 1; return
         if r["sensitive"] and _under(dest_dir, synced):
             dest_dir = os.path.join(local_only, os.path.relpath(dest_dir, cfg.library) if dest_dir.startswith(cfg.library + "/") else "")
-            dst = os.path.join(dest_dir, r["name"]); why += "; sensitive, so kept out of iCloud"
+            dst = os.path.join(dest_dir, new or r["name"]); why += "; sensitive, so kept out of iCloud"
         if r["cloud_only"] and not _under(dest_dir, synced):
             stays["iCloud-only: would need downloading first"] += 1; return
+        if new:  # two files must not get the same name, and an existing file is never overwritten
+            if new.lower() in taken[dest_dir] or (os.path.lexists(dst) and dst != r["path"]):
+                new = NM.distinct(new, r["name"], taken[dest_dir] | {new.lower()})
+                dst = os.path.join(dest_dir, new)
+            if new.lower() == r["name"].lower():
+                new = None
+        taken[dest_dir].add(os.path.basename(dst).lower())
         moves.append({"id": r["id"], "src": r["path"], "dst": dst, "dest_dir": dest_dir, "action": action, "why": why, "size": r["size"] or 0,
-                      "needs_ok": needs_ok, "owner": r["entity"], "topic": r["topic"], "kind": r["kind"], "conf": r["entity_conf"]})
+                      "needs_ok": needs_ok, "owner": r["entity"], "topic": r["topic"], "kind": r["kind"], "conf": r["entity_conf"],
+                      "rename": new})
 
     # 1) the action plan (trash / archive)
     if include_plan and planned:
@@ -326,13 +339,17 @@ def _one(cfg, cat, m, synced, allowed, log):
         log.write(json.dumps({"id": m["id"], "src": src, "skipped": why}) + "\n"); log.flush(); return why
     try:
         os.makedirs(m["dest_dir"], exist_ok=True)
-        dst = platforms.norm(_free(os.path.join(m["dest_dir"], os.path.basename(src))))
+        name = m.get("rename") or os.path.basename(src)  # the new name from the plan, if renaming was ticked
+        if not name or "/" in name or "\\" in name or name in (".", ".."):
+            raise OSError("bad file name in the plan")
+        dst = platforms.norm(_free(os.path.join(m["dest_dir"], name)))
         os.rename(src, dst)
         if m["action"] == "trash":
             platforms.after_trash(src, dst)
     except OSError as e:
         log.write(json.dumps({"id": m["id"], "src": src, "error": str(e)}) + "\n"); log.flush(); return f"error: {type(e).__name__}"
-    log.write(json.dumps({"id": m["id"], "src": src, "dst": dst, "action": m["action"], "t": time.time()}, ensure_ascii=False) + "\n"); log.flush()
+    log.write(json.dumps({"id": m["id"], "src": src, "dst": dst, "action": m["action"], "renamed": bool(m.get("rename")), "t": time.time()},
+                         ensure_ascii=False) + "\n"); log.flush()
     _update_catalogue(cat, m["id"], src, dst)
     if m["action"] in ("trash", "archive"):
         cat.db.execute("DELETE FROM plan WHERE file_id=?", (m["id"],))

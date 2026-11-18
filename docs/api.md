@@ -169,8 +169,8 @@ Triage answers use `/api/label`; “skip 30 days” uses `/api/insights/dismiss`
 
 | Method | Path | Who | Body | Returns |
 |---|---|---|---|---|
-| GET | `/api/sort/options` | admin | – | default sources, other choices, plan size, library, layout, local-only folder |
-| POST | `/api/sort/plan` | admin | `sources: [folders]` (inside scanned folders, not protected), `include_plan`, `tidy`, `archive_old` | the plan: `moves[]` (id, src, dst, why, size, `needs_ok`, owner, topic, kind, confidence), totals. Kept on the server for 30 minutes. |
+| GET | `/api/sort/options` | admin | – | default sources, other choices, plan size, library, layout, local-only folder, `naming` style and its `naming_template` |
+| POST | `/api/sort/plan` | admin | `sources: [folders]` (inside scanned folders, not protected), `include_plan`, `tidy`, `archive_old`, `rename` (give moved documents a new name in the chosen style) | the plan: `moves[]` (id, src, dst, why, size, `needs_ok`, owner, topic, kind, confidence, `rename` = new file name or null), totals. Kept on the server for 30 minutes. |
 | POST | `/api/sort/run` | admin | `ids: [..]` (ticked moves) | starts the run. **Paths come only from the server's own plan**, never from the request. Each move is re-checked (size, date, protection, cloud, sensitive). |
 | GET | `/api/sort/status` | admin | – | job progress and result |
 | GET | `/api/sort/runs` | admin | – | past runs with counts and undo state |

@@ -38,7 +38,7 @@ Most people never edit JSON: the wizard and Settings cover the usual keys and va
 | `doc_type_topics` | `{"Payslip": "Work/HR & Payslips"}` | when a document type is detected with confidence, its topic |
 | `layout_preset` | `by-owner`, `by-year`, `media`, `classic-numbered` | folder layout for the Sorter (see `presets.layouts`) |
 | `group_labels` | `{"Family": "20_Family", "Unsorted": "99_To Sort", …}` | top-level folder names per owner type and for Media, Archive, Unsorted, Duplicates, Testing, Projects |
-| `naming_preset` | `original` (default), `dated`, `id-docs`, `invoice`, `screenshot` | chosen file-name style. **Not applied yet:** the Sorter currently always keeps original file names. |
+| `naming_preset` | `original` (default), `dated`, `id-docs`, `invoice`, `screenshot` | file-name style used when you tick **Rename files** in the Sorter (`original` = never rename). See [file renaming](#file-renaming). |
 | `access` | `{"mode": "local"}` | `local`, `lan` (home Wi-Fi), `remote` (+ your VPN) — see below |
 | `hub` | `{"enabled": true}` | accept catalogues from paired computers |
 | `agent` | `{"every_minutes": 60}` | how often `uo autostart` runs scan + sync on an agent |
@@ -123,6 +123,38 @@ used by the lifecycle recommendations. A region may add words through `topic_key
 | `kinds` | only for these file kinds |
 | `max_text_chars` | only documents with at most this much text (an ID card is short; a book mentioning “passport” is not) |
 | `tags` | `id` identity document · `holder` named holder owns it · `dob` name above the date of birth · `important` Triage first · `paper` counted as an important paper · `money` `tax` `insurance` `medical` `education` `work` `property` `vehicle` `travel` person-page sections |
+
+## File renaming
+
+Only when **Rename files** is ticked in the Sorter, and only for files that run moves. Every new name is shown in the
+plan first; undoing the run restores the old name with the old place.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `naming_preset` | `original` | the style for documents; `original` never renames |
+| `presets.naming` | `dated` `{date}_{entity_tag}_{title}` · `id-docs` `{entity_tag}_{doc_type}_{title}` · `invoice` `{date}_{vendor}_Invoice_{amount}_{title}` · `screenshot` `{date}_{time}_Screenshot` · `original` `{original}` | the templates (edit or add your own in your profile) |
+| `presets.naming_by_type` | `tag:id` → `id-docs`, `Invoice`/`Receipt` → `invoice`, `Screenshot` → `screenshot` | document types with their own style (`tag:<tag>` = every type with that tag) |
+| `presets.naming_kinds` | PDF, Document, Spreadsheet, Presentation, Email | kinds renamed with the chosen style; any file with a detected document type is renamed too |
+
+Tokens: `{date}` (document date, YYYY-MM-DD) · `{time}` (HH.MM of the file) · `{entity_tag}` (owner: a person's first
+name, an organisation's name, or the owner's `tag`) · `{doc_type}` · `{vendor}` (owner, when it is an office,
+organisation or client) · `{amount}` (the last “Total / Grand total / Amount due” amount in the text) · `{original}`
+(the old name) · `{title}` — what the old name says beyond what the new name adds back.
+
+Rules: **a new name never loses what the old one said.** `{title}` is the old name with only the parts the style writes
+again taken out (a leading date when the style has `{date}`, the owner when it has `{entity_tag}`, the type's words when
+it has `{doc_type}` or writes them itself); the rest keeps its own spelling and separators. Empty tokens are left out
+with their separator. Never renamed: sensitive files, and photos, videos and audio that are not documents. Names
+already in the style are left alone. Two files that would get the same name: the later one gets its old name added;
+an existing file is never overwritten. Characters that are not allowed in file names become `-`; names stay ≤ 60
+characters for the `{title}` part.
+
+| Old name | Style | New name |
+|---|---|---|
+| `B 412 sale deed Scan.pdf` (owner Alex, 2023-07-30) | dated | `2023-07-30_Alex_B 412 sale deed Scan.pdf` |
+| `2024-07-19_PASSPORT-Dad1.pdf` (passport of Sam) | id-docs | `Sam_Passport_2024-07-19_Dad1.pdf` |
+| `invoice 77.pdf` (Acme Traders, total 1,499.00) | invoice | `2024-03-05_Acme Traders_Invoice_1499.00_77.pdf` |
+| `IMG_2041.jpg` (holiday photo) | — | unchanged |
 
 ## Country packs (`profiles/regions/<name>.json`)
 

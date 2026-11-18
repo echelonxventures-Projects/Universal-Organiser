@@ -124,6 +124,51 @@ class Profiles(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
 
+class Naming(unittest.TestCase):
+    def setUp(self):
+        from engine import config, doctypes
+        base = json.load(open(os.path.join(ROOT, "profiles", "base.json"), encoding="utf-8"))
+        self.base = config.apply_region(base, "india")
+        doctypes.load(self.base)
+
+    def cfg(self, preset):
+        return {**self.base, "naming_preset": preset, "entities": [{"name": "Alex Example", "type": "Self"},
+                                                                    {"name": "Acme Traders", "type": "Office"}]}
+
+    def r(self, **kw):
+        return {"id": 1, "name": "scan001.pdf", "kind": "PDF", "date": "2024-03-05", "entity": "Alex Example", "doc_type": None,
+                "title": None, "mtime": 1709640000, "sensitive": 0, **kw}
+
+    def test_styles(self):
+        from engine.naming import new_name, distinct
+        c = self.cfg("dated")
+        self.assertIsNone(new_name(self.cfg("original"), self.r()))
+        self.assertEqual(new_name(c, self.r()), "2024-03-05_Alex_scan001.pdf")
+        self.assertEqual(new_name(c, self.r(name="B 412 sale deed.pdf", title="Page 1 header junk")), "2024-03-05_Alex_B 412 sale deed.pdf",
+                         "the text's first line is never used: the original name is")
+        self.assertEqual(new_name(c, self.r(name="IMG_1.jpg", kind="Photo", doc_type="Passport")), "Alex_Passport_IMG_1.jpg")
+        self.assertEqual(new_name(c, self.r(name="10th Certificate.pdf", doc_type="Certificate")), "2024-03-05_Alex_10th Certificate.pdf",
+                         "a word is only taken out when the new name adds it back")
+        self.assertEqual(new_name(c, self.r(name="Form - 28 - Part A.pdf")), "2024-03-05_Alex_Form - 28 - Part A.pdf", "separators kept")
+        self.assertEqual(new_name(c, self.r(name="2024-07-19_AADHAAR-Dad1.pdf", doc_type="Aadhaar")), "Alex_Aadhaar_2024-07-19_Dad1.pdf",
+                         "country ID types too; the type word is not repeated")
+        self.assertEqual(new_name(c, self.r(name="Aadhaar.pdf", doc_type="Aadhaar")), "Alex_Aadhaar.pdf")
+        txt = lambda fid: "Item 1 ... Subtotal 1,300.00\nTax 199\nGrand Total: Rs. 1,499.00"
+        self.assertEqual(new_name(c, self.r(name="inv-march.pdf", doc_type="Invoice"), txt), "2024-03-05_Invoice_1499.00_inv-march.pdf")
+        self.assertEqual(new_name(c, self.r(name="invoice 77.pdf", doc_type="Invoice", entity="Acme Traders"), txt),
+                         "2024-03-05_Acme Traders_Invoice_1499.00_77.pdf")
+        self.assertEqual(new_name(c, self.r(name="Invoice.pdf", doc_type="Invoice", date=None), lambda f: ""), None, "nothing to add")
+        self.assertEqual(new_name(self.cfg("id-docs"), self.r(name="ITR ack 2023.pdf", doc_type="Form 16 / ITR")), "Alex_Form 16 - ITR_ack 2023.pdf")
+        self.assertRegex(new_name(c, self.r(name="Screen Shot.png", kind="Photo", doc_type="Screenshot")),
+                         r"^2024-03-05_\d\d\.\d\d_Screenshot\.png$")
+        self.assertIsNone(new_name(c, self.r(name="IMG_2.jpg", kind="Photo")), "holiday photos keep their names")
+        self.assertIsNone(new_name(c, self.r(sensitive=1)))
+        self.assertIsNone(new_name(c, self.r(name="2024-03-05_Alex_scan001.pdf")), "already named")
+        self.assertEqual(new_name(c, self.r(name='a:b*?c.pdf')), "2024-03-05_Alex_a-b-c.pdf")
+        self.assertEqual(new_name(c, self.r(name="१०वीं प्रमाण पत्र.pdf")), "2024-03-05_Alex_१०वीं प्रमाण पत्र.pdf", "other scripts are kept")
+        self.assertEqual(distinct("Alex_Passport.jpg", "front.jpg", {"alex_passport.jpg"}), "Alex_Passport_front.jpg")
+
+
 class EndToEnd(unittest.TestCase):
     def test_hub_and_agent(self):
         hub, ag = Install("hub", role="hub"), Install("agent", role="agent")
@@ -206,6 +251,46 @@ class EndToEnd(unittest.TestCase):
                       "/api/settings/save", "/api/users/add", "/api/hub/code", "/api/access", "/api/welcome/save", "/api/scan/start"):
                 self.assertEqual(a.api(p, {}, ok=False).get("_status"), 403, p)
             self.assertEqual(a.api("/api/welcome", ok=False).get("_status"), 403)
+        finally:
+            a.cleanup()
+
+    def test_sorter_renames_and_undo_restores(self):
+        a = Install("ren")
+        try:
+            p = os.path.join(a.data, "profiles", "machine.json")
+            m = json.load(open(p)); m["naming_preset"] = "dated"; json.dump(m, open(p, "w"))
+            tosort = os.path.join("Organized", "99_To Sort")
+            a.write(os.path.join(tosort, "scan1.txt"), "Notes about the garden fence for the council")
+            a.write(os.path.join(tosort, "scan2.txt"), "Other notes about the garden shed")
+            a.uo("scan")
+            a.admin(a.serve())
+            ids = [x["id"] for x in a.api("/api/search?q=garden")["results"]]
+            self.assertEqual(len(ids), 2)
+            a.api("/api/label", {"ids": ids, "set": {"entity": "Alex Example", "topic": "Property"}})
+            plan = a.api("/api/sort/plan", {"rename": False})
+            self.assertTrue(plan["moves"] and not any(x["rename"] for x in plan["moves"]), "no renaming unless ticked")
+            plan = a.api("/api/sort/plan", {"rename": True})
+            mv = {x["src"].replace("\\", "/").split("/")[-1]: x for x in plan["moves"]}
+            self.assertEqual(set(mv), {"scan1.txt", "scan2.txt"})
+            for old, x in mv.items():
+                self.assertRegex(x["rename"], r"^\d{4}-\d{2}-\d{2}_Alex_scan[12]\.txt$")
+            a.api("/api/sort/run", {"ids": [x["id"] for x in plan["moves"]]})
+            for _ in range(100):
+                j = a.api("/api/sort/status")
+                if j and j["phase"] != "running":
+                    break
+                time.sleep(0.2)
+            self.assertEqual(j["result"]["moved"], 2, j)
+            for x in mv.values():
+                self.assertTrue(os.path.exists(os.path.join(x["dest_dir"], x["rename"])), x)
+                self.assertFalse(os.path.exists(x["src"]))
+            hit = a.api("/api/search?q=fence")["results"][0]
+            self.assertEqual(os.path.basename(hit["path"]), mv["scan1.txt"]["rename"], "the catalogue follows the new name")
+            run = a.api("/api/sort/runs")[0]["id"]
+            self.assertEqual(a.api("/api/sort/undo", {"run": run})["undone"], 2)
+            for x in mv.values():
+                self.assertTrue(os.path.exists(x["src"]), "undo restores the old name and place")
+            self.assertTrue(a.api("/api/search?q=fence")["results"][0]["path"].endswith("scan1.txt"))
         finally:
             a.cleanup()
 

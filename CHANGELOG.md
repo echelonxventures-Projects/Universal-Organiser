@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 — 2026-11-18
+
+- **File renaming in the Sorter.** Tick “Rename files” to give moved documents clear names in the style chosen in
+  Settings (`dated`, `id-docs`, `invoice`, `screenshot`); identity documents, invoices/receipts and screenshots get
+  their own style automatically. Names are built around the old name so nothing it said is lost, shown in the plan
+  before anything moves, never collide or overwrite, and undo restores them. Sensitive files, photos, videos and audio
+  keep their names. Templates now include `{title}` (the meaningful rest of the old name).
+
 ## 1.0.1 — 2026-11-18
 
 - **Security:** checking projects, stopping and resuming their iCloud sync now require an admin account (a member

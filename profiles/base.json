@@ -618,11 +618,25 @@
     "naming": {
       "dated": "{date}_{entity_tag}_{title}",
       "original": "{original}",
-      "id-docs": "{entity_tag}_{doc_type}",
-      "invoice": "{date}_{vendor}_Invoice_{amount}",
+      "id-docs": "{entity_tag}_{doc_type}_{title}",
+      "invoice": "{date}_{vendor}_Invoice_{amount}_{title}",
       "screenshot": "{date}_{time}_Screenshot"
     },
-    "month_format": "{mm}-{MonthName}"
+    "month_format": "{mm}-{MonthName}",
+    "naming_by_type": {
+      "tag:id": "id-docs",
+      "Invoice": "invoice",
+      "Receipt": "invoice",
+      "Screenshot": "screenshot"
+    },
+    "naming_kinds": [
+      "PDF",
+      "Document",
+      "Spreadsheet",
+      "Presentation",
+      "Email"
+    ],
+    "_naming_about": "Sorter renaming (only when ticked): 'original' = never rename. Types in naming_by_type get their own style; other documents (naming_kinds, or any file with a detected document type) get the chosen style; plain photos, videos and audio keep their names."
   },
   "ui": {
     "port": 8765,

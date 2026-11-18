@@ -575,7 +575,9 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                     groups = [os.path.join(lib, g) for g in sorted(os.listdir(lib)) if os.path.isdir(os.path.join(lib, g))] if os.path.isdir(lib) else []
                     return self._json({"default": SO.sources(cfg), "choices": [p for p in groups + cfg.roots if p not in SO.sources(cfg)],
                                        "plan": cat.db.execute("SELECT count(*) FROM plan").fetchone()[0], "library": lib,
-                                       "layout": cfg.get("layout_preset"), "local_only": SO.expand(SO._sc(cfg).get("local_only_folder", ""))})
+                                       "layout": cfg.get("layout_preset"), "local_only": SO.expand(SO._sc(cfg).get("local_only_folder", "")),
+                                       "naming": cfg.get("naming_preset") or "original",
+                                       "naming_template": (cfg["presets"].get("naming") or {}).get(cfg.get("naming_preset") or "original")})
                 if path == "/api/sort/status":
                     j = state.get("sortjob")
                     return self._json(None if not j else {k: v for k, v in j.items() if k != "thread"})
@@ -932,9 +934,9 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                 if bad:
                     return self._err("Not allowed as a source: " + ", ".join(bad))
                 p = SO.build_plan(cfg, cat, extra_sources=extra, include_plan=b.get("include_plan", True),
-                                  tidy=bool(b.get("tidy")), archive_old=bool(b.get("archive_old")))
+                                  tidy=bool(b.get("tidy")), archive_old=bool(b.get("archive_old")), rename=bool(b.get("rename")))
                 state["sortplan"] = p
-                light = [{k: m[k] for k in ("id", "src", "dst", "dest_dir", "action", "why", "size", "needs_ok", "owner", "topic", "kind", "conf")}
+                light = [{k: m.get(k) for k in ("id", "src", "dst", "dest_dir", "action", "why", "size", "needs_ok", "owner", "topic", "kind", "conf", "rename")}
                          for m in p["moves"][:20000]]
                 return self._json({**{k: v for k, v in p.items() if k != "moves"}, "moves": light, "total_moves": len(p["moves"])})
             if path == "/api/sort/run":

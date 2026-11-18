@@ -62,6 +62,7 @@ Where a feature changes files, it is always **preview → your approval → logg
 |---|---|
 | Triage ✓ | one file at a time, keyboard (`1`–`9`, `Enter`, `N`, `T`, `D`, `S`, `Z`, `O`), important papers first, learns rules |
 | Sorter ✓ | moves files to where files of the same owner and topic already are, else the layout preset; media by year/month; local-only folder for sensitive files; needs-OK for medium confidence |
+| Renaming ✓ | optional (“Rename files” in the Sorter): clear names from date, owner, document type, vendor and amount, built around the old name so nothing it said is lost; ID documents, invoices/receipts and screenshots get their own style; photos, videos and sensitive files keep their names; shown in the plan; undo restores the old name |
 | Tidy ✓ | library standard Group/Person/Topic (+Year when a topic has more than 30 files); merges Misc/Others/General; misfiled files |
 | Archive ✓ | old code, installers and archives from To Sort into Archive/<year> |
 | Browse ✓ | real folder tree; drag-and-drop or cut/paste with preview |

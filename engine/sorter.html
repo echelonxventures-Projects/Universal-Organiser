@@ -63,24 +63,26 @@ async function load(){OPT=await api("/api/sort/options");
  $("srcs").innerHTML=OPT.default.map(p=>`<label class="ck"><input type="checkbox" checked disabled><span>${esc(short(p))} <span class="mono">(default)</span></span></label>`).join("")
  +`<label class="ck"><input type="checkbox" id="inplan" ${OPT.plan?"checked":""}><span>Action plan from Analytics: ${OPT.plan.toLocaleString()} file(s) to Trash / Archive</span></label>`
  +`<label class="ck"><input type="checkbox" id="tidy" ${new URLSearchParams(location.search).get("tidy")?"checked":""}><span><b>Tidy the library to one standard</b>: Group / Person / Topic, with a year level only where a topic has more than 30 files; “Others/General” merged into Misc. Files found in the wrong person's folder are listed too (unticked).</span></label>`
+ +(OPT.naming!=="original"?`<label class="ck"><input type="checkbox" id="ren" checked><span><b>Rename files</b> as they move, style “${esc(OPT.naming)}” (<span class="mono">${esc(OPT.naming_template||"")}</span>). ID documents, invoices and screenshots get their own style; plain photos, videos and sensitive files keep their names. Every new name is shown below first; undo restores the old name. <a href="/settings" style="color:var(--accent)">Change the style</a></span></label>`
+   :`<label class="ck"><input type="checkbox" id="ren" disabled><span><b>Rename files</b>: off — choose a naming style in <a href="/settings" style="color:var(--accent)">Settings → Folders &amp; layout</a> to give moved documents clear names.</span></label>`)
  +`<label class="ck"><input type="checkbox" id="arch"><span><b>Archive old clutter</b>: code, installers and archives in To Sort older than 2 years → 70_Archive/&lt;year&gt;</span></label>`
  +`<details style="margin-top:6px"><summary style="cursor:pointer;font-size:13px;color:var(--accent)">Also sort other folders…</summary><div style="padding:6px 0 0 4px">${OPT.choices.map(p=>`<label class="ck"><input type="checkbox" class="xs" value="${esc(p)}"><span class="mono" style="color:var(--ink)">${esc(short(p))}</span></label>`).join("")}</div></details>`;
  drawRuns()}
 $("build").onclick=async()=>{$("build").disabled=true;try{
- PLAN=await api("/api/sort/plan",{include_plan:$("inplan").checked,tidy:$("tidy").checked,archive_old:$("arch").checked,sources:[...document.querySelectorAll(".xs:checked")].map(x=>x.value)});
+ PLAN=await api("/api/sort/plan",{include_plan:$("inplan").checked,tidy:$("tidy").checked,archive_old:$("arch").checked,rename:$("ren").checked,sources:[...document.querySelectorAll(".xs:checked")].map(x=>x.value)});
  ON=new Set(PLAN.moves.filter(m=>!m.needs_ok).map(m=>m.id));drawPlan()}catch(e){alertBox(e.message)}$("build").disabled=false};
 function alertBox(msg){const s=$("shade");s.innerHTML=`<div class="modal"><h3>Problem</h3><p>${esc(msg)}</p><div class="act"><button class="pri" id="ok">OK</button></div></div>`;s.hidden=false;$("ok").onclick=()=>s.hidden=true}
 function drawPlan(){const P=PLAN,s2=$("s2");s2.hidden=false;
  const groups={};for(const m of P.moves){const k=m.action+"\u0000"+m.dest_dir;(groups[k]=groups[k]||[]).push(m)}
  const gl=Object.entries(groups).sort((a,b)=>b[1].length-a[1].length);
  const ask=P.moves.filter(m=>m.needs_ok).length;
- $("review").innerHTML=`<div class="kpis"><div class="kpi"><b>${P.total_moves.toLocaleString()}</b><span>files could be moved</span></div><div class="kpi"><b>${ask.toLocaleString()}</b><span>need your OK (unticked)</span></div>
+ $("review").innerHTML=`<div class="kpis"><div class="kpi"><b>${P.total_moves.toLocaleString()}</b><span>files could be moved</span></div><div class="kpi"><b>${ask.toLocaleString()}</b><span>need your OK (unticked)</span></div><div class="kpi"><b>${P.moves.filter(m=>m.rename).length.toLocaleString()}</b><span>get a new name</span></div>
   <div class="kpi"><b>${gl.length}</b><span>destination folders</span></div><div class="kpi"><b>${P.learned}</b><span>destinations learned from your library</span></div></div>
   <p class="help"><b>Stay where they are:</b></p><div class="stays">${Object.entries(P.stays).map(([k,v])=>`<span>${v.toLocaleString()} · ${esc(k)}</span>`).join("")||"<span>none</span>"}</div>
   ${ask?`<p class="help"><span class="tag ask">needs OK</span> the owner was found only because their full name appears inside the document. Open a few, then tick the ones that are right. Ticked files keep that owner label.</p>`:""}
   ${gl.map(([k,ms],gi)=>{const[a,d]=k.split("\u0000");const tag=a==="trash"?'<span class="tag trash">Trash</span>':a==="archive"?'<span class="tag arch">Archive</span>':ms.some(m=>m.needs_ok)?'<span class="tag ask">needs OK</span>':"";
    return`<div class="grp"><div class="gh" data-g="${gi}"><input type="checkbox" class="gck" data-g="${gi}" aria-label="Tick group"><span class="d">→ ${esc(short(d))}</span>${tag}<span class="n">${ms.length} · ${size(ms.reduce((a,m)=>a+m.size,0))}</span></div>
-   <div class="rows" hidden>${ms.map(m=>`<div class="row"><input type="checkbox" class="fck" data-id="${m.id}" ${ON.has(m.id)?"checked":""} aria-label="Tick file"><div><div>${esc(m.src.split("/").pop())}</div><div class="mono">from ${esc(short(m.src.slice(0,m.src.lastIndexOf("/"))))}</div>
+   <div class="rows" hidden>${ms.map(m=>`<div class="row"><input type="checkbox" class="fck" data-id="${m.id}" ${ON.has(m.id)?"checked":""} aria-label="Tick file"><div><div>${m.rename?`<s style="color:var(--muted)">${esc(m.src.split("/").pop())}</s> → <b>${esc(m.rename)}</b>`:esc(m.src.split("/").pop())}</div><div class="mono">from ${esc(short(m.src.slice(0,m.src.lastIndexOf("/"))))}</div>
     <div class="w">${esc(m.why)}${m.owner?` · owner ${esc(m.owner)} (${esc(m.conf)})`:""}${m.topic?` · ${esc(m.topic)}`:""}</div></div><a href="/?q=${encodeURIComponent(m.src.split("/").pop().replace(/\.[^.]+$/,""))}" target="_blank" style="font-size:12px;color:var(--accent)">open</a></div>`).join("")}</div></div>`}).join("")||'<div class="empty">Nothing to move.</div>'}`;
  const G=gl.map(g=>g[1]);
  const sync=()=>{document.querySelectorAll(".gck").forEach(c=>{const ms=G[+c.dataset.g];const n=ms.filter(m=>ON.has(m.id)).length;c.checked=n===ms.length;c.indeterminate=n>0&&n<ms.length});
@@ -91,7 +93,7 @@ function drawPlan(){const P=PLAN,s2=$("s2");s2.hidden=false;
  $("all").onclick=()=>{PLAN.moves.forEach(m=>ON.add(m.id));document.querySelectorAll(".fck").forEach(f=>f.checked=true);sync()};
  $("none").onclick=()=>{ON.clear();document.querySelectorAll(".fck").forEach(f=>f.checked=false);sync()};
  sync();s2.scrollIntoView({behavior:"smooth"})}
-$("go").onclick=async()=>{const sel=PLAN.moves.filter(m=>ON.has(m.id));const by={};sel.forEach(m=>{const k=m.action==="trash"?"to the Trash":m.action==="archive"?"to the archive":"into the library";by[k]=(by[k]||0)+1});
+$("go").onclick=async()=>{const sel=PLAN.moves.filter(m=>ON.has(m.id));const by={};sel.forEach(m=>{const k=m.action==="trash"?"to the Trash":m.action==="archive"?"to the archive":"into the library";by[k]=(by[k]||0)+1});const rn=sel.filter(m=>m.rename).length;if(rn)by["of them get a new name (shown in the plan)"]=rn;
  if(!await modal(`Move ${sel.length.toLocaleString()} file(s)?`,`<ul>${Object.entries(by).map(([k,v])=>`<li>${v.toLocaleString()} ${esc(k)}</li>`).join("")}<li>Each file is checked again just before it moves (skipped if it changed since the scan).</li><li>The whole run can be undone from “Past runs”.</li></ul>`,"Move"))return;
  try{await api("/api/sort/run",{ids:sel.map(m=>m.id)})}catch(e){alertBox(e.message);return}
  $("bar").hidden=true;$("s2").hidden=true;$("s3").hidden=false;$("s3").scrollIntoView({behavior:"smooth"});PLAN=null;

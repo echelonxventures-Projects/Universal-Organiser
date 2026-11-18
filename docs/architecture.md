@@ -39,7 +39,7 @@ static HTML pages. There is no database server, no web framework and no build st
 | `setup.py` | presets, country packs, folder detection, profile writing, requirement checks, building the helper |
 | `service.py` | start at login |
 | `analytics.py`, `overview.py`, `home.py`, `insights.py`, `smartfolders.py` | views, health, alerts, recommendations, learning, reports |
-| `sorter.py`, `tidy.py`, `tags.py` | plans and logged, undoable moves; library tidy and archive; Finder tags |
+| `sorter.py`, `tidy.py`, `tags.py`, `naming.py` | plans and logged, undoable moves; library tidy and archive; Finder tags; new file names for moved documents |
 | `deepread.py`, `transcribe.py`, `similar.py` | all pages of scans, speech transcripts, near-identical photos (macOS) |
 | `projects.py`, `projindex.py`, `cleanup.py`, `projmove.py`, `projsteps.py`, `declutter.py` | projects: status, iCloud exclusion, index, version review, logged folder steps |
 | `settings.py`, `reclassify.py` | validated profile editing with versions; re-applying rules |

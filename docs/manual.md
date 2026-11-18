@@ -1,6 +1,6 @@
 # Universal Organiser — user manual
 
-Version 1.0.1 · works on macOS, Windows and Linux · phones and tablets use it through the browser
+Version 1.1 · works on macOS, Windows and Linux · phones and tablets use it through the browser
 
 1. [What it does](#1-what-it-does)
 2. [Install](#2-install)
@@ -121,6 +121,9 @@ Run the wizard again any time from *Settings → Set-up wizard*; your other sett
   answers it proposes a rule learnt from you.
 - **Sorter** (admin) — builds a plan to file things where they belong, learning from where your files of the same owner
   and topic already are. Untick anything, then run. Each run is logged and can be undone.
+  **Rename files** (shown once you pick a naming style in *Settings → Folders & layout*) also gives the moved
+  documents clear names, e.g. `2023-07-30_Alex_B 412 sale deed Scan.pdf`; the plan shows every old → new name,
+  and undo restores the old names. Holiday photos, videos and sensitive files keep their names.
 - **Projects** (admin) — folders with code (git, package.json…) are kept whole as projects and never sorted. Here you
   can set their status and, on a Mac, stop iCloud from syncing a project folder.
 - **Analytics** — space (treemap), duplicates with a suggested keeper, overlapping folders, timelines, similar photos.

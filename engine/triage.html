@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Triage · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--amber:#8a5a00;--ambersoft:#f7ecd4;--shade:rgba(20,25,22,.45);
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--amber:#e5b75c;--ambersoft:#352a14;--shade:rgba(0,0,0,.6);color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f)}
+header{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}header a{color:var(--accent);text-decoration:none;font-size:13px}.sp{flex:1}
+.top{max-width:1180px;margin:12px auto 0;padding:0 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px}
+.prog{flex:1 1 240px;height:8px;background:var(--line);border-radius:4px;overflow:hidden}.prog i{display:block;height:100%;background:var(--accent)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 10px;font:12.5px var(--f);cursor:pointer}
+.seg button:last-child{border-right:0}.seg button.on{background:var(--accent);color:var(--surface)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted)}
+main{max-width:1180px;margin:12px auto;padding:0 16px 60px;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+.nm{font-size:17px;font-weight:600;overflow-wrap:anywhere;margin:0 0 4px}.pt{font:12px var(--m);color:var(--muted);overflow-wrap:anywhere}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.b{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:1px 7px;color:var(--muted)}
+.holder{background:var(--ambersoft);color:var(--ink);border-radius:8px;padding:8px 12px;margin:10px 0;font-size:13.5px}.holder b{color:var(--amber)}
+.pv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;margin-top:6px}.pv img{max-width:240px;max-height:320px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+pre{white-space:pre-wrap;font:12px var(--m);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;max-height:330px;overflow:auto;margin:0}
+h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 6px}
+.owners{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ob{display:flex;gap:8px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:7px 9px;font:13px var(--f);cursor:pointer}
+.ob:hover{border-color:var(--accent)}.ob.sug{border-color:var(--accent);background:var(--soft)}.ob kbd{font:11px var(--m);border:1px solid var(--line);border-radius:4px;padding:0 5px;background:var(--surface);min-width:20px;text-align:center}
+.ob small{color:var(--muted);font-size:11px;margin-left:auto}
+select{font:13px var(--f);padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button.a{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:7px;cursor:pointer}
+button.a.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+button:focus-visible,select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.keys{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.8}.keys kbd{font:11px var(--m);border:1px solid var(--line);border-radius:4px;padding:0 5px;background:var(--bg)}
+.learn{grid-column:1/-1;background:var(--soft);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;font-size:13px;max-width:calc(100% - 32px)}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:30;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(620px,100%);max-height:86vh;overflow:auto}
+.modal h3{font-size:16px;text-transform:none;letter-spacing:0;color:var(--ink);margin:0 0 8px}.modal .act{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+@media (max-width:860px){main{grid-template-columns:1fr}.pv{grid-template-columns:1fr}.owners{grid-template-columns:1fr}}
+</style></head><body>
+<header><h1>Triage</h1><span class="sp"></span><a href="/home">Home</a><a href="/">Files</a><a href="/browse">Browse</a><a href="/sorter">Sorter</a><a href="/analytics">Analytics</a><a href="/insights">Insights</a><a href="/settings">Settings</a></header>
+<div class="top"><div class="seg" role="group" aria-label="Which files"><button data-w="tosort" class="on">In “To Sort”</button><button data-w="all">Everywhere</button></div>
+ <span id="count"></span><div class="prog" aria-hidden="true"><i id="pb"></i></div><span id="done"></span></div>
+<div class="top"><div class="chips" id="buckets"></div><span id="underlbl" class="chip" hidden></span></div>
+<main id="main"></main>
+<div id="toast" hidden></div><div class="shade" id="shade" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}const j=await r.json();if(!r.ok&&!j.errors)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const size=n=>{if(!n)return"0 B";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+" "+u[i]};
+const UNDER=new URLSearchParams(location.search).get("under")||"";
+let ME=null,Q=[],cur=null,where="tosort",total0=null,done=0,history=[],sinceLearn=0,OWN=[];
+function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,3500)}
+async function load(){const T=await api(`/api/triage?where=${where}&limit=12${UNDER?"&under="+encodeURIComponent(UNDER):""}`);
+ if(UNDER)$("buckets").insertAdjacentHTML("beforebegin","");Q=T.items;if(total0===null)total0=T.remaining+done;
+ $("count").textContent=`${T.remaining.toLocaleString()} waiting`;$("pb").style.width=(total0?Math.round(100*done/Math.max(total0,1)):0)+"%";$("done").textContent=done?`${done} done this session`:"";
+ $("buckets").innerHTML=T.buckets.map(([n,c])=>`<span class="chip">${esc(n)}: ${c.toLocaleString()}</span>`).join("");next()}
+function next(){cur=Q.shift();if(!cur){$("main").innerHTML='<div class="empty card">Nothing waiting here. 🎉 Switch to “Everywhere” for files outside To Sort.</div>';return}draw()}
+function ownerList(){const s=[...new Set([...cur.holder_known,...cur.suggestions])];const rest=ME.options.entities.map(e=>e.name).filter(n=>!s.includes(n));return[...s.map(n=>({n,sug:true})),...rest.map(n=>({n,sug:false}))].slice(0,9)}
+function draw(){const c=cur;OWN=ownerList();const O=ME.options;
+ const why=c.holder.length?`<div class="holder">Holder written on the document: <b>${c.holder.map(esc).join(", ")}</b>${c.holder_known.length?"":" (not one of your people)"}</div>`:"";
+ $("main").innerHTML=`<div class="card"><p class="nm">${esc(c.name)}</p><div class="pt">${esc(c.path.replace(/^\/Users\/[^/]+/,"~"))}</div>
+  <div class="badges"><span class="b">${esc(c.kind)}</span>${c.doc_type?`<span class="b">${esc(c.doc_type)}</span>`:""}${c.topic?`<span class="b">${esc(c.topic)}</span>`:""}${c.date?`<span class="b">${c.date}</span>`:""}<span class="b">${size(c.size)}</span>${c.cloud_only?'<span class="b">iCloud only: not read</span>':""}</div>
+  ${why}<div class="pv">${c.preview?`<img alt="Preview" src="/api/thumb?id=${c.id}" onerror="this.remove()">`:""}<div style="min-width:0">${c.excerpt?`<pre>${esc(c.excerpt)}</pre>`:'<p style="color:var(--muted)">No text read from this file.</p>'}</div></div></div>
+ <div class="card"><h3>Whose is it?</h3><div class="owners">${OWN.map((o,i)=>`<button class="ob ${o.sug?"sug":""}" data-i="${i}"><kbd>${i+1}</kbd>${esc(o.n)}${o.sug?"<small>★ suggested</small>":""}</button>`).join("")}</div>
+  <select id="more" aria-label="Other owner" style="margin-top:6px"><option value="">Someone else…</option>${O.entities.map(e=>`<option>${esc(e.name)}</option>`).join("")}</select>
+  <h3>Topic <span style="text-transform:none;letter-spacing:0">(T)</span></h3><select id="tp"><option value="">${c.topic?"keep: "+esc(c.topic):"— none —"}</option>${O.topics.map(t=>`<option>${esc(t)}</option>`).join("")}</select>
+  <h3>Document type <span style="text-transform:none;letter-spacing:0">(D)</span></h3><select id="dt"><option value="">${c.doc_type?"keep: "+esc(c.doc_type):"— none —"}</option>${O.doc_types.map(t=>`<option>${esc(t)}</option>`).join("")}</select>
+  <div class="acts"><button class="a pri" id="ok">${OWN[0]&&OWN[0].sug?"Accept "+esc(OWN[0].n):"Save"} ⏎</button><button class="a" id="none">No owner (N)</button><button class="a" id="skip">Skip (S)</button><button class="a" id="undo" ${history.length?"":"disabled"}>Undo (Z)</button><button class="a" id="fnd">Show in Finder (O)</button></div>
+  <div class="keys"><kbd>1</kbd>–<kbd>9</kbd> owner · <kbd>⏎</kbd> accept ★ · <kbd>N</kbd> no owner · <kbd>T</kbd> topic · <kbd>D</kbd> type · <kbd>S</kbd> skip 30 days · <kbd>Z</kbd> undo · <kbd>O</kbd> Finder</div></div>`;
+ document.querySelectorAll(".ob").forEach(b=>b.onclick=()=>decide(OWN[+b.dataset.i].n));
+ $("more").onchange=e=>{if(e.target.value)decide(e.target.value)};
+ $("ok").onclick=()=>decide(OWN[0]&&OWN[0].sug?OWN[0].n:null);$("none").onclick=()=>decide("");$("skip").onclick=skip;$("undo").onclick=undo;
+ $("fnd").onclick=()=>api("/api/reveal",{id:c.id})}
+async function decide(owner){const set={};if(owner!==null)set.entity=owner;const tp=$("tp").value,dt=$("dt").value;if(tp)set.topic=tp;if(dt)set.doc_type=dt;
+ if(!Object.keys(set).length){toast("Choose an owner (1–9), N for no owner, or S to skip.");return}
+ try{const r=await api("/api/label",{ids:[cur.id],set});history.push({change:r.change,item:cur});done++;sinceLearn++;
+  toast(owner?`${cur.name.slice(0,40)} → ${owner}`:owner===""?"Marked: no particular owner":"Saved");
+  if(sinceLearn>=5){sinceLearn=0;checkLearn()}if(!Q.length)await load();else{next();bump()}}catch(e){toast(e.message)}}
+async function skip(){await api("/api/insights/dismiss",{key:"triage:"+cur.id,days:30});history.push({skip:cur});if(!Q.length)await load();else next()}
+async function undo(){const h=history.pop();if(!h)return;if(h.change){await api("/api/undo",{id:h.change});done--}else await api("/api/insights/undismiss",{key:"triage:"+h.skip.id});
+ if(cur)Q.unshift(cur);cur=h.item||h.skip;draw();bump();toast("Undone")}
+function bump(){$("done").textContent=done?`${done} done this session`:"";if(total0)$("pb").style.width=Math.round(100*done/total0)+"%"}
+async function checkLearn(){try{const P=(await api("/api/insights/proposals")).filter(p=>p.kind==="rule");if(!P.length)return;const p=P[0];
+ const el=document.createElement("div");el.className="learn";el.innerHTML=`<span>💡 <b>Learned:</b> ${esc(p.title.replace("Teach a rule: ",""))} — ${esc(p.evidence)}</span><span class="sp"></span><button class="a pri" id="lr-ok">Preview rule</button><button class="a" id="lr-no">No</button>`;
+ $("main").prepend(el);$("lr-no").onclick=async()=>{await api("/api/insights/dismiss",{key:p.key});el.remove()};
+ $("lr-ok").onclick=async()=>{const r=await api("/api/insights/proposal",{key:p.key});if(r.errors){toast(r.errors[0]);return}el.remove();rules()}}catch(e){}}
+async function rules(){await api("/api/rules/start",{});const s=$("shade");s.hidden=false;s.innerHTML='<div class="modal"><h3>Working out what the rule changes…</h3></div>';
+ const tick=async()=>{const j=await api("/api/rules/status");if(j.phase==="running"){setTimeout(tick,700);return}
+  if(j.phase!=="ready"){s.hidden=true;return}const R=j.result;
+  s.innerHTML=`<div class="modal"><h3>${R.files.toLocaleString()} file(s) would get labels</h3><pre>${R.sample.slice(0,40).map(x=>esc(x.path.split("/").pop())+"  "+x.changes.map(c=>c[0]+": "+(c[1]||"none")+" → "+(c[2]||"none")).join(", ")).join("\n")}</pre>
+  <div class="act"><button class="a" id="r-no">Not now</button><button class="a pri" id="r-ok">Apply</button></div></div>`;
+  $("r-no").onclick=()=>s.hidden=true;$("r-ok").onclick=async()=>{await api("/api/rules/apply",{});s.hidden=true;toast("Rule applied (undo in Settings → History)");Q=[];await load()}};tick()}
+document.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{where=b.dataset.w;document.querySelectorAll("[data-w]").forEach(x=>x.classList.toggle("on",x===b));total0=null;load()});
+document.addEventListener("keydown",e=>{if(!cur||!$("shade").hidden)return;if(e.target.tagName==="SELECT"&&e.key!=="Escape")return;const k=e.key.toLowerCase();
+ if(/^[1-9]$/.test(k)&&OWN[+k-1]){e.preventDefault();decide(OWN[+k-1].n)}else if(k==="enter"){e.preventDefault();$("ok").click()}else if(k==="n")decide("");else if(k==="s")skip();
+ else if(k==="z")undo();else if(k==="t"){e.preventDefault();$("tp").focus()}else if(k==="d"){e.preventDefault();$("dt").focus()}else if(k==="o")$("fnd").click();else if(k==="escape")document.activeElement.blur()});
+(async()=>{ME=await api("/api/me");if(ME.role!=="admin"){location.href="/";return}
+ if(UNDER){$("underlbl").hidden=false;$("underlbl").textContent="Only in "+UNDER.replace(/^\/Users\/[^/]+/,"~")+" ✕";$("underlbl").style.cursor="pointer";$("underlbl").onclick=()=>location.href="/triage"}load()})();
+</script></body></html>

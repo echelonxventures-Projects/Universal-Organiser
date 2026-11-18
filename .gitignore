@@ -1,0 +1,24 @@
+# Your data never goes into the repository
+profiles/machine.json
+profiles/versions/
+vault/
+vault.sparsebundle/
+catalogue/
+logs/
+exports/
+agent/
+*.db
+*.db-wal
+*.db-shm
+*.jsonl
+*.pem
+*.key
+*.crt
+# built from source on install
+helpers/macos/fehelper
+helpers/macos/fetrash
+*.new
+__pycache__/
+*.pyc
+.DS_Store
+.venv/

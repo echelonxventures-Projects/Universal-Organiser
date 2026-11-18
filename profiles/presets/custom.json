@@ -1,0 +1,8 @@
+{
+  "_about": "Ready-made starting profile. The setup wizard copies it into your own profile; change anything later in Settings.",
+  "title": "Custom",
+  "about": "Start from the plain rules and set everything yourself in Settings.",
+  "profile": {
+    "layout_preset": "by-owner"
+  }
+}

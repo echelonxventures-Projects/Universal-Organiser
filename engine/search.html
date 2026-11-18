@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+/* Offline page: system fonts only, nothing loaded from the internet. */
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--mark:#fbe7a1;--shade:rgba(20,25,22,.45);
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--mark:#5c4d14;--shade:rgba(0,0,0,.6);color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f)}
+header{position:sticky;top:0;z-index:3;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0;white-space:nowrap}
+#q{flex:1 1 320px;font:15px var(--f);padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+#q:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.stat{color:var(--muted);font-size:12.5px;white-space:nowrap}
+.who{display:flex;gap:10px;align-items:center;font-size:13px;white-space:nowrap}.who a{color:var(--accent);text-decoration:none}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr)}
+aside{border-right:1px solid var(--line);padding:12px 14px;height:calc(100vh - 58px);overflow:auto;position:sticky;top:58px}
+aside h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 6px}
+.f{display:flex;justify-content:space-between;gap:8px;padding:3px 6px;border-radius:5px;cursor:pointer;font-size:13px}
+.f:hover{background:var(--soft)}.f.on{background:var(--accent);color:var(--surface)}
+.f span:last-child{font:12px var(--m);opacity:.75}
+.more{font-size:12px;color:var(--accent);cursor:pointer;padding:2px 6px}
+main{padding:12px 18px 80px;min-width:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer}
+.bar{position:sticky;top:58px;z-index:2;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.bar .n{font-weight:600}.bar label{display:flex;gap:6px;align-items:center;cursor:pointer}
+select{font:13px var(--f);padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);max-width:200px}
+.r{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px}
+.r.nobox{grid-template-columns:minmax(0,1fr)}.r:hover{border-color:var(--accent)}.r.sel{border-color:var(--accent);background:var(--soft)}
+.r input[type=checkbox]{width:17px;height:17px;margin:2px 0 0;accent-color:var(--accent);cursor:pointer}
+.r .t{font-weight:600;overflow-wrap:anywhere}.r .p{font:12px var(--m);color:var(--muted);overflow-wrap:anywhere}
+.r .s{font-size:13px;color:var(--muted);margin-top:4px}
+mark{background:var(--mark);color:inherit;padding:0 1px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+.b{font-size:11.5px;border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted)}
+.b.own{border-color:var(--accent);color:var(--accent)}.b.warn{border-color:var(--warn);color:var(--warn)}.b.you{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.sg{font:11.5px var(--f);border:1px dashed var(--accent);color:var(--accent);background:transparent;border-radius:4px;padding:1px 7px;cursor:pointer}
+.sg:hover{background:var(--soft)}
+#detail{position:fixed;top:0;right:0;width:min(560px,100%);height:100%;background:var(--surface);border-left:1px solid var(--line);z-index:5;overflow:auto;padding:16px 18px;box-shadow:-8px 0 24px rgba(0,0,0,.12)}
+#detail h2{font-size:16px;margin:0 0 6px;overflow-wrap:anywhere}
+.edit{display:grid;grid-template-columns:110px minmax(0,1fr);gap:6px 10px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:10px 0 14px;font-size:13px}
+.edit select{max-width:none;width:100%}.edit .act{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}
+dl{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 10px;font-size:13px}dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere}
+pre{white-space:pre-wrap;font:12px var(--m);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;max-height:340px;overflow:auto}
+button{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 11px;border-radius:6px;cursor:pointer}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}button:disabled{opacity:.5;cursor:default}
+.pager{display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--muted)}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:8;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(460px,100%)}
+.modal h3{margin:0 0 8px;font-size:16px}.modal p{margin:0 0 16px;color:var(--muted)}.modal .act{display:flex;gap:8px;justify-content:flex-end}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;display:flex;gap:14px;align-items:center;max-width:calc(100% - 32px);font-size:13px}
+#toast button{background:transparent;color:var(--bg);border-color:var(--bg)}
+@media (max-width:760px){.layout{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}.bar{top:0;position:static}}
+</style></head><body>
+<header><h1>Universal Organiser</h1><input id="q" placeholder="Search names, contents, text in images, inside zips… e.g. passport, insurance 2021, invoice" autofocus>
+<span class="stat" id="stat"></span><span class="who" id="who"></span></header>
+<div class="layout"><aside id="facets"></aside><main><div class="chips" id="chips"></div><div class="bar" id="bar" hidden></div><div id="res"></div><div class="pager" id="pager"></div></main></div>
+<div id="detail" hidden></div><div class="shade" id="shade" hidden></div><div id="toast" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const LABEL={kind:"Type",entity:"Owner",entity_type:"Owner type",doc_type:"Document type",topic:"Topic",year:"Year",under:"Folder",planned:"In action plan"};
+const st={q:"",f:{},review:"",dups:false,offset:0,rec:"",rect:"",literal:false,ignore:[],smart:null,smartName:""},sel=new Set();
+let SMART=[];
+let ME=null,FAC=null,LAST=null,open={};
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const size=n=>{if(!n&&n!==0)return"";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+" "+u[i]};
+const admin=()=>ME&&ME.role==="admin";
+const fmtT=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return(h?h+":"+String(m).padStart(2,"0"):m)+":"+String(x).padStart(2,"0")};
+function opts(list,cur,none){return `<option value="__keep">${none||"— choose —"}</option><option value="">(none)</option>`+list.map(v=>`<option ${v===cur?"selected":""}>${esc(v)}</option>`).join("")}
+function toast(msg,cid){const t=$("toast");t.innerHTML=`<span>${esc(msg)}</span>${cid?'<button id="undo">Undo</button>':""}`;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,12000);
+ if(cid)$("undo").onclick=async()=>{const r=await api("/api/undo",{id:cid});t.hidden=true;toast(`Undone (${r.n} file${r.n===1?"":"s"}).`);refresh()}}
+function modal(title,text,okLabel){return new Promise(res=>{const s=$("shade");s.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h3>${esc(title)}</h3><p>${esc(text)}</p><div class="act"><button id="mno">Cancel</button><button class="pri" id="mok">${esc(okLabel)}</button></div></div>`;
+ s.hidden=false;$("mok").focus();const done=v=>{s.hidden=true;res(v)};$("mok").onclick=()=>done(true);$("mno").onclick=()=>done(false);s.onclick=e=>{if(e.target===s)done(false)}})}
+async function label(target,set,{ask=true}={}){
+ const body={set,...target};
+ try{if(ask){const p=await api("/api/label",{...body,preview:true});if(!p.n){toast("Nothing to change.");return}
+  if(!await modal("Check before applying",p.summary,"Apply"))return}
+ const r=await api("/api/label",body);sel.clear();toast(r.summary+".",r.change);refresh()}catch(e){toast(e.message)}}
+async function refresh(){await loadFacets();await run()}
+async function loadFacets(){FAC=await api("/api/facets");drawFacets();
+ const [n,s]=FAC.total;const ls=FAC.last_scan;$("stat").textContent=`${n.toLocaleString()} items · ${size(s)}`+(ls?` · scanned ${new Date(ls.at*1000).toLocaleDateString()}`:"")}
+function drawFacets(){
+ const rv=FAC.review,row=(k,txt,n,on)=>`<div class="f ${on?"on":""}" data-rv="${k}"><span>${txt}</span><span>${n.toLocaleString()}</span></div>`;
+ let h=SMART.length?`<h3>Smart folders</h3>`+SMART.map(s=>`<div class="f ${st.smart===s.id?"on":""}" data-sf="${s.id}"><span>📁 ${esc(s.name)}</span><span>${s.n==null?"":s.n.toLocaleString()}</span></div>`).join(""):"";
+ h+="<h3>Review</h3>";
+ if(admin()){h+=row("owner","Needs owner",rv.owner,st.review==="owner")+row("suggested","Owner suggested",rv.suggested,st.review==="suggested")+row("mine","Decided by you",rv.mine,st.review==="mine")}
+ h+=`<div class="f ${st.dups?"on":""}" data-dups="1"><span>Duplicate copies</span><span>${rv.dups.toLocaleString()}</span></div>`;
+ if(admin())h+=row("sensitive","Sensitive (not read)",rv.sensitive,st.review==="sensitive");
+ for(const k of ["entity","doc_type","topic","kind","year","entity_type"]){const list=FAC[k]||[];const lim=open[k]?list.length:8;
+  h+=`<h3>${LABEL[k]}</h3>`+list.slice(0,lim).map(([v,c])=>`<div class="f ${st.f[k]===v?"on":""}" data-k="${k}" data-v="${esc(v)}"><span>${esc(v)}</span><span>${c.toLocaleString()}</span></div>`).join("")
+   +(list.length>8?`<div class="more" data-more="${k}">${open[k]?"Show less":"Show all "+list.length}</div>`:"")}
+ $("facets").innerHTML=h}
+$("facets").addEventListener("click",e=>{const el=e.target.closest("[data-k],[data-rv],[data-dups],[data-more],[data-sf]");if(!el)return;
+ if(el.dataset.sf){const s=SMART.find(x=>x.id===+el.dataset.sf);if(s.def.q||s.def.filters){st.q=s.def.q||"";$("q").value=st.q;st.f={...(s.def.filters||{})};st.smart=null}
+  else if(st.smart===s.id){st.smart=null;st.smartName=""}else{st.smart=s.id;st.smartName=s.name}st.offset=0;sel.clear();drawFacets();run();return}
+ if(el.dataset.more){open[el.dataset.more]=!open[el.dataset.more];drawFacets();return}
+ if(el.dataset.rv)st.review=st.review===el.dataset.rv?"":el.dataset.rv;else if(el.dataset.dups)st.dups=!st.dups;
+ else{const k=el.dataset.k,v=el.dataset.v;st.f[k]===v?delete st.f[k]:st.f[k]=v}
+ st.offset=0;sel.clear();drawFacets();run()});
+let timer;$("q").addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>{st.q=$("q").value;st.offset=0;st.ignore=[];st.literal=false;sel.clear();run()},260)});
+function askName(){return new Promise(res=>{const s=$("shade");s.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h3>Save as smart folder</h3><p>It keeps itself up to date. Nothing is moved.</p>
+ <input id="sfname" style="width:100%;font:14px var(--f);padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)" placeholder="e.g. Dad's documents" value="${esc(st.q)}">
+ <div class="act" style="margin-top:12px"><button id="mno">Cancel</button><button class="pri" id="mok">Save</button></div></div>`;s.hidden=false;$("sfname").focus();$("sfname").select();
+ const done=v=>{s.hidden=true;res(v)};$("mok").onclick=()=>done($("sfname").value.trim());$("mno").onclick=()=>done(null)})}
+async function loadSmart(){try{SMART=await api("/api/smart");if(st.smart&&!st.smartName){const s=SMART.find(x=>x.id===st.smart);if(s){st.smartName=s.name;run()}}drawFacets()}catch(e){}}
+const query=()=>({q:st.q,...st.f,review:st.review,dups:st.dups,rec:st.rec});
+function drawBar(){const b=$("bar");if(!admin()||!LAST||!LAST.total){b.hidden=true;return}
+ const O=ME.options,pageIds=LAST.results.map(r=>r.id),allOn=pageIds.length&&pageIds.every(i=>sel.has(i));
+ b.innerHTML=`<label><input type="checkbox" id="selpage" ${allOn?"checked":""}> Select page</label>
+ <span class="n">${sel.size?sel.size+" selected":"Nothing selected"}</span>
+ <button id="selall" title="Apply to every file matching the current search and filters">All ${LAST.total.toLocaleString()} matching</button>
+ <span style="flex:1"></span>
+ <select id="b-entity" aria-label="Owner">${opts(O.entities.map(e=>e.name),null,"Owner…")}</select>
+ <select id="b-topic" aria-label="Topic">${opts(O.topics,null,"Topic…")}</select>
+ <select id="b-doc" aria-label="Document type">${opts(O.doc_types,null,"Document type…")}</select>
+ <button class="pri" id="bapply">Preview for selected</button>`;b.hidden=false;
+ $("selpage").onchange=e=>{pageIds.forEach(i=>e.target.checked?sel.add(i):sel.delete(i));draw()};
+ const set=()=>{const s={};for(const[k,id]of[["entity","b-entity"],["topic","b-topic"],["doc_type","b-doc"]]){const v=$(id).value;if(v!=="__keep")s[k]=v}return s};
+ $("selall").onclick=()=>{const s=set();if(!Object.keys(s).length){toast("Choose an owner, topic or document type first.");return}label({query:query()},s)};
+ $("bapply").onclick=()=>{const s=set();if(!Object.keys(s).length){toast("Choose an owner, topic or document type first.");return}
+  if(!sel.size){toast("Tick some files first, or use “All matching”.");return}label({ids:[...sel]},s)}}
+function draw(){const d=LAST;
+ $("res").innerHTML=d.results.length?d.results.map(r=>{
+  const snip=esc(r.snip||"").replace(/\[\[/g,"<mark>").replace(/\]\]/g,"</mark>");
+  const tags=(r.tags||[]).slice(0,5).map(t=>`<span class="b">${esc(t)}</span>`).join("");
+  const you=(r.entity_conf||"").startsWith("you");
+  const own=r.entity?`<span class="b ${you?"you":"own"}">${esc(r.entity)}${you?" ✓":r.entity_conf==="medium"?" (from content)":""}</span>`
+   :(r.suggestions&&r.suggestions.length?(admin()?r.suggestions.slice(0,3).map(s=>`<button class="sg" data-sg="${esc(s)}" title="Set owner to ${esc(s)}">Owner: ${esc(s)}?</button>`).join(""):`<span class="b warn">maybe: ${esc(r.suggestions.join(", "))}</span>`):"");
+  return `<div class="r ${admin()?"":"nobox"} ${sel.has(r.id)?"sel":""}" data-id="${r.id}">${admin()?`<input type="checkbox" aria-label="Select" ${sel.has(r.id)?"checked":""}>`:""}<div>
+  <div class="t">${esc(r.title&&r.title.length>3&&r.kind!=="Code"?r.title:r.name)}</div><div class="p">${esc(r.path.replace(/^\/Users\/[^/]+/,"~"))}</div>
+  ${snip?`<div class="s">${snip}</div>`:""}<div class="meta">${own}${r.doc_type?`<span class="b">${esc(r.doc_type)}</span>`:""}${r.topic?`<span class="b">${esc(r.topic)}</span>`:""}
+  <span class="b">${esc(r.kind||r.unit)}</span>${r.date?`<span class="b">${r.date}</span>`:""}<span class="b">${size(r.size)}</span>${tags}</div></div></div>`}).join(""):"<p>No matches.</p>";
+ const end=Math.min(st.offset+50,d.total);
+ $("pager").innerHTML=d.total?`${(st.offset+1).toLocaleString()}–${end.toLocaleString()} of ${d.total.toLocaleString()} ${st.offset?'<button id="prev">Previous</button>':""}${end<d.total?'<button id="next">Next</button>':""}`:"";
+ if($("prev"))$("prev").onclick=()=>{st.offset-=50;run();scrollTo(0,0)};if($("next"))$("next").onclick=()=>{st.offset+=50;run();scrollTo(0,0)};
+ drawBar()}
+async function run(){
+ const p=new URLSearchParams({q:st.q,offset:st.offset,limit:50});for(const[k,v]of Object.entries(st.f))p.set(k,v);
+ if(st.review)p.set("review",st.review);if(st.dups)p.set("dups","1");if(st.rec)p.set("rec",st.rec);
+ if(st.literal)p.set("literal","1");if(st.ignore.length)p.set("ignore",st.ignore.join(","));if(st.smart)p.set("smart",st.smart);
+ const d=await api("/api/search?"+p);
+ const RV={owner:"Needs owner",suggested:"Owner suggested",mine:"Decided by you",sensitive:"Sensitive"};
+ $("chips").innerHTML=Object.entries(st.f).map(([k,v])=>`<span class="chip" data-k="${k}">${LABEL[k]}${k==="planned"?"":": "+esc(k==="under"?v.replace(/^\/Users\/[^/]+/,"~"):v)} ✕</span>`).join("")+(st.review?`<span class="chip" data-rv="1">${RV[st.review]} ✕</span>`:"")+(st.dups?`<span class="chip" data-d="1">Duplicates ✕</span>`:"")+(st.rec?`<span class="chip" data-rc="1">${esc(st.rect||st.rec)} ✕</span>`:"")+(st.smart?`<span class="chip" data-sm="1">📁 ${esc(st.smartName)} ✕</span>`:"")
+  +(d.understood&&(d.understood.chips.length||d.understood.also.length)?`<span style="font-size:12.5px;color:var(--muted);margin-left:6px">Understood as:</span>`
+   +d.understood.chips.map(c=>`<span class="chip" data-ig="${c.kind}" title="Remove this and search the word as text">${esc(c.label)} ✕</span>`).join("")
+   +(d.understood.also.length?`<span style="font-size:12px;color:var(--muted)">also searched: ${d.understood.also.slice(0,6).map(esc).join(", ")}</span>`:"")
+   +`<a href="#" id="lit" style="font-size:12px;color:var(--accent);margin-left:6px">search exact words</a>`:"")
+  +(st.literal?`<span class="chip" data-lit="1">Exact words ✕</span>`:"")
+  +(st.q||Object.keys(st.f).length?`<a href="#" id="savesf" style="font-size:12px;color:var(--accent);margin-left:6px">☆ Save this search</a>`:"");
+ if(d.error){$("res").innerHTML=`<p>Search error: ${esc(d.error)}</p>`;return}
+ LAST=d;draw()}
+$("chips").addEventListener("click",async e=>{
+ if(e.target.id==="lit"){e.preventDefault();st.literal=true;run();return}
+ if(e.target.id==="savesf"){e.preventDefault();const n=await askName();if(!n)return;try{await api("/api/smart/save",{name:n,def:{q:st.q,filters:st.f}});toast("Saved as smart folder “"+n+"”.");loadSmart()}catch(x){toast(x.message)}return}
+ const c=e.target.closest(".chip");if(!c)return;
+ if(c.dataset.ig){st.ignore.push(c.dataset.ig);run();return}if(c.dataset.lit){st.literal=false;run();return}if(c.dataset.sm){st.smart=null;st.smartName="";drawFacets();run();return}if(c.dataset.k)delete st.f[c.dataset.k];if(c.dataset.rv)st.review="";if(c.dataset.d)st.dups=false;if(c.dataset.rc){st.rec="";st.rect=""}st.offset=0;sel.clear();drawFacets();run()});
+$("res").addEventListener("click",async e=>{const r=e.target.closest(".r");if(!r)return;const id=+r.dataset.id;
+ if(e.target.matches("input[type=checkbox]")){e.target.checked?sel.add(id):sel.delete(id);r.classList.toggle("sel",e.target.checked);drawBar();return}
+ const sg=e.target.closest("[data-sg]");if(sg){label({ids:[id]},{entity:sg.dataset.sg},{ask:false});return}
+ showDetail(id)});
+async function showDetail(id){const d=await api("/api/file?id="+id);if(!d.id)return;const x=d.extra||{};
+ const row=(k,v)=>v||v===0?`<dt>${k}</dt><dd>${v}</dd>`:"";const O=ME.options;
+ const edit=admin()?`<div class="edit"><span>Owner</span><select id="e-entity">${opts(O.entities.map(e=>e.name),d.entity,"(keep)")}</select>
+  <span>Topic</span><select id="e-topic">${opts(O.topics,d.topic,"(keep)")}</select>
+  <span>Document type</span><select id="e-doc">${opts(O.doc_types,d.doc_type,"(keep)")}</select>
+  <div class="act"><span style="flex:1;color:var(--muted);font-size:12px;align-self:center">${d.decision?"You labelled this file before. ":""}Labels only: the file is not moved.</span><button class="pri" id="e-save">Save labels</button></div></div>`:"";
+ $("detail").innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:8px"><button class="pri" id="reveal">Show in Finder</button><button id="close">Close</button></div>
+ <h2>${esc(d.name)}</h2>${edit}<dl>${row("Location",esc(d.path))}${row("Type",esc(d.kind))}${row("Size",size(d.size))}${row("Date",d.date?d.date+" <span style='color:var(--muted)'>("+esc(d.date_source)+")</span>":"")}
+ ${row("Owner",d.entity?esc(d.entity)+" · "+esc(d.entity_type)+" · "+esc(d.entity_conf)+" ("+esc(d.entity_why)+")":"")}${row("Suggestions",d.suggestions?esc(d.suggestions.join(", ")):"")}
+ ${row("Document type",d.doc_type?esc(d.doc_type)+" ("+esc(d.doc_conf)+")":"")}${row("Topic",esc(d.topic))}${row("Lifecycle",esc(d.lifecycle))}${row("Pages",d.pages)}
+ ${row("Items inside",d.inner_count)}${row("Tags",(d.tags||[]).map(esc).join(", "))}${row("Camera",esc(x.camera))}${row("Faces",x.faces)}${row("Project markers",esc(x.why))}
+ ${row("Notes",[d.cloud_only?"Stored in iCloud only: content not read":"",d.sensitive?"Sensitive: content not read":"",d.protected?"Protected: never opened":"",d.errors?esc(d.errors):""].filter(Boolean).join("<br>"))}</dl>
+ ${d.copies.length?`<h3>Identical copies (${d.copies.length})</h3><pre>${d.copies.map(esc).join("\n")}</pre>`:""}
+ ${d.archive.length?`<h3>Inside this archive</h3><pre>${d.archive.map(([n,s])=>esc(n)+"  ("+size(s)+")").join("\n")}</pre>`:""}
+ ${d.transcript?`<h3>Transcript <span style="font-weight:400;color:var(--muted);font-size:12px">${fmtT(d.transcript.duration)} · ${(d.transcript.words||0).toLocaleString()} words · ${esc(d.transcript.locale||"")}${d.transcript.error?" · "+esc(d.transcript.error):""}</span></h3>
+  ${admin()?`<p style="font-size:12.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">Wrong language? <select id="tr-lang" aria-label="Language"><option value="">choose…</option></select><button id="tr-again">Transcribe again</button></p>`:""}
+  ${d.transcript.segments.length?`<pre>${d.transcript.segments.map(([t,s])=>`[${fmtT(t)}] ${esc(s)}`).join("\n")}</pre>`:`<p style="color:var(--muted)">No speech found.</p>`}`
+  :(["Audio","Video"].includes(d.kind)&&admin()&&!d.cloud_only&&!d.sensitive?`<h3>Transcript</h3><p><button id="tr-go">Transcribe on this Mac</button> <span style="color:var(--muted);font-size:12px">Uses Apple's on-device speech recognition; nothing leaves the Mac.</span></p>`:"")}
+ ${admin()&&!d.sensitive&&d.cloud_only?`<p><button id="dr-go">Download &amp; read</button> <span style="color:var(--muted);font-size:12px">Brings this one file from iCloud onto the Mac and reads it.</span></p>`:""}
+ ${admin()&&!d.sensitive&&!d.cloud_only&&(d.tags||[]).includes("scanned")&&!(d.tags||[]).includes("all-pages-read")&&d.pages>3?`<p><button id="dr-go">Read all ${d.pages} pages</button> <span style="color:var(--muted);font-size:12px">The scan read the first pages only.</span></p>`:""}
+ ${d.text&&!d.archive.length?`<h3>Text</h3><pre>${esc(d.text)}</pre>`:""}`;
+ $("detail").hidden=false;$("close").onclick=()=>$("detail").hidden=true;
+ if($("tr-lang"))api("/api/languages").then(L=>{const nm=new Intl.DisplayNames([navigator.language||"en"],{type:"language"});
+  const inst=new Set(L.installed);$("tr-lang").innerHTML='<option value="">choose…</option>'+L.supported.map(l=>`<option value="${esc(l)}" ${l===d.transcript.locale?"selected":""}>${esc((nm.of(l)||l))} (${esc(l)})${inst.has(l)?"":" · downloads first"}</option>`).join("")}).catch(()=>{});
+ if($("tr-again"))$("tr-again").onclick=async()=>{const l=$("tr-lang").value;if(!l){toast("Choose a language first.");return}
+  try{await api("/api/transcribe",{id:d.id,language:l});$("tr-again").disabled=true;$("tr-again").textContent="Transcribing…";
+   const poll=async()=>{const j=await api("/api/transcribe/status");if(j&&j.phase==="running"){setTimeout(poll,1500);return}if(j&&j.phase==="failed")toast(j.error);showDetail(d.id)};poll()}catch(e){toast(e.message)}};
+ if($("dr-go"))$("dr-go").onclick=async()=>{try{await api("/api/deepread",{id:d.id});$("dr-go").disabled=true;$("dr-go").textContent="Working…";
+  const poll=async()=>{const j=await api("/api/deepread/status");if(j&&j.phase==="running"){$("dr-go").textContent=j.step+"…";setTimeout(poll,2000);return}
+   if(j&&j.phase==="failed")toast(j.error);else toast("Done.");showDetail(d.id)};poll()}catch(e){toast(e.message)}};
+ if($("tr-go"))$("tr-go").onclick=async()=>{try{await api("/api/transcribe",{id:d.id});$("tr-go").disabled=true;$("tr-go").textContent="Transcribing…";
+  const poll=async()=>{const j=await api("/api/transcribe/status");if(j&&j.phase==="running"){setTimeout(poll,1500);return}if(j&&j.phase==="failed")toast(j.error);showDetail(d.id)};poll()}catch(e){toast(e.message)}};$("reveal").onclick=()=>api("/api/reveal",{id:d.id});
+ if(admin())$("e-save").onclick=async()=>{const s={};for(const[k,el,cur]of[["entity","e-entity",d.entity],["topic","e-topic",d.topic],["doc_type","e-doc",d.doc_type]]){const v=$(el).value;if(v!=="__keep"&&v!==(cur||""))s[k]=v}
+  if(!Object.keys(s).length){toast("No changes.");return}await label({ids:[d.id]},s,{ask:false});showDetail(d.id)}}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("shade").hidden)return;$("detail").hidden=true}});
+(async()=>{ME=await api("/api/me");
+ $("who").innerHTML=`<span>${esc(ME.display)}${admin()?"":" · view only"}</span><a href="/home">Home</a><a href="/browse">Browse</a><a href="/analytics">Analytics</a>${admin()?'<a href="/triage">Triage</a><a href="/sorter">Sorter</a><a href="/insights" id="ins">Insights</a><a href="/settings">Settings</a>':""}<a href="#" id="out">Sign out</a>`;
+ $("out").onclick=async e=>{e.preventDefault();await api("/api/logout",{});location.href="/login"};
+ const U=new URLSearchParams(location.search);
+ if(U.get("q")){st.q=U.get("q");$("q").value=st.q}if(U.get("review"))st.review=U.get("review");if(U.get("smart"))st.smart=+U.get("smart");if(U.get("rec")){st.rec=U.get("rec");st.rect=U.get("rect")||""}
+ for(const k of Object.keys(LABEL))if(U.get(k))st.f[k]=U.get(k);
+ if([...U.keys()].length)history.replaceState(null,"","/");
+ await refresh();loadSmart();if(U.get("open"))showDetail(+U.get("open"));
+ if(admin())api("/api/insights/summary").then(s=>{if(s.important)$("ins").textContent=`Insights (${s.important})`}).catch(()=>{})})();
+</script></body></html>

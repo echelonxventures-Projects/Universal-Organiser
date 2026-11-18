@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Analytics · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+/* Offline page: system fonts, no libraries. Chart colours: validated categorical palette (light + dark), sequential blue ramp. */
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--shade:rgba(20,25,22,.45);
+ --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--other:#a7aca8;
+ --q0:#eef2f6;--q1:#cde2fb;--q2:#9ec5f4;--q3:#6da7ec;--q4:#3987e5;--q5:#256abf;--q6:#184f95;--q7:#0d366b;
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--shade:rgba(0,0,0,.6);
+ --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--other:#5f6662;
+ --q0:#20272a;--q1:#1b3350;--q2:#104281;--q3:#184f95;--q4:#256abf;--q5:#3987e5;--q6:#6da7ec;--q7:#b7d3f6;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f)}
+header{position:sticky;top:0;z-index:6;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}header a{color:var(--accent);text-decoration:none;font-size:13px}.sp{flex:1}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;padding:14px 16px 60px;max-width:1500px;margin:0 auto}
+.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:20px;font-variant-numeric:tabular-nums;line-height:1.3}.kpi span{font-size:12px;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-width:0}
+nav{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:6px 8px 0}
+nav button{border:0;background:transparent;border-bottom:2px solid transparent;padding:8px 12px;font:13.5px var(--f);color:var(--muted);cursor:pointer}
+nav button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.body{padding:12px 14px}
+.help{color:var(--muted);font-size:13px;margin:0 0 10px;max-width:90ch}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
+.crumbs{display:flex;flex-wrap:wrap;gap:2px;align-items:center;font-size:13px}.crumbs a{color:var(--accent);cursor:pointer;text-decoration:none;padding:1px 4px;border-radius:4px}
+.crumbs a:hover{background:var(--soft)}.crumbs span{color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 10px;font:12.5px var(--f);cursor:pointer}
+.seg button:last-child{border-right:0}.seg button.on{background:var(--accent);color:var(--surface)}
+#map{position:relative;height:min(62vh,600px);min-height:320px;border-radius:8px;overflow:hidden;background:var(--bg)}
+.tile{position:absolute;border:2px solid var(--surface);border-radius:6px;overflow:hidden;cursor:pointer;transition:filter .1s}
+.tile:hover{filter:brightness(1.08)}.tile.sel{outline:3px solid var(--ink);outline-offset:-3px;z-index:2}
+.tile .lb{position:absolute;left:4px;top:4px;right:4px;background:color-mix(in srgb,var(--surface) 88%,transparent);color:var(--ink);border-radius:4px;padding:1px 5px;font-size:11.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .lb small{color:var(--muted);font-family:var(--m);font-size:10.5px}
+.tile.dir::after{content:"";position:absolute;right:5px;bottom:5px;width:7px;height:7px;border-right:2px solid var(--surface);border-bottom:2px solid var(--surface);transform:rotate(-45deg);opacity:.9}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin-top:8px;align-items:center}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+table{border-collapse:collapse;width:100%;font-size:13px}th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:6px;border-bottom:1px solid var(--line)}
+td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:middle}td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}td.mono{font:12px var(--m);color:var(--muted);overflow-wrap:anywhere}
+tr.drag{cursor:grab}tr.drag:hover{background:var(--soft)}
+.tw{overflow-x:auto}
+.hbar{height:10px;border-radius:0 4px 4px 0;background:var(--s1);min-width:2px}
+.stack{display:flex;height:14px;gap:2px;border-radius:4px;overflow:hidden;min-width:120px}.stack i{display:block;height:100%}
+.heat{border-collapse:separate;border-spacing:2px;font-size:11.5px}.heat td{padding:0;border:0;text-align:center}
+.heat .c{width:100%;min-width:30px;height:24px;border-radius:4px;cursor:pointer;font:10.5px/24px var(--m);color:transparent}
+.heat .c:hover{outline:2px solid var(--ink);color:var(--ink)}.heat th{font-weight:500;text-transform:none;letter-spacing:0;padding:2px 4px;border:0;white-space:nowrap}
+.heat th.rh{text-align:right;color:var(--ink)}
+aside{display:flex;flex-direction:column;gap:12px;min-width:0}
+aside .panel{padding:12px}aside h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px}
+.drop{display:flex;flex-wrap:wrap;gap:6px}
+.dz{border:1.5px dashed var(--line);border-radius:999px;padding:4px 10px;font-size:12.5px;background:var(--bg);cursor:copy;transition:all .1s;user-select:none}
+.dz.act{border-style:solid}.dz.over{background:var(--accent);color:var(--surface);border-color:var(--accent);transform:scale(1.05)}
+.dz.big{border-radius:8px;padding:10px 12px;flex:1 1 120px;text-align:center}
+.dz.trash{border-color:var(--warn)}
+.sticky{position:sticky;top:64px;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 76px);overflow:auto}
+.selbox{font-size:13px}.selbox .nm{font-weight:600;overflow-wrap:anywhere}.selbox .pt{font:11.5px var(--m);color:var(--muted);overflow-wrap:anywhere;margin:2px 0 8px}
+.selbox .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+button,a.btn{font:12.5px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}button.x{border-color:transparent;background:transparent;color:var(--warn)}
+select{font:12.5px var(--f);padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);max-width:100%}
+button:focus-visible,a:focus-visible,select:focus,.tile:focus-visible,.dz:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.rec{display:flex;gap:8px;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.rec:last-child{border-bottom:0}.rec a{color:var(--ink);text-decoration:none}.rec a:hover{color:var(--accent)}.rec span{font:11.5px var(--m);color:var(--muted);white-space:nowrap}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--accent)}.dot.important{background:var(--warn)}
+.sg{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.sg .hd{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px}.sg .hd b{font-size:14px}
+.ph{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.pc{flex:0 0 168px;border:2px solid var(--line);border-radius:8px;padding:6px;cursor:pointer;background:var(--bg);font-size:11.5px;min-width:0}
+.pc.keep{border-color:var(--accent)}.pc img{width:100%;height:120px;object-fit:cover;border-radius:5px;display:block;background:var(--line)}
+.pc .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px}.pc .mt{color:var(--muted);font-family:var(--m);font-size:10.5px}
+.pc .k{font-weight:600;color:var(--accent)}
+.copies{margin:6px 0 4px 18px;font:12px var(--m)}.copies div{padding:2px 4px;border-radius:4px;cursor:pointer;overflow-wrap:anywhere;color:var(--muted)}
+.copies div.keep{color:var(--ink)}.copies div:hover{background:var(--soft)}
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:8px;padding:7px 10px;font-size:12px;max-width:340px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+#tip b{display:block;overflow-wrap:anywhere}#tip span{opacity:.8}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:30;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(620px,100%);max-height:86vh;overflow:auto}
+.modal h3{margin:0 0 8px;font-size:16px}.modal p{color:var(--muted);margin:0 0 14px}.modal .act{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:40;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;display:flex;gap:14px;align-items:center;max-width:calc(100% - 32px);font-size:13px}
+#toast button{background:transparent;color:var(--bg);border-color:var(--bg)}
+.empty{color:var(--muted);padding:24px;text-align:center}
+@media (max-width:980px){.wrap{grid-template-columns:1fr}.sticky{position:static;max-height:none}}
+</style></head><body>
+<header><h1>Analytics</h1><span class="sp"></span><a href="/home">Home</a><a href="/">Files</a><a href="/browse">Browse</a><a href="/triage" id="lnk-tri">Triage</a><a href="/sorter" id="lnk-sort">Sorter</a><a href="/insights" id="lnk-ins">Insights</a><a href="/settings" id="lnk-set">Settings</a></header>
+<div class="wrap">
+ <div class="kpis" id="kpis"></div>
+ <div class="panel">
+  <nav id="tabs"></nav>
+  <div class="body" id="view"></div>
+ </div>
+ <aside><div class="sticky">
+  <div class="panel selbox" id="sel"><h3>Selected</h3><div class="help" style="margin:0">Click a tile or row to select it. Drag it onto an owner, topic or plan below, or use the buttons here.</div></div>
+  <div class="panel" id="targets"></div>
+  <div class="panel" id="plan"></div>
+  <div class="panel" id="recs"></div>
+ </div></aside>
+</div>
+<div id="tip" hidden></div><div class="shade" id="shade" hidden></div><div id="toast" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const size=n=>{if(!n)return"0 B";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(i>2?1:0):n)+" "+u[i]};
+const num=n=>(n||0).toLocaleString();
+const short=p=>String(p||"").replace(/^\/Users\/[^/]+/,"~");
+const tail=(p,n=2)=>short(p).split("/").slice(-n).join("/");
+let ME=null,OV=null,KCOL={},tab="map",mode="type",cur="",SEL=null,TREE=null,DUPS=null;
+const TABS=[["map","Space map"],["dups","Duplicates"],["similar","Similar photos"],["overlap","Folder overlap"],["time","Timeline"],["matrix","Owners × topics"],["types","Types"]];
+const admin=()=>ME&&ME.role==="admin";
+/* ---------- shared UI ---------- */
+function toast(msg,cid){const t=$("toast");t.innerHTML=`<span>${esc(msg)}</span>${cid?'<button id="undo">Undo</button>':""}`;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,12000);
+ if(cid)$("undo").onclick=async()=>{const r=await api("/api/undo",{id:cid});t.hidden=true;toast(`Undone (${num(r.n)} files).`);reload()}}
+function modal(title,text,ok){return new Promise(res=>{const s=$("shade");s.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h3>${esc(title)}</h3><p>${esc(text)}</p><div class="act"><button id="mno">Cancel</button><button class="pri" id="mok">${esc(ok)}</button></div></div>`;
+ s.hidden=false;$("mok").focus();const done=v=>{s.hidden=true;res(v)};$("mok").onclick=()=>done(true);$("mno").onclick=()=>done(false);s.onclick=e=>{if(e.target===s)done(false)}})}
+const tip=$("tip");function showTip(e,html){tip.innerHTML=html;tip.hidden=false;moveTip(e)}
+function moveTip(e){const w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+14,y=e.clientY+14;if(x+w>innerWidth-8)x=e.clientX-w-14;if(y+h>innerHeight-8)y=e.clientY-h-14;tip.style.left=x+"px";tip.style.top=y+"px"}
+const hideTip=()=>tip.hidden=true;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("shade").hidden=true});
+/* ---------- colour ---------- */
+const SLOTS=["--s1","--s2","--s3","--s4","--s5","--s6","--s7"];
+function kindColor(k){return `var(${KCOL[k]||"--other"})`}
+const QS=["--q1","--q2","--q3","--q4","--q5","--q6","--q7"];
+function seq(share){if(share==null)return"var(--q0)";if(share<=0)return"var(--q0)";return `var(${QS[Math.min(6,Math.floor(share*7))]})`}
+function seqCount(v,max){if(!v)return"var(--q0)";const t=Math.log(v+1)/Math.log(max+1);return `var(${QS[Math.min(6,Math.floor(t*7))]})`}
+/* ---------- items, selection, drag ---------- */
+// An item is {type:"dir"|"file"|"group", name, path, id?, ids?, n, size}
+function itemTarget(it){if(it.type==="file")return{ids:[it.id]};if(it.type==="group")return{ids:it.ids};return{query:{under:it.path}}}
+function select(it){SEL=it;drawSel();document.querySelectorAll(".tile.sel").forEach(t=>t.classList.remove("sel"));if(it&&it.el)it.el.classList.add("sel")}
+function drawSel(){const b=$("sel"),it=SEL;if(!it){b.innerHTML=`<h3>Selected</h3><div class="help" style="margin:0">Click a tile or row to select it. Drag it onto an owner, topic or plan below, or use the buttons here.</div>`;return}
+ const O=ME.options;const open=it.type==="dir"?`/?under=${encodeURIComponent(it.path)}`:it.type==="file"?`/?open=${it.id}`:null;
+ b.innerHTML=`<h3>Selected ${it.type==="dir"?"folder":it.type==="group"?"copies":"file"}</h3><div class="nm">${esc(it.name)}</div><div class="pt">${esc(short(it.path||""))}</div>
+ <div style="font-size:12.5px;color:var(--muted)">${it.n!=null?num(it.n)+" file(s) · ":""}${size(it.size)}</div>
+ <div class="row">${open?`<a class="btn" href="${open}">Open in files</a>`:""}${it.type==="file"?'<button id="sf">Show in Finder</button>':""}${it.type==="dir"?'<button id="drill">Open on map</button>':""}</div>
+ ${admin()?`<div class="row"><select id="so" aria-label="Owner"><option value="">Owner…</option>${O.entities.map(e=>`<option>${esc(e.name)}</option>`).join("")}</select><button id="so-go">Set</button></div>
+ <div class="row"><select id="st" aria-label="Topic"><option value="">Topic…</option>${O.topics.map(t=>`<option>${esc(t)}</option>`).join("")}</select><button id="st-go">Set</button></div>
+ <div class="row"><button id="pt-trash">Plan: Trash</button><button id="pt-arch">Plan: Archive</button></div>`:""}`;
+ if($("sf"))$("sf").onclick=()=>api("/api/reveal",{id:it.id});if($("drill"))$("drill").onclick=()=>{tab="map";cur=it.path;drawTabs();draw()};
+ if(admin()){$("so-go").onclick=()=>{const v=$("so").value;if(v)act(it,{label:{entity:v}})};$("st-go").onclick=()=>{const v=$("st").value;if(v)act(it,{label:{topic:v}})};
+  $("pt-trash").onclick=()=>act(it,{plan:"trash"});$("pt-arch").onclick=()=>act(it,{plan:"archive"})}}
+function dragify(el,it){if(!admin())return;el.draggable=true;el.addEventListener("dragstart",e=>{hideTip();window._drag=it;e.dataTransfer.effectAllowed="copy";e.dataTransfer.setData("text/plain",it.name||"item");
+ document.querySelectorAll(".dz").forEach(z=>z.classList.add("act"))});el.addEventListener("dragend",()=>document.querySelectorAll(".dz").forEach(z=>z.classList.remove("act","over")))}
+async function act(it,what){try{
+ if(what.label){const body={...itemTarget(it),set:what.label};const p=await api("/api/label",{...body,preview:true});if(!p.n){toast("Nothing to change.");return}
+  if(!await modal("Check before applying",p.summary,"Apply"))return;const r=await api("/api/label",body);toast(r.summary+".",r.change)}
+ else if(what.plan){const body={...itemTarget(it),action:what.plan};const p=await api("/api/plan/add",{...body,preview:true});if(!p.n){toast(p.summary);return}
+  if(!await modal(`Add to plan (${size(p.size)})`,p.summary,"Add to plan"))return;const r=await api("/api/plan/add",body);toast(`${num(r.n)} file(s) added to the plan. Remove them any time from “Action plan”.`)}
+ reload()}catch(e){toast(e.message)}}
+function drawTargets(){if(!admin()){$("targets").innerHTML=`<h3>View only</h3><div class="help" style="margin:0">You can explore. Only an admin can label files or plan actions.</div>`;return}
+ const O=ME.options;
+ $("targets").innerHTML=`<h3>Drop to set owner</h3><div class="drop">${O.entities.map(e=>`<span class="dz" tabindex="0" data-own="${esc(e.name)}">${esc(e.name)}</span>`).join("")}</div>
+ <h3 style="margin-top:12px">Drop to set topic</h3><div class="drop">${O.topics.map(t=>`<span class="dz" tabindex="0" data-top="${esc(t)}">${esc(t)}</span>`).join("")}</div>
+ <h3 style="margin-top:12px">Drop to plan</h3><div class="drop"><span class="dz big trash" tabindex="0" data-plan="trash">🗑 Trash</span><span class="dz big" tabindex="0" data-plan="archive">📦 Archive</span></div>
+ <div class="help" style="margin:8px 0 0;font-size:12px">Labels apply now (preview + undo). Plans only collect: nothing moves until you run the sorter.</div>`;
+ $("targets").querySelectorAll(".dz").forEach(z=>{
+  z.addEventListener("dragover",e=>{e.preventDefault();z.classList.add("over")});z.addEventListener("dragleave",()=>z.classList.remove("over"));
+  const go=it=>{if(!it){toast("Select or drag an item first.");return}z.dataset.own?act(it,{label:{entity:z.dataset.own}}):z.dataset.top?act(it,{label:{topic:z.dataset.top}}):act(it,{plan:z.dataset.plan})};
+  z.addEventListener("drop",e=>{e.preventDefault();z.classList.remove("over");go(window._drag);window._drag=null});
+  z.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go(SEL)}});z.addEventListener("click",()=>{if(SEL)go(SEL)})})}
+async function drawPlan(){if(!admin()){$("plan").hidden=true;return}const P=await api("/api/plan");const s=P.summary,L=P.labels;const any=Object.keys(s).length;
+ $("plan").innerHTML=`<h3>Action plan</h3>${any?Object.entries(s).map(([k,v])=>`<div class="rec"><span style="color:var(--ink);font:13px var(--f)">${esc(L[k])}</span><span>${num(v.n)} · ${size(v.size)}</span></div>`).join(""):'<div class="help" style="margin:0">Empty. Drop files or folders on Trash or Archive.</div>'}
+ ${any?`<div class="selbox"><div class="row"><button id="pl-rev">Review</button><a class="btn" href="/?planned=1">Open in files</a><button class="x" id="pl-clr">Clear</button></div></div>`:""}`;
+ if(!any)return;
+ $("pl-clr").onclick=async()=>{if(!await modal("Clear the plan?","Only the plan is cleared. No file is touched.","Clear"))return;await api("/api/plan/remove",{all:true});reload()};
+ $("pl-rev").onclick=()=>{const s2=$("shade");s2.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h3>Action plan</h3><p>Runs only when you start the sorter, with its own preview. Remove anything you are not sure about.</p>
+  <div class="tw" style="max-height:52vh;overflow:auto"><table><tbody>${P.items.map(i=>`<tr><td>${esc(L[i.action])}</td><td class="mono">${esc(short(i.path))}</td><td class="r">${size(i.size)}</td><td><button class="x" data-rm="${i.file_id}" aria-label="Remove">✕</button></td></tr>`).join("")}</tbody></table></div>
+  <div class="act" style="margin-top:12px"><button class="pri" id="pl-x">Close</button></div></div>`;s2.hidden=false;$("pl-x").onclick=()=>{s2.hidden=true;reload()};
+  s2.querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{await api("/api/plan/remove",{ids:[+b.dataset.rm]});b.closest("tr").remove()})}}
+async function drawRecs(){if(!admin()){$("recs").hidden=true;return}const R=(await api("/api/insights/recs")).filter(r=>!r.dismissed);
+ $("recs").innerHTML=`<h3>Recommendations</h3>${R.map(r=>`<div class="rec"><a href="/?rec=${encodeURIComponent(r.id)}&rect=${encodeURIComponent(r.title)}"><span class="dot ${r.level==="important"?"important":""}"></span>${esc(r.title)}</a><span>${num(r.n)} · ${size(r.size)}</span></div>`).join("")||'<div class="help">None.</div>'}
+ <div class="selbox"><div class="row"><a class="btn" href="/insights#recs">All insights</a></div></div>`}
+/* ---------- KPIs ---------- */
+function drawKpis(){const o=OV,[n,s]=o.total,pl=Object.values(o.plan).reduce((a,v)=>[a[0]+v[0],a[1]+v[1]],[0,0]);
+ const k=(v,l)=>`<div class="kpi"><b>${v}</b><span>${l}</span></div>`;
+ $("kpis").innerHTML=k(num(n),"items catalogued")+k(size(s),"total size")+k(num(o.cloud[0]),`iCloud-only (${size(o.cloud[1])}): content not read`)
+  +k(Math.round(100*o.owned[0]/Math.max(1,o.docs||n))+"%",`of documents & media have an owner (${num(o.owned[0])})`)+k(size(o.dup[1]),`wasted in ${num(o.dup[0])} extra copies`)+(admin()?k(num(pl[0]),`in the action plan (${size(pl[1])})`):"")}
+/* ---------- treemap ---------- */
+function squarify(items,x,y,w,h){const out=[];const total=items.reduce((a,b)=>a+b.v,0);if(!total||w<=0||h<=0)return out;
+ const scale=w*h/total;let rest=items.map(i=>({...i,a:i.v*scale}));
+ while(rest.length){const short=Math.min(w,h);let row=[],best=Infinity;
+  for(const it of rest){const r=[...row,it],s=r.reduce((a,b)=>a+b.a,0),mx=Math.max(...r.map(z=>z.a)),mn=Math.min(...r.map(z=>z.a));
+   const worst=Math.max(short*short*mx/(s*s),(s*s)/(short*short*mn));if(worst<=best){row=r;best=worst}else break}
+  const s=row.reduce((a,b)=>a+b.a,0),thick=s/short;let off=0;
+  for(const it of row){const len=it.a/thick;if(w>=h)out.push({...it,x,y:y+off,w:thick,h:len});else out.push({...it,x:x+off,y,w:len,h:thick});off+=len}
+  if(w>=h){x+=thick;w-=thick}else{y+=thick;h-=thick}rest=rest.slice(row.length)}
+ return out}
+function dominant(kinds){let b=null,v=-1;for(const[k,s]of Object.entries(kinds||{}))if(s>v){v=s;b=k}return b||"Other"}
+function tileColor(it){if(mode==="type")return kindColor(it.type==="dir"?dominant(it.kinds):it.kind);
+ if(it.type!=="dir"){if(mode==="dups")return it.dup?"var(--q6)":"var(--q0)";if(mode==="cloud")return it.cloud?"var(--q6)":"var(--q0)";return it.owner?"var(--q0)":"var(--q6)"}
+ if(mode==="dups")return seq(it.size?it.dup_bytes/it.size:0);if(mode==="cloud")return seq(it.n?it.cloud/it.n:0);return seq(it.n?(it.n-it.owned)/it.n:0)}
+function tipHtml(it){if(it.type==="rest")return`<b>${num(it.n)} smaller files</b><span>${size(it.size)}</span>`;
+ if(it.type!=="dir")return`<b>${esc(it.name)}</b><span>${esc(it.kind)} · ${size(it.size)}${it.owner?" · "+esc(it.owner):" · no owner"}${it.dup?" · has identical copy":""}${it.cloud?" · iCloud only":""}${it.unit&&it.unit!=="file"?" · "+esc(it.unit)+" (kept whole)":""}</span>`;
+ const ks=Object.entries(it.kinds||{}).map(([k,s])=>`${esc(k)} ${size(s)}`).join(", ");
+ return`<b>${esc(it.name)}</b><span>${num(it.n)} files · ${size(it.size)}<br>${ks}<br>Duplicated: ${size(it.dup_bytes)} · iCloud-only: ${num(it.cloud)} · with owner: ${num(it.owned)}${it.owners&&it.owners.length?" ("+it.owners.map(o=>esc(o[0])).join(", ")+")":""}</span><br><span>Click to open · drag to act</span>`}
+async function drawMap(v){TREE=await api("/api/analytics/tree?path="+encodeURIComponent(cur));const T=TREE;
+ const crumbs=[`<a data-go="">All folders</a>`,...T.crumbs.map(c=>`<span>›</span><a data-go="${esc(c.path)}">${esc(c.name)}</a>`)].join("");
+ v.innerHTML=`<div class="tools"><div class="crumbs">${crumbs}${T.expanded&&T.expanded.length?`<span style="margin-left:8px">· opened ${T.expanded.map(esc).join(", ")} (it held most of the space)</span>`:""}</div><span class="sp"></span><span style="color:var(--muted)">Colour by</span>
+  <div class="seg" role="group" aria-label="Colour by">${[["type","Type"],["dups","Duplicates"],["cloud","iCloud-only"],["owner","No owner"]].map(([k,l])=>`<button class="${mode===k?"on":""}" data-mode="${k}">${l}</button>`).join("")}</div></div>
+  <div id="map" role="list" aria-label="Space map"></div><div class="legend" id="leg"></div>
+  <h3 style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 4px">Table view</h3><div class="tw"><table><thead><tr><th>Name</th><th class="r">Files</th><th class="r">Size</th><th class="r">Duplicated</th><th class="r">iCloud-only</th><th class="r">With owner</th></tr></thead><tbody id="tbl"></tbody></table></div>`;
+ v.querySelectorAll("[data-go]").forEach(a=>a.onclick=()=>{cur=a.dataset.go;select(null);draw()});
+ v.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;draw()});
+ const items=[...T.dirs.map(d=>({...d,v:Math.max(d.size,1)})),...T.files.map(f=>({...f,v:Math.max(f.size,1)}))];
+ if(T.rest)items.push({type:"rest",name:`${num(T.rest.n)} smaller files`,n:T.rest.n,size:T.rest.size,v:Math.max(T.rest.size,1)});
+ items.sort((a,b)=>b.v-a.v);const m=$("map");
+ if(!items.length){m.innerHTML='<div class="empty">Empty folder.</div>';return}
+ const R=squarify(items,0,0,m.clientWidth,m.clientHeight);
+ for(const it of R){const el=document.createElement("div");el.className="tile"+(it.type==="dir"?" dir":"");el.setAttribute("role","listitem");el.tabIndex=0;
+  Object.assign(el.style,{left:it.x+"px",top:it.y+"px",width:Math.max(0,it.w)+"px",height:Math.max(0,it.h)+"px",background:it.type==="rest"?"var(--other)":tileColor(it)});
+  if(it.w>56&&it.h>26)el.innerHTML=`<div class="lb">${esc(tail(it.name,2))} <small>${size(it.size)}</small></div>`;
+  el.setAttribute("aria-label",`${it.name}, ${size(it.size)}${it.type==="dir"?", folder":""}`);
+  el.addEventListener("mouseenter",e=>showTip(e,tipHtml(it)));el.addEventListener("mousemove",moveTip);el.addEventListener("mouseleave",hideTip);
+  const pick=()=>{if(it.type==="rest")return;if(it.type==="dir"){cur=it.path;select({...it});draw()}else select({...it,el})};
+  el.addEventListener("click",pick);el.addEventListener("keydown",e=>{if(e.key==="Enter")pick()});
+  if(it.type!=="rest")dragify(el,it);m.appendChild(el)}
+ const leg=$("leg");
+ if(mode==="type")leg.innerHTML=Object.keys(KCOL).map(k=>`<span><i style="background:${kindColor(k)}"></i>${esc(k)}</span>`).join("")+`<span><i style="background:var(--other)"></i>Other types</span><span>· tile size = space used · folders have ↘</span>`;
+ else{const L={dups:"share of space in duplicated files",cloud:"share of files stored in iCloud only",owner:"share of files with no owner"}[mode];
+  leg.innerHTML=`<span>${L}:</span>${["--q0",...QS].map((q,i)=>`<span><i style="background:var(${q})"></i>${i===0?"0":i===7?"100%":""}</span>`).join("")}`}
+ $("tbl").innerHTML=items.filter(i=>i.type!=="rest").slice(0,120).map((i,ix)=>`<tr class="drag" data-ix="${ix}"><td>${i.type==="dir"?"📁 ":""}${esc(i.name)}</td><td class="r">${num(i.n??1)}</td><td class="r">${size(i.size)}</td>
+  <td class="r">${i.type==="dir"?size(i.dup_bytes):i.dup?"yes":""}</td><td class="r">${i.type==="dir"?num(i.cloud):i.cloud?"yes":""}</td><td class="r">${i.type==="dir"?num(i.owned):esc(i.owner||"")}</td></tr>`).join("");
+ const list=items.filter(i=>i.type!=="rest");
+ $("tbl").querySelectorAll("tr").forEach(tr=>{const it=list[+tr.dataset.ix];dragify(tr,it);tr.onclick=()=>select({...it});tr.ondblclick=()=>{if(it.type==="dir"){cur=it.path;draw()}}})}
+/* ---------- duplicates ---------- */
+async function drawDups(v){DUPS=DUPS||await api("/api/analytics/dups");const D=DUPS;const mx=Math.max(1,...D.groups.map(g=>g.wasted));
+ const extra=g=>g.copies.filter(c=>c.id!==g.keep).map(c=>c.id);
+ v.innerHTML=`<p class="help">${num(D.total_groups)} groups of identical files · ${num(D.extra)} extra copies · ${size(D.wasted)} wasted. ★ marks the suggested copy to keep (inside your library, labelled, not in Downloads/Desktop, shortest path). Click another copy to keep that one instead. Drag a group to <b>Trash</b> to plan removing its extra copies.</p>
+ ${admin()&&D.groups.length?`<div class="tools"><button class="pri" id="dup-all">Plan Trash for all ${num(D.extra)} extra copies (keep ★)</button></div>`:""}
+ <div class="tw"><table><thead><tr><th style="width:28%">Wasted</th><th>File</th><th class="r">Copies</th><th class="r">Each</th><th></th></tr></thead><tbody>${D.groups.map((g,i)=>`<tr class="drag" data-g="${i}">
+  <td><div style="display:flex;align-items:center;gap:6px"><div class="hbar" style="width:${Math.max(2,g.wasted/mx*100)}%;background:${kindColor(g.kind)}"></div><span style="font:11.5px var(--m);color:var(--muted);white-space:nowrap">${size(g.wasted)}</span></div></td>
+  <td>${esc(g.name)}<div class="copies" hidden>${g.copies.map(c=>`<div data-k="${c.id}" class="${c.id===g.keep?"keep":""}">${c.id===g.keep?"★ ":"· "}${esc(short(c.path))}${c.cloud?" (iCloud only)":""}</div>`).join("")}</div></td>
+  <td class="r">${g.n}</td><td class="r">${size(g.size)}</td><td><button data-exp="${i}">Copies</button></td></tr>`).join("")||'<tr><td colspan="5" class="empty">No duplicates.</td></tr>'}</tbody></table></div>`;
+ v.querySelectorAll("tr[data-g]").forEach(tr=>{const g=D.groups[+tr.dataset.g];
+  const it=()=>({type:"group",name:`${g.n-1} extra cop${g.n>2?"ies":"y"} of ${g.name}`,path:g.copies.find(c=>c.id===g.keep).path,ids:extra(g),n:g.n-1,size:g.wasted});
+  dragify(tr,it());tr.addEventListener("dragstart",()=>{window._drag=it()});tr.onclick=e=>{if(!e.target.closest("button,.copies"))select(it())};
+  tr.querySelector("[data-exp]").onclick=()=>{const c=tr.querySelector(".copies");c.hidden=!c.hidden};
+  tr.querySelectorAll("[data-k]").forEach(d=>d.onclick=()=>{g.keep=+d.dataset.k;tr.querySelectorAll("[data-k]").forEach(x=>{const k=+x.dataset.k===g.keep;x.classList.toggle("keep",k);x.textContent=(k?"★ ":"· ")+x.textContent.slice(2)});select(it())})});
+ if($("dup-all"))$("dup-all").onclick=()=>act({type:"group",name:"all extra copies",ids:D.groups.flatMap(extra),size:D.wasted},{plan:"trash"})}
+/* ---------- similar photos ---------- */
+let SIMS=null,simShow=40;
+async function drawSimilar(v){v.innerHTML='<div class="empty">Comparing photos…</div>';SIMS=SIMS||await api("/api/analytics/similar");const S=SIMS;
+ const save=S.groups.reduce((a,g)=>a+g.save,0);
+ const lvl=g=>g.level||"similar";
+ v.innerHTML=`<p class="help">Photos that look the same even if the files differ: bursts, edits, resized or re-saved copies. Found on this Mac with Apple Vision (${S.photos.toLocaleString()} photos compared${S.pending?`, ${S.pending.toLocaleString()} not fingerprinted yet: run <code>fe similar --compute</code>`:""}; iCloud-only and sensitive photos are skipped). ★ = suggested to keep (most pixels, then largest, then inside your library). Click a photo to keep that one instead. Suggestions only: nothing changes unless you plan it.</p>
+ <div class="tools"><b>${S.groups.length.toLocaleString()} groups</b><span style="color:var(--muted)">· ${size(save)} if only ★ is kept</span><span class="sp"></span>
+ ${admin()&&S.groups.length?`<button class="pri" id="sim-all">Plan Trash for all non-★ photos</button>`:""}</div>
+ <div id="simlist"></div>${S.groups.length>simShow?`<div style="text-align:center"><button id="sim-more">Show more</button></div>`:""}`;
+ const others=g=>g.items.filter(i=>i.id!==g.best).map(i=>i.id);
+ const L=$("simlist");
+ S.groups.slice(0,simShow).forEach((g,gi)=>{const el=document.createElement("div");el.className="sg";
+  const draw1=()=>{el.innerHTML=`<div class="hd"><b>${g.n} photos</b><span style="color:var(--muted)">${lvl(g)} · save ${size(g.save)}</span><span class="sp" style="flex:1"></span>
+   ${admin()?`<button data-a="plan">Plan Trash for the others</button><button data-a="keep">Keep all</button>`:""}</div>
+   <div class="ph">${g.items.map(i=>`<div class="pc ${i.id===g.best?"keep":""}" data-id="${i.id}" title="${esc(short(i.path))}"><img loading="lazy" alt="" src="/api/thumb?id=${i.id}">
+    <div class="nm">${i.id===g.best?'<span class="k">★ keep</span> ':""}${esc(i.path.split("/").pop())}</div><div class="mt">${i.w||"?"}×${i.h||"?"} · ${size(i.size)}${i.date?" · "+i.date:""}</div>
+    <div class="mt" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tail(i.path.slice(0,i.path.lastIndexOf("/")),2))}</div></div>`).join("")}</div>`;
+   el.querySelectorAll(".pc").forEach(p=>{p.onclick=()=>{g.best=+p.dataset.id;g.save=g.items.filter(i=>i.id!==g.best).reduce((a,i)=>a+i.size,0);draw1();select(it())};
+    p.ondblclick=()=>location.href="/?open="+p.dataset.id});
+   const b=el.querySelector('[data-a="plan"]');if(b)b.onclick=()=>act(it(),{plan:"trash"});
+   const k=el.querySelector('[data-a="keep"]');if(k)k.onclick=async()=>{await api("/api/insights/dismiss",{key:g.key});S.groups.splice(S.groups.indexOf(g),1);el.remove();toast("Kept all; this group is hidden.")}};
+  const it=()=>({type:"group",name:`${g.n-1} similar photo(s) beside ${g.items.find(i=>i.id===g.best).path.split("/").pop()}`,path:g.items.find(i=>i.id===g.best).path,ids:others(g),n:g.n-1,size:g.save});
+  draw1();dragify(el,it());el.addEventListener("dragstart",()=>{window._drag=it()});L.appendChild(el)});
+ if($("sim-more"))$("sim-more").onclick=()=>{simShow+=40;drawSimilar(v)};
+ if($("sim-all"))$("sim-all").onclick=()=>act({type:"group",name:"all non-★ similar photos",ids:S.groups.flatMap(others),size:save},{plan:"trash"})}
+/* ---------- overlap ---------- */
+async function drawOverlap(v){const O=await api("/api/analytics/overlap");
+ v.innerHTML=`<p class="help">Pairs of folders holding the same files: usually one is an old copy or backup of the other. Overlap = shared files ÷ files in the smaller folder. Sub-folders of a listed pair are folded into it. Drag either folder onto Trash or Archive, or open both to compare.</p>
+ <div class="legend" style="margin:0 0 10px"><span><i style="background:var(--s1)"></i>only in A</span><span><i style="background:var(--s2)"></i>in both</span><span><i style="background:var(--s3)"></i>only in B</span></div>
+ ${O.pairs.map((p,i)=>{const t=Math.max(1,p.a_only+p.shared+p.b_only);return`<div class="panel" style="padding:10px 12px;margin-bottom:8px">
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><b>${Math.round(p.pct*100)}% overlap</b><span style="color:var(--muted);font-size:12.5px">${num(p.shared)} shared files · ${size(p.shared_bytes)}</span></div>
+  <div class="stack" role="img" aria-label="${p.a_only} only in A, ${p.shared} in both, ${p.b_only} only in B"><i style="width:${p.a_only/t*100}%;background:var(--s1)"></i><i style="width:${p.shared/t*100}%;background:var(--s2)"></i><i style="width:${p.b_only/t*100}%;background:var(--s3)"></i></div>
+  <table style="margin-top:6px"><tbody>${[["A",p.a,p.na],["B",p.b,p.nb]].map(([l,pa,n])=>`<tr class="drag" data-pair="${i}" data-side="${l}"><td style="width:24px"><b>${l}</b></td><td class="mono">${esc(short(pa))}</td><td class="r">${num(n)} files</td><td><a class="btn" href="/?under=${encodeURIComponent(pa)}">Open</a></td></tr>`).join("")}</tbody></table></div>`}).join("")||'<div class="empty">No overlapping folders.</div>'}`;
+ v.querySelectorAll("tr[data-pair]").forEach(tr=>{const p=O.pairs[+tr.dataset.pair],A=tr.dataset.side==="A";const it={type:"dir",name:tail(A?p.a:p.b,1),path:A?p.a:p.b,n:A?p.na:p.nb};
+  dragify(tr,it);tr.onclick=e=>{if(!e.target.closest("a"))select(it)}})}
+/* ---------- heatmaps ---------- */
+function heatTip(e,t,n,s){showTip(e,`<b>${esc(t)}</b><span>${num(n)} files · ${size(s)}</span>`)}
+function drawTime(v){const T=OV.timeline.filter(r=>r[0]>="1990"),years=[...new Set(T.map(r=>r[0]))].sort().reverse(),M="Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+ const cell={};let mx=1;for(const[y,m,n,s]of T){cell[y+"-"+m]=[n,s];mx=Math.max(mx,n)}
+ v.innerHTML=`<p class="help">Files per month, by the date of the document (from its name, camera or file dates). Stronger colour = more files. Click a cell to open that year's files.</p>
+ <div class="tw"><table class="heat"><thead><tr><th></th>${M.map(m=>`<th>${m}</th>`).join("")}<th class="r">Year</th></tr></thead><tbody>${years.map(y=>{let tn=0,ts=0;
+  const cells=M.map((m,i)=>{const[n,s]=cell[y+"-"+(i+1)]||[0,0];tn+=n;ts+=s;return`<td><div class="c" style="background:${seqCount(n,mx)}" data-y="${y}" data-t="${m} ${y}" data-n="${n}" data-s="${s}">${n||""}</div></td>`}).join("");
+  return`<tr><th class="rh">${y}</th>${cells}<td class="r" style="font:11.5px var(--m);color:var(--muted);padding:0 6px">${num(tn)} · ${size(ts)}</td></tr>`}).join("")}</tbody></table></div>
+ <div class="legend"><span>Fewer</span>${["--q0",...QS].map(q=>`<i style="background:var(${q})"></i>`).join("")}<span>More (log scale, max ${num(mx)}/month)</span></div>`;
+ v.querySelectorAll(".c").forEach(c=>{c.onmouseenter=e=>heatTip(e,c.dataset.t,+c.dataset.n,+c.dataset.s);c.onmousemove=moveTip;c.onmouseleave=hideTip;c.onclick=()=>location.href="/?year="+c.dataset.y})}
+function drawMatrix(v){const owners=[...OV.owners,"(no owner)"],topics=[...OV.topics,"(no topic)"];const cell={};let mx=1;
+ for(const[e,t,n,s]of OV.matrix){cell[e+"\u0000"+t]=[n,s];if(e!=="(no owner)"||t!=="(no topic)")mx=Math.max(mx,n)}
+ v.innerHTML=`<p class="help">How files spread across owners and topics. Stronger colour = more files. Empty rows or columns show gaps (for example an owner with no ID documents). Click a cell to open those files.</p>
+ <div class="tw"><table class="heat"><thead><tr><th></th>${topics.map(t=>`<th style="writing-mode:vertical-rl;transform:rotate(180deg);height:160px;text-align:left">${esc(t)}</th>`).join("")}</tr></thead><tbody>
+ ${owners.map(o=>`<tr><th class="rh">${esc(o)}</th>${topics.map(t=>{const[n,s]=cell[o+"\u0000"+t]||[0,0];return`<td><div class="c" style="background:${seqCount(n,mx)}" data-o="${esc(o)}" data-tp="${esc(t)}" data-n="${n}" data-s="${s}">${n||""}</div></td>`}).join("")}</tr>`).join("")}</tbody></table></div>
+ <div class="legend"><span>Fewer</span>${["--q0",...QS].map(q=>`<i style="background:var(${q})"></i>`).join("")}<span>More (log scale)</span></div>`;
+ v.querySelectorAll(".c").forEach(c=>{c.onmouseenter=e=>heatTip(e,`${c.dataset.o} · ${c.dataset.tp}`,+c.dataset.n,+c.dataset.s);c.onmousemove=moveTip;c.onmouseleave=hideTip;
+  c.onclick=()=>{const p=new URLSearchParams();p.set("entity",c.dataset.o==="(no owner)"?"(none)":c.dataset.o);p.set("topic",c.dataset.tp==="(no topic)"?"(none)":c.dataset.tp);location.href="/?"+p}})}
+function drawTypes(v){const K=OV.kinds,mx=Math.max(1,...K.map(k=>k[2]));
+ v.innerHTML=`<p class="help">Space by file type. Click a type to open its files.</p><table><thead><tr><th>Type</th><th style="width:55%">Size</th><th class="r">Files</th><th class="r">Size</th></tr></thead><tbody>
+ ${K.map(([k,n,s])=>`<tr class="drag" data-k="${esc(k)}" style="cursor:pointer"><td><i style="display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:${kindColor(k)}"></i>${esc(k)}</td>
+  <td><div class="hbar" style="width:${Math.max(.5,s/mx*100)}%;background:${kindColor(k)}"></div></td><td class="r">${num(n)}</td><td class="r">${size(s)}</td></tr>`).join("")}</tbody></table>`;
+ v.querySelectorAll("tr[data-k]").forEach(tr=>tr.onclick=()=>location.href="/?kind="+encodeURIComponent(tr.dataset.k))}
+/* ---------- frame ---------- */
+function drawTabs(){$("tabs").innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?"on":""}" data-t="${k}">${l}</button>`).join("")}
+$("tabs").onclick=e=>{const b=e.target.closest("[data-t]");if(!b)return;tab=b.dataset.t;history.replaceState(null,"","#"+tab);drawTabs();draw()};
+async function draw(){const v=$("view");hideTip();
+ try{if(tab==="map")await drawMap(v);else if(tab==="dups")await drawDups(v);else if(tab==="similar")await drawSimilar(v);else if(tab==="overlap")await drawOverlap(v);else if(tab==="time")drawTime(v);else if(tab==="matrix")drawMatrix(v);else drawTypes(v)}
+ catch(e){v.innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+async function reload(){OV=await api("/api/analytics/overview");DUPS=null;SIMS=null;drawKpis();drawPlan();draw()}
+let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(tab==="map")draw()},150)});
+(async()=>{ME=await api("/api/me");if(!admin()){$("lnk-ins").hidden=$("lnk-set").hidden=$("lnk-sort").hidden=$("lnk-tri").hidden=true}
+ OV=await api("/api/analytics/overview");
+ const top=OV.kinds.filter(k=>k[0]!=="Other").slice(0,7);top.forEach((k,i)=>KCOL[k[0]]=SLOTS[i]);  // colour follows the type, fixed for the session
+ const h=(location.hash||"").slice(1);if(TABS.some(t=>t[0]===h))tab=h;
+ drawTabs();drawKpis();drawTargets();drawPlan();drawRecs();draw()})();
+</script></body></html>

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Overview · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+/* Offline page. Health uses status colours, always with a label or count, never colour alone. */
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--shade:rgba(20,25,22,.45);
+ --ok:#2f7d4f;--okbg:#dcefe3;--need:#9a6700;--needbg:#f8ebc8;--prob:#b3261e;--probbg:#f7dcd8;--newc:#2a78d6;
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--shade:rgba(0,0,0,.6);
+ --ok:#7cc79a;--okbg:#1d3326;--need:#e5b75c;--needbg:#3a2f15;--prob:#f08a80;--probbg:#3d201d;--newc:#6da7ec;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f)}
+header{position:sticky;top:0;z-index:6;background:var(--surface);border-bottom:1px solid var(--line);padding:8px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}nav.top{display:flex;gap:14px;flex-wrap:wrap}nav.top a{color:var(--accent);text-decoration:none;font-size:13px}nav.top a.on{color:var(--ink);font-weight:600}.sp{flex:1}
+.strip{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.m{border:1px solid var(--line);border-radius:9px;padding:6px 10px;min-width:118px;text-decoration:none;color:inherit;background:var(--bg)}
+.m b{display:block;font-size:17px;font-variant-numeric:tabular-nums}.m span{font-size:11.5px;color:var(--muted)}
+.tr{font:11.5px var(--m);margin-left:4px}.tr.up{color:var(--ok)}.tr.down{color:var(--prob)}.tr.flat{color:var(--muted)}
+.lens{display:flex;gap:6px;align-items:center;padding:8px 16px;flex-wrap:wrap;font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 11px;font:13px var(--f);cursor:pointer}
+.seg button:last-child{border-right:0}.seg button.on{background:var(--accent);color:var(--surface)}
+.legend{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px;flex-wrap:wrap}.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.grid{display:grid;grid-template-columns:270px minmax(0,1fr) 320px;gap:0;height:calc(100vh - 170px);min-height:480px}
+aside.tree{border-right:1px solid var(--line);overflow:auto;padding:8px 6px;background:var(--surface)}
+.tn{display:flex;align-items:center;gap:5px;padding:3px 6px;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap;border:1.5px solid transparent}
+.tn:hover{background:var(--soft)}.tn.on{background:var(--accent);color:var(--surface)}.tn.over{border-color:var(--accent)}
+.tn .tw{width:12px;flex:none;color:var(--muted);font-size:10px;text-align:center}.tn.on .tw{color:var(--surface)}
+.tn .nm{overflow:hidden;text-overflow:ellipsis}.tn .c{margin-left:auto;font:11px var(--m);opacity:.75}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}.dot.ok{background:var(--ok)}.dot.needs{background:var(--need)}.dot.problem{background:var(--prob)}
+.nb{font:10.5px var(--m);color:var(--surface);background:var(--newc);border-radius:8px;padding:0 5px;margin-left:4px}
+section.center{overflow:auto;padding:10px 14px;min-width:0}
+.crumbs{display:flex;flex-wrap:wrap;gap:4px;font-size:13px;margin-bottom:8px;align-items:center}.crumbs a{color:var(--accent);cursor:pointer}
+#map{position:relative;height:min(52vh,520px);min-height:280px;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--line)}
+.tile{position:absolute;border:2px solid var(--surface);border-radius:6px;overflow:hidden;cursor:pointer;padding:5px 7px;font-size:12px;line-height:1.3}
+.tile.ok{background:var(--okbg)}.tile.needs{background:var(--needbg)}.tile.problem{background:var(--probbg)}
+.tile:hover{outline:2px solid var(--ink);outline-offset:-2px;z-index:2}.tile .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .s{color:var(--muted);font:11px var(--m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .hb{position:absolute;left:0;right:0;bottom:0;height:5px;display:flex}.tile .hb i{display:block;height:100%}
+.tile .w{font-size:11px;white-space:nowrap}.tile .w.needs{color:var(--need)}.tile .w.problem{color:var(--prob)}
+table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:12px}th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:5px;border-bottom:1px solid var(--line);font-weight:600}
+td{padding:5px;border-bottom:1px solid var(--line)}td.r{text-align:right;font:11.5px var(--m);color:var(--muted);white-space:nowrap}tr.f{cursor:pointer}tr.f:hover{background:var(--soft)}
+aside.panel{border-left:1px solid var(--line);overflow:auto;padding:12px 14px;background:var(--surface)}
+.panel h2{font-size:16px;margin:0 0 2px;overflow-wrap:anywhere}.panel h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px}
+.pk{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.pk div{background:var(--bg);border-radius:7px;padding:6px 8px}.pk b{display:block;font-size:15px}.pk span{font-size:11px;color:var(--muted)}
+.iss{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13px;border-bottom:1px solid var(--line)}.iss:last-child{border-bottom:0}
+.bars div{display:grid;grid-template-columns:96px minmax(0,1fr) 44px;gap:6px;align-items:center;font-size:12px;margin:2px 0}
+.bars i{display:block;height:8px;background:var(--accent);border-radius:0 3px 3px 0;min-width:2px;opacity:.75}.bars span:last-child{font:11px var(--m);color:var(--muted);text-align:right}
+.bars span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+a.btn,button.btn{font:12.5px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 10px;border-radius:7px;cursor:pointer;text-decoration:none;display:inline-block}
+a.btn.pri,button.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+a:focus-visible,button:focus-visible,.tn:focus-visible,.tile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.todo{padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}.todo a{color:var(--ink);text-decoration:none;font-weight:600}.todo a:hover{color:var(--accent)}.todo div{color:var(--muted);font-size:12px}
+.help{color:var(--muted);font-size:12px}
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:8px;padding:6px 9px;font-size:12px;max-width:320px}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:30;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(500px,100%)}.modal h3{margin:0 0 8px}.modal .a{display:flex;gap:8px;justify-content:flex-end}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;background:var(--ink);color:var(--bg);border-radius:10px;padding:9px 14px;font-size:13px;display:flex;gap:12px;align-items:center}
+#toast button{background:transparent;color:var(--bg);border:1px solid var(--bg);border-radius:6px;padding:3px 8px;cursor:pointer}
+@media (max-width:1100px){.grid{grid-template-columns:220px minmax(0,1fr);height:auto}aside.panel{grid-column:1/-1;border-left:0;border-top:1px solid var(--line)}}
+@media (max-width:700px){.grid{grid-template-columns:1fr}aside.tree{max-height:35vh}}
+</style></head><body>
+<header><h1>Universal Organiser</h1><nav class="top" id="nav"></nav><span class="sp"></span><span id="who" style="font-size:13px"></span></header>
+<div class="strip" id="strip"></div>
+<div class="lens"><span style="color:var(--muted)">View by</span><div class="seg" id="lenses" role="group" aria-label="View by"></div><span class="sp"></span>
+ <div class="legend"><span><i style="background:var(--okbg);border:1px solid var(--ok)"></i>in order</span><span><i style="background:var(--needbg);border:1px solid var(--need)"></i>15%+ of papers need an owner</span><span><i style="background:var(--probbg);border:1px solid var(--prob)"></i>problem (sensitive in iCloud, damaged)</span><span><span class="nb">+n</span> new since your last visit</span></div></div>
+<div class="grid"><aside class="tree" id="tree" aria-label="Tree"></aside><section class="center"><div class="crumbs" id="crumbs"></div><div id="map" role="list"></div><div id="files"></div></section><aside class="panel" id="panel"></aside></div>
+<div id="tip" hidden></div><div class="shade" id="shade" hidden></div><div id="toast" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const size=n=>{if(!n)return"0 B";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+" "+u[i]};
+const num=n=>(n||0).toLocaleString();
+const LENSES=[["folder","Folders"],["person","People"],["topic","Topics"],["year","Years"],["type","Types"]];
+let ME=null,lens="folder",key=[],CACHE={},OPEN=new Set(),STAMP=null,NODE=null;
+const kid=(l,k)=>l+"|"+JSON.stringify(k);
+async function getNode(l,k){const id=kid(l,k);if(!CACHE[id])CACHE[id]=await api(`/api/ov/node?lens=${l}&key=${encodeURIComponent(JSON.stringify(k))}`);return CACHE[id]}
+// red: sensitive files in an iCloud-synced folder, or 5%+ damaged · amber: 15%+ of its papers have no owner · green: otherwise
+function state(c){if(c.sens>0||(c.damaged||0)/Math.max(1,c.n)>=0.05)return"problem";if(c.papers&&c.needs/c.papers>=0.15)return"needs";return"ok"}
+function toast(m,run){const t=$("toast");t.innerHTML=`<span>${esc(m)}</span>${run?'<button id="un">Undo</button>':""}`;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,9000);
+ if(run)$("un").onclick=async()=>{const r=await api("/api/sort/undo",{run});t.hidden=true;toast(`Undone (${r.undone} back).`);refresh()}}
+function modal(t,txt,ok){return new Promise(res=>{const s=$("shade");s.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h3>${esc(t)}</h3><p class="help" style="font-size:13px">${esc(txt)}</p><div class="a"><button class="btn" id="mn">Cancel</button><button class="btn pri" id="my">${esc(ok)}</button></div></div>`;
+ s.hidden=false;$("my").focus();const d=v=>{s.hidden=true;res(v)};$("my").onclick=()=>d(true);$("mn").onclick=()=>d(false)})}
+const tip=$("tip");const showTip=(e,h)=>{tip.innerHTML=h;tip.hidden=false;mvTip(e)};const mvTip=e=>{tip.style.left=Math.min(e.clientX+14,innerWidth-330)+"px";tip.style.top=(e.clientY+14)+"px"};
+/* ---------- strip ---------- */
+function arrow(v,goodWhenUp,fmt){if(v==null)return"";if(!v)return`<span class="tr flat">→</span>`;const up=v>0;return`<span class="tr ${up===goodWhenUp?"up":"down"}">${up?"▲":"▼"}${fmt?fmt(Math.abs(v)):num(Math.abs(v))}</span>`}
+async function drawStrip(){const S=await api("/api/ov/strip");const T=S.trend||{};
+ const m=(href,big,lbl,tr="")=>`<a class="m" href="${href}"><b>${big}${tr}</b><span>${lbl}</span></a>`;
+ $("strip").innerHTML=m("/?review=owner",`${S.pct}%`,`of ${num(S.docs)} papers have an owner`,arrow(T.owned_pct,true,v=>v+"%"))
+  +m("/triage",num(S.needs),"papers need an owner",arrow(T.needs,false))
+  +(S.alerts!=null?m("/insights#alerts",S.alerts,"alerts"):"")
+  +m("/analytics",size(S.size),"in all",arrow(T.size,false,size))
+  +m("/?q=",num(S.cloud),"iCloud-only (not read)")
+  +(S.since?m("#",num(S.new),`new or changed since ${new Date(S.since*1000).toLocaleString([], {dateStyle:"medium",timeStyle:"short"})}`):"")
+  +m("#",S.last_scan?new Date(S.last_scan*1000).toLocaleString([], {dateStyle:"medium",timeStyle:"short"}):"never","last scan")
+  +(T.vs?`<span class="help" style="align-self:center">arrows: change since ${esc(T.vs)}</span>`:"")}
+/* ---------- tree ---------- */
+async function drawTree(){const root=await getNode(lens,[]);const out=[];
+ async function walk(children,depth){for(const c of children){const id=kid(lens,c.key),isOpen=OPEN.has(id),st=state(c),on=JSON.stringify(c.key)===JSON.stringify(key);
+  const leafy=lens!=="folder"&&c.key.length>=({person:3,topic:3,year:3,type:3})[lens];
+  out.push(`<div class="tn ${on?"on":""}" tabindex="0" data-k='${esc(JSON.stringify(c.key))}' style="padding-left:${6+depth*13}px"><span class="tw" data-tw="1">${leafy?"":isOpen?"▾":"▸"}</span><span class="dot ${st}" title="${st}"></span><span class="nm">${esc(c.label)}</span>${c.new?`<span class="nb">+${num(c.new)}</span>`:""}<span class="c">${num(c.n)}</span></div>`);
+  if(isOpen&&!leafy){const N=await getNode(lens,c.key);await walk(N.children,depth+1)}}}
+ await walk(root.children,0);$("tree").innerHTML=`<div class="tn ${key.length?"":"on"}" tabindex="0" data-k="[]"><span class="tw"></span>🌐 <span class="nm">Everything</span></div>`+out.join("");
+ $("tree").querySelectorAll(".tn").forEach(n=>{const k=JSON.parse(n.dataset.k);const id=kid(lens,k);
+  n.onclick=e=>{if(e.target.dataset.tw&&k.length){OPEN.has(id)?OPEN.delete(id):OPEN.add(id);drawTree();return}go(k)};n.onkeydown=e=>{if(e.key==="Enter")n.click()};
+  if(lens==="folder"&&k.length&&ME.role==="admin"){n.addEventListener("dragover",e=>{e.preventDefault();n.classList.add("over")});n.addEventListener("dragleave",()=>n.classList.remove("over"));
+   n.addEventListener("drop",e=>{e.preventDefault();n.classList.remove("over");const it=JSON.parse(e.dataTransfer.getData("text/plain")||"null");if(it)move(it,k[k.length-1])})}})}
+/* ---------- map ---------- */
+function squarify(items,x,y,w,h){const out=[];const total=items.reduce((a,b)=>a+b.v,0);if(!total||w<=0||h<=0)return out;const sc=w*h/total;let rest=items.map(i=>({...i,a:i.v*sc}));
+ while(rest.length){const s=Math.min(w,h);let row=[],best=Infinity;for(const it of rest){const r=[...row,it],sum=r.reduce((a,b)=>a+b.a,0),mx=Math.max(...r.map(z=>z.a)),mn=Math.min(...r.map(z=>z.a));
+  const worst=Math.max(s*s*mx/(sum*sum),(sum*sum)/(s*s*mn));if(worst<=best){row=r;best=worst}else break}
+  const sum=row.reduce((a,b)=>a+b.a,0),th=sum/s;let off=0;for(const it of row){const len=it.a/th;out.push(w>=h?{...it,x,y:y+off,w:th,h:len}:{...it,x:x+off,y,w:len,h:th});off+=len}
+  if(w>=h){x+=th;w-=th}else{y+=th;h-=th}rest=rest.slice(row.length)}return out}
+function drawMap(N){const m=$("map");m.innerHTML="";const items=[...N.children.map(c=>({...c,v:Math.max(c.size,1)})),
+  ...N.files.slice(0,150).map(f=>({key:null,file:f,label:f.name,n:1,size:f.size,ok:+(f.state==="ok"),needs:+(f.state==="needs"),problem:+(f.state==="problem"),
+   papers:+(f.state==="needs"),sens:+(f.state==="problem"),damaged:0,new:+f.new,v:Math.max(f.size,1)}))].sort((a,b)=>b.v-a.v);
+ if(!items.length){m.innerHTML='<p class="help" style="padding:20px">Nothing here.</p>';return}
+ for(const it of squarify(items,0,0,m.clientWidth,m.clientHeight)){const st=state(it),el=document.createElement("div");el.className="tile "+st;el.tabIndex=0;el.setAttribute("role","listitem");
+  Object.assign(el.style,{left:it.x+"px",top:it.y+"px",width:Math.max(0,it.w)+"px",height:Math.max(0,it.h)+"px"});
+  const T=Math.max(1,it.n);el.setAttribute("aria-label",`${it.label}, ${it.n} files, ${size(it.size)}, ${st}`);
+  if(it.w>60&&it.h>34)el.innerHTML=`<div class="t">${it.file?"📄 ":""}${esc(it.label)}${it.new?` <span class="nb">+${num(it.new)}</span>`:""}</div><div class="s">${it.file?"":num(it.n)+" · "}${size(it.size)}</div>`
+   +(it.h>52&&(it.needs||it.problem)?`<div class="w ${it.problem?"problem":"needs"}">${it.problem?`⚠ ${num(it.problem)} problem`:""}${it.problem&&it.needs?" · ":""}${it.needs?`${num(it.needs)} need owner`:""}</div>`:"");
+  el.innerHTML+=`<div class="hb"><i style="width:${it.ok/T*100}%;background:var(--ok)"></i><i style="width:${it.needs/T*100}%;background:var(--need)"></i><i style="width:${it.problem/T*100}%;background:var(--prob)"></i></div>`;
+  el.onmouseenter=e=>showTip(e,`<b>${esc(it.label)}</b><br>${num(it.n)} files · ${size(it.size)}<br>${num(it.ok)} in order · ${num(it.needs)} need an owner · ${num(it.problem)} problem${it.new?`<br>${num(it.new)} new since your last visit`:""}<br><i>${it.file?"click: open details":"click: zoom in"}</i>`);
+  el.onmousemove=mvTip;el.onmouseleave=()=>tip.hidden=true;
+  const open=()=>{tip.hidden=true;it.file?location.href="/?open="+it.file.id:go(it.key)};el.onclick=open;el.onkeydown=e=>{if(e.key==="Enter")open()};
+  if(lens==="folder"&&ME.role==="admin"&&(it.file?it.file.unit==="file":true)){el.draggable=true;el.addEventListener("dragstart",e=>{tip.hidden=true;e.dataTransfer.setData("text/plain",JSON.stringify(it.file?{id:it.file.id}:{folder:it.key[it.key.length-1]}))})}
+  m.appendChild(el)}}
+function drawFiles(N){if(!N.files.length){$("files").innerHTML="";return}
+ $("files").innerHTML=`<table><thead><tr><th></th><th>File</th><th>Owner</th><th>Type</th><th>Date</th><th style="text-align:right">Size</th></tr></thead><tbody>${N.files.map(f=>`<tr class="f" data-id="${f.id}" tabindex="0" ${lens==="folder"&&ME.role==="admin"&&f.unit==="file"?'draggable="true"':""}>
+  <td><span class="dot ${f.state}" style="display:inline-block"></span></td><td>${esc(f.name)}${f.new?' <span class="nb">new</span>':""}${f.cloud?' <span class="help">☁︎</span>':""}</td><td>${esc(f.owner||"")}</td><td>${esc(f.doc_type||f.kind||"")}</td><td class="r">${f.date||""}</td><td class="r">${size(f.size)}</td></tr>`).join("")}</tbody></table>
+  ${N.rest?`<p class="help">…and ${num(N.rest.n)} more (${size(N.rest.size)}). Open in Files to see all.</p>`:""}`;
+ $("files").querySelectorAll("tr.f").forEach(tr=>{tr.onclick=()=>location.href="/?open="+tr.dataset.id;tr.addEventListener("dragstart",e=>e.dataTransfer.setData("text/plain",JSON.stringify({id:+tr.dataset.id})))})}
+/* ---------- panel ---------- */
+function filesLink(){if(!key.length)return"/";if(lens==="folder")return"/?under="+encodeURIComponent(key[key.length-1]);
+ const cols={person:["entity","topic","year"],topic:["topic","entity","year"],year:["year",null,"kind"],type:["kind","year","doc_type"]}[lens];
+ const p=new URLSearchParams();key.forEach((v,i)=>{if(cols[i])p.set(cols[i],v==="(none)"?"(none)":v)});return"/?"+p}
+async function drawPanel(N){const P=N.panel,A=ME.role==="admin";const title=N.crumbs[N.crumbs.length-1].label;
+ const bar=(rows)=>{const mx=Math.max(1,...rows.map(r=>r[1]));return`<div class="bars">${rows.map(([k,n])=>`<div><span title="${esc(k)}">${esc(k)}</span><i style="width:${n/mx*100}%"></i><span>${num(n)}</span></div>`).join("")}</div>`};
+ let acts=`<a class="btn pri" href="${filesLink()}">Open in Files</a>`;
+ if(lens==="folder"&&key.length){const p=key[key.length-1];if(A)acts+=`<a class="btn" href="/triage?under=${encodeURIComponent(p)}">Triage here</a><a class="btn" href="/sorter?tidy=1">Tidy (Sorter)</a><button class="btn" id="rev">Show in Finder</button>`}
+ if(lens==="person"&&key.length&&key[0]!=="(none)")acts+=`<a class="btn" href="/person?name=${encodeURIComponent(key[0])}">Person page</a>`;
+ if(lens==="person"&&key[0]==="(none)"&&A)acts+=`<a class="btn" href="/triage?where=all">Triage</a>`;
+ let todo="";if(!key.length&&A){try{const D=await api("/api/home");todo=`<h3>Do these next</h3>`+D.actions.map(a=>`<div class="todo">${a.link?`<a href="${esc(a.link)}">${esc(a.title)}</a>`:`<b>${esc(a.title)}</b>`}<div>${esc(a.why)}</div></div>`).join("")}catch(e){}}
+ $("panel").innerHTML=`<h2>${esc(title)}</h2><div class="help">${esc({folder:"Folder",person:"Owner",topic:"Topic",year:"Period",type:"Type"}[lens])}${N.crumbs.length>1?" · "+esc(N.crumbs.slice(1).map(c=>c.label).join(" › ")):""}</div>
+  <div class="pk"><div><b>${num(P.n)}</b><span>files · ${size(P.size)}</span></div><div><b>${P.docs?Math.round(100*P.owned/P.docs):100}%</b><span>of ${num(P.docs)} papers owned</span></div>
+  <div><b style="color:var(--need)">${num(P.needs)}</b><span>need an owner</span></div><div><b style="color:var(--prob)">${num(P.problem)}</b><span>problems</span></div></div>
+  <div class="acts">${acts}</div>
+  ${P.issues.length?`<h3>What needs attention here</h3>${P.issues.map(i=>`<div class="iss"><span class="dot ${i.kind==="info"?"ok":i.kind}" style="margin-top:5px"></span><span>${esc(i.text)}</span></div>`).join("")}`:`<h3>All in order here</h3>`}
+  ${todo}${P.types.length?`<h3>Types</h3>${bar(P.types)}`:""}${P.owners.length?`<h3>Owners</h3>${bar(P.owners.map(o=>[o[0]==="(none)"?"(no owner)":o[0],o[1]]))}`:""}
+  ${P.topics.length?`<h3>Topics</h3>${bar(P.topics.map(o=>[o[0]==="(none)"?"(no topic)":o[0],o[1]]))}`:""}${P.years.length?`<h3>Years</h3>${bar(P.years)}`:""}`;
+ if($("rev"))$("rev").onclick=()=>api("/api/reveal-folder",{path:key[key.length-1]}).catch(e=>toast(e.message))}
+/* ---------- navigation ---------- */
+async function go(k){key=k;for(let i=1;i<=k.length;i++)OPEN.add(kid(lens,k.slice(0,i)));const N=await getNode(lens,k);NODE=N;
+ $("crumbs").innerHTML=N.crumbs.map((c,i)=>(i?" › ":"")+`<a data-k='${esc(JSON.stringify(c.key))}'>${esc(c.label)}</a>`).join("");
+ $("crumbs").querySelectorAll("a").forEach(a=>a.onclick=()=>go(JSON.parse(a.dataset.k)));
+ drawMap(N);drawFiles(N);drawPanel(N);drawTree();try{history.replaceState(null,"","#"+lens)}catch(e){}}
+function drawLenses(){$("lenses").innerHTML=LENSES.map(([k,l])=>`<button class="${k===lens?"on":""}" data-l="${k}">${l}</button>`).join("");
+ $("lenses").querySelectorAll("button").forEach(b=>b.onclick=()=>{lens=b.dataset.l;key=[];drawLenses();go([])})}
+async function move(item,dest){const body={ids:item.id?[item.id]:[],folders:item.folder?[item.folder]:[],dest};
+ try{const p=await api("/api/move",{...body,preview:true});if(!await modal(`Move ${num(p.n)} file(s)?`,`To ${dest.replace(/^\/Users\/[^/]+/,"~")} (${size(p.size)}). Checked again before moving; you can undo.`,"Move"))return;
+  const r=await api("/api/move",body);toast(`Moved ${num(r.moved)} file(s).`,r.run);refresh()}catch(e){toast(e.message)}}
+async function refresh(){CACHE={};await drawStrip();await go(key)}
+async function poll(){try{const s=await api("/api/ov/stamp");if(STAMP&&JSON.stringify(s)!==JSON.stringify(STAMP)){toast("Updated: new scan or changes.");await refresh()}STAMP=s}catch(e){}setTimeout(poll,20000)}
+addEventListener("resize",()=>{clearTimeout(window._rz);window._rz=setTimeout(()=>NODE&&drawMap(NODE),150)});
+(async()=>{ME=await api("/api/me");const a=ME.role==="admin";
+ const L=[["/home","Overview"],["/","Files"],["/browse","Browse"],...(a?[["/triage","Triage"],["/sorter","Sorter"],["/projects","Projects"]]:[]),["/analytics","Analytics"],...(a?[["/insights","Insights"],["/computers","Computers"],["/settings","Settings"]]:[])];
+ $("nav").innerHTML=L.map(([h,t])=>`<a href="${h}" class="${h==="/home"?"on":""}">${t}</a>`).join("");
+ $("who").innerHTML=`${esc(ME.display)} · <a href="#" id="out" style="color:var(--accent)">Sign out</a>`;$("out").onclick=async e=>{e.preventDefault();await api("/api/logout",{});location.href="/login"};
+ await api("/api/ov/visit",{}).catch(()=>{});
+ const h=(location.hash||"").slice(1);if(LENSES.some(l=>l[0]===h))lens=h;
+ drawLenses();await drawStrip();await go([]);poll()})();
+</script></body></html>

@@ -1,0 +1,3 @@
+#!/bin/sh
+# Universal Organiser launcher (macOS / Linux). Needs Python 3.9+; uses only its standard library.
+exec /usr/bin/env python3 -I "$(dirname "$0")/engine/cli.py" "$@"

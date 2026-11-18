@@ -1,0 +1,29 @@
+{
+  "_about": "Ready-made starting profile. The setup wizard copies it into your own profile; change anything later in Settings.",
+  "title": "Family",
+  "about": "A household: each person gets their own folder and page; family members can have their own read-only accounts.",
+  "profile": {
+    "entity_types": [
+      "Self",
+      "Family",
+      "Friend",
+      "Office",
+      "Organisation",
+      "Property",
+      "Vehicle"
+    ],
+    "layout_preset": "classic-numbered",
+    "group_labels": {
+      "Self": "10_Personal",
+      "Family": "20_Family",
+      "Friend": "25_Friends",
+      "Office": "30_Office",
+      "Organisation": "40_Organisations",
+      "Media": "50_Media",
+      "Projects": "60_Projects Archive",
+      "Testing": "80_Sandbox",
+      "Duplicates": "90_Duplicates Review",
+      "Unsorted": "99_To Sort"
+    }
+  }
+}

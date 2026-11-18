@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--warnsoft:#f6e4e0;--amber:#8a5a00;--ambersoft:#f7ecd4;
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--warnsoft:#3a2420;--amber:#e5b75c;--ambersoft:#352a14;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f)}
+header{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}nav.top{display:flex;gap:14px;flex-wrap:wrap}nav.top a{color:var(--accent);text-decoration:none;font-size:13px}nav.top a.on{color:var(--ink);font-weight:600}.sp{flex:1}
+main{max-width:1180px;margin:0 auto;padding:16px 16px 60px;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:16px}
+.hello{grid-column:1/-1;display:flex;gap:12px;flex-wrap:wrap;align-items:baseline}.hello h2{font-size:22px;margin:0;text-wrap:balance}.hello span{color:var(--muted)}
+.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none;color:inherit}.kpi:hover{border-color:var(--accent)}
+.kpi b{display:block;font-size:20px;font-variant-numeric:tabular-nums}.kpi span{font-size:12px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
+.act{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}.act:last-child{border-bottom:0}
+.act .n{font:600 12px var(--m);width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--accent)}
+.act.hi .n{background:var(--warnsoft);color:var(--warn)}.act .t{font-weight:600}.act .w{color:var(--muted);font-size:13px;margin-top:2px}
+a.btn,button{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 11px;border-radius:7px;cursor:pointer;text-decoration:none;white-space:nowrap;display:inline-block}
+a.btn.pri,button.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}button:disabled{opacity:.5}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pc{border:1px solid var(--line);border-radius:10px;padding:10px;text-decoration:none;color:inherit;background:var(--bg)}.pc:hover{border-color:var(--accent)}
+.pc b{display:block;overflow-wrap:anywhere}.pc span{font-size:12px;color:var(--muted)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}.row:last-child{border-bottom:0}
+.row a{color:var(--ink);text-decoration:none}.row a:hover{color:var(--accent)}.row span{font:12px var(--m);color:var(--muted);white-space:nowrap}
+.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.prog{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:8px 0}.prog i{display:block;height:100%;background:var(--accent);width:0}
+.help{color:var(--muted);font-size:12.5px;margin:4px 0 8px}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+</style></head><body>
+<header><h1>Universal Organiser</h1><nav class="top" id="nav"></nav><span class="sp"></span><span id="who" style="font-size:13px"></span></header>
+<main id="main"><div class="hello"><h2>Loading…</h2></div></main>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const size=n=>{if(!n)return"0 B";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+" "+u[i]};
+function navbar(me,on){const a=me.role==="admin";const L=[["/home","Home"],["/","Files"],["/browse","Browse"],...(a?[["/triage","Triage"],["/sorter","Sorter"]]:[]),["/analytics","Analytics"],...(a?[["/insights","Insights"],["/computers","Computers"],["/settings","Settings"]]:[])];
+ $("nav").innerHTML=L.map(([h,t])=>`<a href="${h}" class="${h===on?"on":""}">${t}</a>`).join("");$("who").innerHTML=`${esc(me.display)} · <a href="#" id="out" style="color:var(--accent)">Sign out</a>`;
+ $("out").onclick=async e=>{e.preventDefault();await api("/api/logout",{});location.href="/login"}}
+(async()=>{const me=await api("/api/me");navbar(me,"/home");const D=await api("/api/home");const admin=me.role==="admin";
+ const [n,sz,owned]=D.totals;const hr=new Date().getHours();const hi=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
+ const tri=D.actions.find(a=>a.kind==="triage");
+ $("main").innerHTML=`<div class="hello"><h2>${hi}, ${esc(me.display.split(" ")[0])}.</h2><span>${admin?(D.actions.length?`${D.actions.length} things worth doing, most important first.`:"Nothing urgent. 🎉"):"Your files, kept in order."}</span></div>
+ <div class="kpis"><a class="kpi" href="/"><b>${n.toLocaleString()}</b><span>documents &amp; media · ${size(sz)} in all</span></a><a class="kpi" href="/?review=owner"><b>${Math.round(100*(owned||0)/Math.max(1,n))}%</b><span>have an owner</span></a>
+  ${admin&&tri?`<a class="kpi" href="/triage"><b>${esc(tri.title.split(" ")[0])}</b><span>${esc(tri.title.split(" ").slice(1).join(" "))}</span></a>`:""}
+  ${admin?`<a class="kpi" href="/insights#alerts"><b>${D.actions.filter(a=>a.kind==="alert").length}</b><span>alerts</span></a>`:""}</div>
+ <div class="card">${admin?`<h3>Do these next</h3>${D.actions.map((a,i)=>`<div class="act ${a.score>=85?"hi":""}"><span class="n">${i+1}</span><div><div class="t">${esc(a.title)}</div><div class="w">${esc(a.why)}</div></div>
+   <div>${a.link&&a.button?`<a class="btn ${i===0?"pri":""}" href="${esc(a.link)}">${esc(a.button)}</a>`:""}</div></div>`).join("")||'<p class="help">Nothing to do right now.</p>'}`
+  :`<h3>Smart folders</h3>${D.smart.filter(s=>s.n).map(s=>`<div class="row"><a href="/?smart=${s.id}">📁 ${esc(s.name)}</a><span>${(s.n||0).toLocaleString()}</span></div>`).join("")}`}</div>
+ <div class="side"><div class="card"><h3>People</h3><div class="people">${D.people.map(p=>`<a class="pc" href="/person?name=${encodeURIComponent(p.name)}"><b>${esc(p.name)}</b><span>${esc(p.relation||p.type)} · ${p.files.toLocaleString()} files</span></a>`).join("")}</div></div>
+  ${admin?`<div class="card"><h3>Smart folders</h3>${D.smart.map(s=>`<div class="row"><a href="/?smart=${s.id}">📁 ${esc(s.name)}</a><span>${s.n==null?"":s.n.toLocaleString()}</span></div>`).join("")}</div>
+  <div class="card"><h3>Recent changes</h3>${D.recent.map(r=>`<div class="row"><span style="font-family:var(--f);color:var(--ink);white-space:normal">${esc(r.what)}</span><span>${new Date(r.t*1000).toLocaleDateString()}</span></div>`).join("")||'<p class="help">None yet.</p>'}</div>
+  ${D.platform==="macos"?`<div class="card" id="tagcard"><h3>Finder tags</h3><p class="help">Show owner and topic as tags in Finder and Spotlight. Only tags are written; your own tags are kept; never on sensitive or iCloud-only files. Remove any time.</p><div id="tagbody">…</div></div>`:""}`:""}</div>`;
+ if(admin&&D.platform==="macos")drawTags()})();
+async function drawTags(){const T=await api("/api/tags");const j=T.job;const b=$("tagbody");
+ if(j&&j.phase==="running"){b.innerHTML=`<div class="prog"><i style="width:${j.total?Math.round(100*j.done/j.total):0}%"></i></div><p class="help">${j.what==="apply"?"Tagging":"Removing tags"}: ${j.done.toLocaleString()} of ${j.total.toLocaleString()}</p>`;setTimeout(drawTags,1200);return}
+ b.innerHTML=`<p class="help">${T.tagged.toLocaleString()} files tagged now · ${T.files.toLocaleString()} would change${T.tags.length?" · tags such as "+T.tags.slice(0,6).map(esc).join(", "):""}</p>
+  <button class="pri" id="tg-on" ${T.files?"":"disabled"}>Apply tags</button> <button id="tg-off" ${T.tagged?"":"disabled"}>Remove all tags it added</button>${j&&j.phase==="done"?`<p class="help">Last run: ${esc(JSON.stringify(j.result))}</p>`:""}${j&&j.phase==="failed"?`<p class="help" style="color:var(--warn)">${esc(j.error)}</p>`:""}`;
+ $("tg-on").onclick=async()=>{await api("/api/tags/apply",{});drawTags()};$("tg-off").onclick=async()=>{await api("/api/tags/remove",{});drawTags()}}
+</script></body></html>

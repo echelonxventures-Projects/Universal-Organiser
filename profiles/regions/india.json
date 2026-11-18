@@ -1,0 +1,260 @@
+{
+  "_about": "India: identity and tax documents, April-March financial year, Indian English and Hindi speech.",
+  "name": "India",
+  "doc_types_insert": [
+    {
+      "before": "Passport",
+      "type": {
+        "name": "PAN card",
+        "all_text": [
+          "\\b[A-Z]{5}[0-9]{4}[A-Z]\\b"
+        ],
+        "any_text": [
+          "income tax department",
+          "permanent account number"
+        ],
+        "any_name": [
+          "\\bpan\\b",
+          "pancard",
+          "pan card"
+        ],
+        "max_text_chars": 2500,
+        "tags": [
+          "id",
+          "holder",
+          "important",
+          "paper"
+        ]
+      }
+    },
+    {
+      "before": "Passport",
+      "type": {
+        "name": "Aadhaar",
+        "all_text": [
+          "\\b\\d{4}\\s\\d{4}\\s\\d{4}\\b"
+        ],
+        "any_text": [
+          "aadhaar",
+          "uidai",
+          "unique identification",
+          "आधार"
+        ],
+        "any_name": [
+          "aadhaar",
+          "aadhar"
+        ],
+        "max_text_chars": 2500,
+        "tags": [
+          "id",
+          "holder",
+          "dob",
+          "important",
+          "paper"
+        ]
+      }
+    },
+    {
+      "before": "Vehicle RC",
+      "type": {
+        "name": "Voter ID",
+        "any_text": [
+          "election commission of india",
+          "elector"
+        ],
+        "any_name": [
+          "voter"
+        ],
+        "max_text_chars": 2500,
+        "tags": [
+          "id",
+          "holder",
+          "dob",
+          "important",
+          "paper"
+        ]
+      }
+    },
+    {
+      "before": "Invoice",
+      "type": {
+        "name": "Form 16 / ITR",
+        "any_text": [
+          "form no\\.? ?16",
+          "form 16",
+          "acknowledgement number",
+          "itr-\\d",
+          "income tax return"
+        ],
+        "any_name": [
+          "form ?16",
+          "\\bitr\\b",
+          "26as"
+        ],
+        "tags": [
+          "money",
+          "tax",
+          "important",
+          "paper"
+        ]
+      }
+    },
+    {
+      "before": "Meeting recording",
+      "type": {
+        "name": "80G / 12A / FCRA",
+        "any_text": [
+          "80g",
+          "12a",
+          "fcra"
+        ],
+        "any_name": [
+          "80g",
+          "12a",
+          "fcra"
+        ],
+        "tags": [
+          "important"
+        ]
+      }
+    }
+  ],
+  "doc_types_replace": {
+    "Passport": {
+      "name": "Passport",
+      "any_text": [
+        "republic of india.{0,40}passport",
+        "passport no"
+      ],
+      "any_name": [
+        "passport"
+      ],
+      "max_text_chars": 2500,
+      "tags": [
+        "id",
+        "holder",
+        "dob",
+        "important",
+        "paper"
+      ]
+    }
+  },
+  "set": {
+    "search": {
+      "doc_type_words": {
+        "aadhaar": "Aadhaar",
+        "aadhar": "Aadhaar",
+        "adhaar": "Aadhaar",
+        "adhar": "Aadhaar",
+        "uidai": "Aadhaar",
+        "pan": "PAN card",
+        "pancard": "PAN card",
+        "voter": "Voter ID",
+        "epic": "Voter ID",
+        "itr": "Form 16 / ITR",
+        "form16": "Form 16 / ITR",
+        "80g": "80G / 12A / FCRA",
+        "fcra": "80G / 12A / FCRA"
+      },
+      "synonyms": {
+        "id": [
+          "aadhaar",
+          "pan",
+          "passport",
+          "voter"
+        ],
+        "tax": [
+          "itr",
+          "form 16",
+          "tds"
+        ],
+        "train": [
+          "irctc",
+          "pnr"
+        ]
+      }
+    },
+    "insights": {
+      "expected_docs": {
+        "Self": [
+          "PAN card",
+          "Aadhaar"
+        ],
+        "Family": [
+          "Aadhaar"
+        ]
+      },
+      "annual_docs": {
+        "Self": [
+          "Form 16 / ITR"
+        ]
+      },
+      "year_start_month": 4,
+      "annual_due_month": 8
+    },
+    "plugins": {
+      "transcribe": {
+        "languages": [
+          "en-IN",
+          "hi-IN",
+          "mul-IN"
+        ],
+        "keep_reserved": [
+          "hi-IN"
+        ]
+      }
+    },
+    "doc_type_topics": {
+      "PAN card": "IDs & Legal",
+      "Aadhaar": "IDs & Legal",
+      "Voter ID": "IDs & Legal",
+      "Form 16 / ITR": "Finance/Tax"
+    }
+  },
+  "topic_keywords_extra": {
+    "IDs & Legal": [
+      "\\bcoi\\b",
+      "pan card",
+      "pancard",
+      "\\bpan\\b",
+      "aadhaar",
+      "aadhar",
+      "voter"
+    ],
+    "Finance/Tax": [
+      "\\bitr\\b",
+      "form 16",
+      "form16",
+      "26as",
+      "\\btds\\b",
+      "\\bgst\\b"
+    ],
+    "Finance/Bank": [
+      "\\bsbi\\b",
+      "hdfc",
+      "icici",
+      "\\baxis\\b",
+      "demat"
+    ],
+    "Insurance": [
+      "\\blic\\d*\\b",
+      "mediclaim"
+    ],
+    "Property": [
+      "registry",
+      "mutation",
+      "khata"
+    ],
+    "Vehicle": [
+      "\\brc\\b",
+      "\\bpuc\\b",
+      "fastag"
+    ],
+    "Travel": [
+      "irctc"
+    ],
+    "Finance/Invoices & Receipts": [
+      "challan"
+    ]
+  }
+}

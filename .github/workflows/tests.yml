@@ -1,0 +1,24 @@
+name: tests
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.9", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Tests (throwaway data folders, unencrypted test catalogue)
+        run: python -m unittest discover -s tests -v
+      - name: Requirements check runs
+        run: python -I engine/cli.py doctor
+        continue-on-error: true
+      - name: Nothing personal in the repository
+        run: python -I tools/privacy_check.py --all

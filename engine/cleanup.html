@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clean-up · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--warnsoft:#f6e4e0;--amber:#8a5a00;--ambersoft:#f7ecd4;--shade:rgba(20,25,22,.45);
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--warnsoft:#3a2420;--amber:#e5b75c;--ambersoft:#352a14;--shade:rgba(0,0,0,.6);color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f)}
+header{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}nav.top{display:flex;gap:14px;flex-wrap:wrap}nav.top a{color:var(--accent);text-decoration:none;font-size:13px}nav.top a.on{color:var(--ink);font-weight:600}.sp{flex:1}
+main{max-width:1280px;margin:0 auto;padding:16px 16px 100px}
+.intro{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.intro h2{font-size:17px;margin:0 0 4px}.help{color:var(--muted);font-size:13px;margin:0;max-width:95ch}
+.kpis{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.kpi{border:1px solid var(--line);border-radius:9px;padding:6px 12px;background:var(--surface)}.kpi b{display:block;font-size:17px}.kpi span{font-size:12px;color:var(--muted)}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 10px;font:12.5px var(--f);cursor:pointer}
+.seg button:last-child{border-right:0}.seg button.on{background:var(--accent);color:var(--surface)}
+.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px}th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px;border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}td.r{text-align:right;font:12px var(--m);color:var(--muted);white-space:nowrap}
+.nm{font-weight:600;overflow-wrap:anywhere}.pt{font:11.5px var(--m);color:var(--muted);overflow-wrap:anywhere}
+.st{font-size:12px;border-radius:999px;padding:1px 9px;white-space:nowrap;display:inline-block}
+.st.sync{background:var(--ambersoft);color:var(--amber)}.st.off{background:var(--soft);color:var(--accent)}.st.prot{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.g{font-size:12px;color:var(--muted)}.g.w{color:var(--warn)}
+button,a.btn{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 11px;border-radius:7px;cursor:pointer;text-decoration:none;white-space:nowrap}
+select{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:4px 6px;border-radius:7px}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:30;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(640px,100%);max-height:86vh;overflow:auto}.modal h3{margin:0 0 8px;font-size:16px}.modal ul{font-size:13px;padding-left:20px}.modal .a{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.prog{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:8px 0}.prog i{display:block;height:100%;background:var(--accent);width:0}
+.res{font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)}.res b.ok{color:var(--accent)}.res b.no{color:var(--warn)}
+.fam{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:12px 0;overflow:hidden}.fam h3{margin:0;padding:10px 12px;font-size:14px;border-bottom:1px solid var(--line)}.fam h3 span{font-weight:400;color:var(--muted);font-size:12.5px}
+.st.safe{background:var(--soft);color:var(--accent)}.st.probably{background:var(--ambersoft);color:var(--amber)}.st.different{background:var(--warnsoft);color:var(--warn)}
+details{font-size:12px;color:var(--muted)}details code{display:block;overflow-wrap:anywhere}
+</style></head><body>
+<header><h1>Universal Organiser</h1><nav class="top"><a href="/home">Overview</a><a href="/">Files</a><a href="/browse">Browse</a><a href="/triage">Triage</a><a href="/sorter">Sorter</a><a href="/projects">Projects</a><a href="/cleanup" class="on">Clean-up</a><a href="/settings">Settings</a></nav><span class="sp"></span></header>
+<main>
+ <div class="intro"><h2>Clean-up review: other versions of your projects</h2>
+  <p class="help">Each project in your projects folder is the <b>kept version</b>. Below are the other versions found elsewhere, compared with it file by file and by git history. Tick the ones you no longer need and press “Move to holding folder”. <b>Nothing is deleted</b>: a ticked version is renamed into <code id="hold"></code> and can be put back with one click. Projects on the Desktop and protected projects are never listed.</p>
+  <p class="help" style="margin-top:6px"><span class="st safe">Safe</span> nothing in it that the kept version lacks (ticked for you). <span class="st probably">Probably</span> at most 5 files differ. <span class="st different">Different</span> has files or git commits the kept version does not have: look before ticking.</p></div>
+ <div class="kpis" id="kpis"></div>
+ <div class="tools"><button id="tsafe">Tick all “Safe”</button><button id="tnone">Untick all</button><span class="sp" style="flex:1"></span><span class="help" id="checked"></span><button id="refresh">Compare again</button></div>
+ <div id="fams"></div>
+ <div id="heldbox" hidden><div class="intro" style="margin-top:20px"><h2>In the holding folder</h2><p class="help">Still on this Mac. “Put back” returns a version to exactly where it was.</p></div>
+  <div class="tw"><table><thead><tr><th>Version</th><th>Was at</th><th>Moved</th><th></th></tr></thead><tbody id="held"></tbody></table></div></div>
+</main>
+<div class="bar" id="bar" hidden><span id="selinfo"></span><button class="pri" id="go">Move to holding folder</button></div>
+<div class="shade" id="shade" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const size=n=>{if(!n)return"0 B";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+" "+u[i]};
+const short=p=>String(p||"").replace(/^\/Users\/[^/]+/,"~");const num=n=>(n||0).toLocaleString();
+const LBL={safe:"Safe",probably:"Probably",different:"Different"};
+let D=null,sel=new Set(),first=true;
+const all=()=>D.review?D.review.families.flatMap(f=>f.versions):[];
+async function load(){D=await api("/api/cleanup");if(first&&D.review){all().filter(v=>v.group==="safe").forEach(v=>sel.add(v.path));first=false}draw();watch()}
+function draw(){const R=D.review;if(!R){$("fams").innerHTML='<p class="help">Not compared yet: press “Compare again”.</p>';return}
+ $("hold").textContent=short(R.holding);const V=all();const live=new Set(V.map(v=>v.path));[...sel].forEach(p=>live.has(p)||sel.delete(p));
+ $("kpis").innerHTML=["safe","probably","different"].map(g=>{const x=V.filter(v=>v.group===g);return`<div class="kpi"><b>${x.length}</b><span>${LBL[g]} · ${size(x.reduce((a,v)=>a+v.size,0))}</span></div>`}).join("")+`<div class="kpi"><b>${R.unrelated}</b><span>other projects with no kept version (not listed)</span></div>`;
+ $("checked").textContent=`Compared ${new Date(R.at*1000).toLocaleString()}`;
+ $("fams").innerHTML=R.families.map(f=>`<div class="fam"><h3>${esc(f.keeper.name)} <span>kept version · ${esc(short(f.keeper.path))} · ${num(f.keeper.files)} files</span></h3><div class="tw" style="border:0;border-radius:0"><table>
+  <thead><tr><th></th><th>Other version</th><th>Verdict</th><th>git</th><th style="text-align:right">Files</th><th style="text-align:right">Not in kept</th><th style="text-align:right">Size</th></tr></thead><tbody>${f.versions.map(v=>`<tr>
+  <td><input type="checkbox" data-p="${esc(v.path)}" ${sel.has(v.path)?"checked":""} aria-label="Select ${esc(v.name)}"></td>
+  <td><div class="nm">${esc(v.name)}</div><div class="pt">${esc(short(v.path))}</div>${v.sample.length?`<details><summary>Largest files only here</summary>${v.sample.map(s=>`<code>${esc(s)}</code>`).join("")}</details>`:""}</td>
+  <td><span class="st ${v.group}">${LBL[v.group]}</span><div class="g ${v.group==="different"?"w":""}">${esc(v.why)}</div></td><td class="g">${esc(v.git)}</td>
+  <td class="r">${num(v.files)}</td><td class="r">${v.only?num(v.only)+" · "+size(v.only_bytes):"0"}</td><td class="r">${size(v.size)}</td></tr>`).join("")}</tbody></table></div></div>`).join("")||'<p class="help">No other versions found.</p>';
+ document.querySelectorAll("[data-p]").forEach(c=>c.onchange=()=>{c.checked?sel.add(c.dataset.p):sel.delete(c.dataset.p);drawBar()});
+ $("heldbox").hidden=!D.held.length;
+ $("held").innerHTML=D.held.map(h=>`<tr><td class="nm">${esc(h.held.split("/").pop())}</td><td class="pt">${esc(short(h.orig))}</td><td class="g">${new Date(h.t*1000).toLocaleDateString()}</td><td><button data-back="${esc(h.held)}">Put back</button></td></tr>`).join("");
+ document.querySelectorAll("[data-back]").forEach(b=>b.onclick=async()=>{try{const r=await api("/api/cleanup/restore",{path:b.dataset.back});alertBox(r.ok?"Put back":"Problem",r.why)}catch(e){alertBox("Problem",e.message)}load()});
+ drawBar()}
+function drawBar(){const V=all().filter(v=>sel.has(v.path));$("bar").hidden=!V.length;const d=V.filter(v=>v.group==="different").length;
+ $("selinfo").innerHTML=`<b>${V.length}</b> ticked · ${size(V.reduce((a,v)=>a+v.size,0))}${d?` · <span class="g w">${d} marked “Different”</span>`:""}`}
+function confirmBox(t,html,ok){return new Promise(res=>{const s=$("shade");s.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h3>${esc(t)}</h3>${html}<div class="a"><button id="mn">Cancel</button><button class="pri" id="my">${esc(ok)}</button></div></div>`;
+ s.hidden=false;$("my").focus();const d=v=>{s.hidden=true;res(v)};$("my").onclick=()=>d(true);$("mn").onclick=()=>d(false)})}
+function alertBox(t,txt){const s=$("shade");s.innerHTML=`<div class="modal"><h3>${esc(t)}</h3><p class="help">${esc(txt)}</p><div class="a"><button class="pri" id="ok">OK</button></div></div>`;s.hidden=false;$("ok").onclick=()=>s.hidden=true}
+$("tsafe").onclick=()=>{all().filter(v=>v.group==="safe").forEach(v=>sel.add(v.path));draw()};$("tnone").onclick=()=>{sel.clear();draw()};
+$("go").onclick=async()=>{const S=[...sel];const d=all().filter(v=>sel.has(v.path)&&v.group==="different").length;
+ if(!await confirmBox(`Move ${S.length} version(s) to the holding folder?`,`<ul><li>Nothing is deleted; each folder is renamed into the holding folder.</li><li>“Put back” returns it to exactly where it was.</li><li>A version that is open in a program is skipped.</li>${d?`<li><b>${d} ticked version(s) have files or commits the kept version does not have.</b></li>`:""}</ul>`,"Move to holding folder"))return;
+ try{await api("/api/cleanup/hold",{paths:S})}catch(e){alertBox("Problem",e.message);return}sel.clear();watch(true)};
+$("refresh").onclick=async()=>{try{await api("/api/cleanup/analyse",{})}catch(e){alertBox("Problem",e.message);return}watch(true)};
+async function watch(force){const j=(await api("/api/cleanup")).job;if(!j||(j.phase!=="running"&&!force))return;const s=$("shade");
+ const res=(j.results||[]).map(r=>`<div class="res"><b class="${r.ok?"ok":"no"}">${r.ok?"✓":"✗"}</b> ${esc(r.path.split("/").pop())}: ${esc(r.why)}</div>`).join("");
+ if(j.phase==="running"){s.hidden=false;s.innerHTML=`<div class="modal"><h3>Working…</h3><p class="help">${esc(j.step||"")}</p>${res}</div>`;setTimeout(()=>watch(true),1500);return}
+ s.innerHTML=`<div class="modal"><h3>${j.phase==="failed"?"Stopped":"Done"}</h3>${j.error?`<p class="help">${esc(j.error)}</p>`:""}${res||'<p class="help">Compared.</p>'}<div class="a"><button class="pri" id="ok">OK</button></div></div>`;s.hidden=false;$("ok").onclick=()=>{s.hidden=true;load()}}
+load();
+</script></body></html>

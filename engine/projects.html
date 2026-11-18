@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Projects · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--warnsoft:#f6e4e0;--amber:#8a5a00;--ambersoft:#f7ecd4;--shade:rgba(20,25,22,.45);
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--warnsoft:#3a2420;--amber:#e5b75c;--ambersoft:#352a14;--shade:rgba(0,0,0,.6);color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f)}
+header{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}nav.top{display:flex;gap:14px;flex-wrap:wrap}nav.top a{color:var(--accent);text-decoration:none;font-size:13px}nav.top a.on{color:var(--ink);font-weight:600}.sp{flex:1}
+main{max-width:1280px;margin:0 auto;padding:16px 16px 100px}
+.intro{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.intro h2{font-size:17px;margin:0 0 4px}.help{color:var(--muted);font-size:13px;margin:0;max-width:95ch}
+.kpis{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.kpi{border:1px solid var(--line);border-radius:9px;padding:6px 12px;background:var(--surface)}.kpi b{display:block;font-size:17px}.kpi span{font-size:12px;color:var(--muted)}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 10px;font:12.5px var(--f);cursor:pointer}
+.seg button:last-child{border-right:0}.seg button.on{background:var(--accent);color:var(--surface)}
+.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px}th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px;border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}td.r{text-align:right;font:12px var(--m);color:var(--muted);white-space:nowrap}
+.nm{font-weight:600;overflow-wrap:anywhere}.pt{font:11.5px var(--m);color:var(--muted);overflow-wrap:anywhere}
+.st{font-size:12px;border-radius:999px;padding:1px 9px;white-space:nowrap;display:inline-block}
+.st.sync{background:var(--ambersoft);color:var(--amber)}.st.off{background:var(--soft);color:var(--accent)}.st.prot{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.g{font-size:12px;color:var(--muted)}.g.w{color:var(--warn)}
+button,a.btn{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 11px;border-radius:7px;cursor:pointer;text-decoration:none;white-space:nowrap}
+select{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:4px 6px;border-radius:7px}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:30;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(640px,100%);max-height:86vh;overflow:auto}.modal h3{margin:0 0 8px;font-size:16px}.modal ul{font-size:13px;padding-left:20px}.modal .a{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.prog{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:8px 0}.prog i{display:block;height:100%;background:var(--accent);width:0}
+.res{font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)}.res b.ok{color:var(--accent)}.res b.no{color:var(--warn)}
+</style></head><body>
+<header><h1>Universal Organiser</h1><nav class="top"><a href="/home">Overview</a><a href="/">Files</a><a href="/browse">Browse</a><a href="/triage">Triage</a><a href="/sorter">Sorter</a><a href="/projects" class="on">Projects</a><a href="/cleanup">Clean-up</a><a href="/settings">Settings</a></nav><span class="sp"></span></header>
+<main>
+ <div class="intro"><h2>Working projects and iCloud</h2>
+  <p class="help">iCloud syncing code projects (with <code>.git</code>, <code>node_modules</code>, <code>.venv</code>) makes them slow and can leave files “in iCloud only”, which breaks builds. Here you can stop iCloud syncing a project <b>without moving or renaming it</b>: the folder keeps its exact path, so editors, terminals, Docker and scripts are unaffected. First every iCloud-only file is downloaded and checked, and it must not be in use. Afterwards iCloud no longer backs it up, so git (pushed) and Time Machine are its backup. Undo = “Resume sync”. Protected projects are never touched.</p>
+  <p class="help" style="margin-top:6px"><b>Working status</b> (Active, Paused, Completed, Experiment) is kept here and shown as a Finder tag on the project folder. Changing it never renames or moves the project.</p></div>
+ <div class="kpis" id="kpis"></div>
+ <div class="tools"><div class="seg" id="flt"><button data-f="todo" class="on">Still syncing</button><button data-f="off">Not syncing</button><button data-f="all">All</button></div>
+  <label>Working status <select id="stf"><option value="">Any</option><option>Active</option><option>Paused</option><option>Completed</option><option>Experiment</option><option value="-">Not set</option></select></label>
+  <span class="sp" style="flex:1"></span><span class="help" id="checked"></span><button id="refresh">Check projects</button></div>
+ <div class="tw"><table><thead><tr><th></th><th>Project</th><th>Working status</th><th>iCloud</th><th>Last change</th><th>git</th><th style="text-align:right">To download</th><th style="text-align:right">Size</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+</main>
+<div class="bar" id="bar" hidden><span id="selinfo"></span><button class="pri" id="go">Stop iCloud sync</button></div>
+<div class="shade" id="shade" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const size=n=>{if(!n)return"0 B";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+" "+u[i]};
+const short=p=>String(p||"").replace(/^\/Users\/[^/]+/,"~");const num=n=>(n||0).toLocaleString();
+let D=null,flt="todo",stf="",sel=new Set();
+const ago=t=>{if(!t)return"";const d=(Date.now()/1000-t)/86400;return d<1?"today":d<60?Math.round(d)+" days ago":d<365?Math.round(d/30)+" months ago":(d/365).toFixed(1)+" years ago"};
+function status(x){if(!x.eligible&&x.why&&x.why.startsWith("protected"))return'<span class="st prot">Protected · never touched</span>';if(!x.eligible)return`<span class="st prot">${esc(x.why)}</span>`;
+ return x.excluded?'<span class="st off">✓ Not syncing</span>':'<span class="st sync">Syncing with iCloud</span>'}
+async function load(){D=await api("/api/projects");draw();watch()}
+function draw(){const it=D.items;const el=it.filter(x=>x.eligible);
+ $("kpis").innerHTML=`<div class="kpi"><b>${el.filter(x=>!x.excluded).length}</b><span>projects still syncing</span></div><div class="kpi"><b>${el.filter(x=>x.excluded).length}</b><span>not syncing</span></div>
+  <div class="kpi"><b>${it.filter(x=>!x.eligible&&x.why&&x.why.startsWith("protected")).length}</b><span>protected (never touched)</span></div>
+  ${D.checked_at?`<div class="kpi"><b>${num(el.reduce((a,x)=>a+(x.excluded?0:x.cloud_files||0),0))}</b><span>files to download first (${size(el.reduce((a,x)=>a+(x.excluded?0:x.cloud_bytes||0),0))})</span></div>`:""}`;
+ $("checked").textContent=D.checked_at?`Checked ${new Date(D.checked_at*1000).toLocaleString()}`:"Not checked yet: press “Check projects” for git state and files to download.";
+ const rows=it.filter(x=>flt==="all"||(flt==="off"?x.excluded:(x.eligible&&!x.excluded))).filter(x=>!stf||(stf==="-"?!x.status:x.status===stf)).sort((a,b)=>(b.changed||0)-(a.changed||0));
+ $("rows").innerHTML=rows.map(x=>{const g=x.git;return`<tr><td>${x.eligible&&!x.excluded?`<input type="checkbox" data-p="${esc(x.path)}" ${sel.has(x.path)?"checked":""} aria-label="Select ${esc(x.name)}">`:""}</td>
+  <td><div class="nm">${esc(x.name)}</div><div class="pt">${esc(short(x.path))}</div></td>
+  <td>${x.eligible?`<select data-st="${esc(x.path)}" aria-label="Working status of ${esc(x.name)}">${["","Active","Paused","Completed","Experiment"].map(s=>`<option value="${s}" ${s===(x.status||"")?"selected":""}>${s||"Not set"}</option>`).join("")}</select>`:""}</td><td>${status(x)}${x.log&&x.log.warnings&&x.excluded?`<div class="g w">${esc(JSON.parse(x.log.warnings).join("; "))}</div>`:""}</td>
+  <td class="g">${ago(x.changed)}</td><td>${g?`<div class="g">${esc(g.branch||"")}${g.remote?"":" · no remote"}</div>${g.dirty?`<div class="g w">${g.dirty} uncommitted</div>`:""}`:x.eligible&&D.checked_at?'<span class="g w">no git</span>':""}</td>
+  <td class="r">${x.cloud_files?num(x.cloud_files)+" · "+size(x.cloud_bytes):x.eligible&&D.checked_at?"0":""}</td><td class="r">${size(x.size)}</td>
+  <td>${x.excluded?`<button data-res="${esc(x.path)}">Resume sync</button>`:""}</td></tr>`}).join("")||'<tr><td colspan="9" class="help" style="padding:20px">Nothing here.</td></tr>';
+ document.querySelectorAll("[data-p]").forEach(c=>c.onchange=()=>{c.checked?sel.add(c.dataset.p):sel.delete(c.dataset.p);drawBar()});
+ document.querySelectorAll("[data-res]").forEach(b=>b.onclick=async()=>{if(!await confirmBox("Resume iCloud sync?",`<p class="help">${esc(short(b.dataset.res))} will be synced to iCloud again (it will upload the project, including node_modules / .venv).</p>`,"Resume sync"))return;
+  const r=await api("/api/projects/resume",{path:b.dataset.res});alertBox(r.ok?"Syncing again":"Problem",r.why);load()});
+ document.querySelectorAll("[data-st]").forEach(c=>c.onchange=async()=>{try{const r=await api("/api/projects/status",{path:c.dataset.st,status:c.value});if(!r.ok)alertBox("Problem",r.why);
+   else D.items.find(x=>x.path===c.dataset.st).status=c.value}catch(e){alertBox("Problem",e.message)}draw()});
+ drawBar()}
+function drawBar(){const S=[...sel],it=D.items.filter(x=>S.includes(x.path));$("bar").hidden=!S.length;
+ $("selinfo").innerHTML=`<b>${S.length}</b> ticked${D.checked_at?` · ${num(it.reduce((a,x)=>a+(x.cloud_files||0),0))} files to download first`:""}`}
+function confirmBox(t,html,ok){return new Promise(res=>{const s=$("shade");s.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h3>${esc(t)}</h3>${html}<div class="a"><button id="mn">Cancel</button><button class="pri" id="my">${esc(ok)}</button></div></div>`;
+ s.hidden=false;$("my").focus();const d=v=>{s.hidden=true;res(v)};$("my").onclick=()=>d(true);$("mn").onclick=()=>d(false)})}
+function alertBox(t,txt){const s=$("shade");s.innerHTML=`<div class="modal"><h3>${esc(t)}</h3><p class="help">${esc(txt)}</p><div class="a"><button class="pri" id="ok">OK</button></div></div>`;s.hidden=false;$("ok").onclick=()=>s.hidden=true}
+$("go").onclick=async()=>{const S=[...sel];if(!await confirmBox(`Stop iCloud sync for ${S.length} project(s)?`,`<ul><li>Their iCloud-only files are downloaded and checked first.</li><li>A project that is open in an editor, terminal or Docker is skipped (close it and try again).</li>
+  <li>Nothing is moved or renamed; paths stay the same.</li><li>They will no longer be in iCloud on your other devices; git (pushed) and Time Machine become their backup.</li><li>“Resume sync” undoes it.</li></ul>`,"Stop iCloud sync"))return;
+ try{await api("/api/projects/stop",{paths:S})}catch(e){alertBox("Problem",e.message);return}sel.clear();watch(true)};
+$("refresh").onclick=async()=>{try{await api("/api/projects/refresh",{})}catch(e){alertBox("Problem",e.message);return}watch(true)};
+$("stf").onchange=()=>{stf=$("stf").value;draw()};
+document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{flt=b.dataset.f;document.querySelectorAll("[data-f]").forEach(x=>x.classList.toggle("on",x===b));draw()});
+async function watch(force){const j=(await api("/api/projects")).job;if(!j||(j.phase!=="running"&&!force))return;const s=$("shade");
+ if(j.phase==="running"){s.hidden=false;s.innerHTML=`<div class="modal"><h3>${j.what==="refresh"?"Checking projects…":"Stopping iCloud sync…"}</h3><div class="prog"><i style="width:${j.total?Math.round(100*j.done/j.total):5}%"></i></div>
+  <p class="help">${esc(j.step||"")}</p>${(j.results||[]).map(r=>`<div class="res"><b class="${r.ok?"ok":"no"}">${r.ok?"✓":"✗"}</b> ${esc(r.path.split("/").pop())}: ${esc(r.why)}</div>`).join("")}</div>`;setTimeout(()=>watch(true),1500);return}
+ s.innerHTML=`<div class="modal"><h3>${j.phase==="failed"?"Stopped":"Done"}</h3>${j.error?`<p class="help">${esc(j.error)}</p>`:""}${(j.results||[]).map(r=>`<div class="res"><b class="${r.ok?"ok":"no"}">${r.ok?"✓":"✗"}</b> ${esc(r.path.split("/").pop())}: ${esc(r.why)}${(r.warnings||[]).length?` <span class="g w">(${esc(r.warnings.join("; "))})</span>`:""}</div>`).join("")||'<p class="help">Projects checked.</p>'}
+  <div class="a"><button class="pri" id="ok">OK</button></div></div>`;s.hidden=false;$("ok").onclick=()=>{s.hidden=true;load()}}
+load();
+</script></body></html>

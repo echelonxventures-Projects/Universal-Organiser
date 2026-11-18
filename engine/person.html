@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Person · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--warnsoft:#f6e4e0;
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--warnsoft:#3a2420;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f)}
+header{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}nav.top{display:flex;gap:14px;flex-wrap:wrap}nav.top a{color:var(--accent);text-decoration:none;font-size:13px}.sp{flex:1}
+main{max-width:1180px;margin:0 auto;padding:16px 16px 60px;display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+.head{grid-column:1/-1;display:flex;gap:14px;flex-wrap:wrap;align-items:baseline}.head h2{font-size:24px;margin:0}.head span{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px;display:flex;justify-content:space-between}
+.card h3 a{color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0}
+.id{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;padding:6px 0;border-bottom:1px solid var(--line)}.id:last-child{border-bottom:0}
+.dot{width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--accent)}.dot.no{background:var(--warn)}
+.f{display:flex;justify-content:space-between;gap:8px;padding:4px 0;font-size:13px;border-bottom:1px solid var(--line)}.f:last-child{border-bottom:0}
+.f a{color:var(--ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.f a:hover{color:var(--accent)}.f span{font:11.5px var(--m);color:var(--muted);white-space:nowrap}
+.alert{background:var(--warnsoft);border-radius:8px;padding:8px 12px;margin-bottom:6px}.alert b{color:var(--warn)}
+.bars .b{display:grid;grid-template-columns:120px minmax(0,1fr) 40px;gap:8px;align-items:center;font-size:12.5px;margin:3px 0}
+.bars i{display:block;height:10px;background:var(--accent);border-radius:0 4px 4px 0;min-width:2px}.bars span:last-child{font:11.5px var(--m);color:var(--muted);text-align:right}
+.help{color:var(--muted);font-size:12.5px}a.btn{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 11px;border-radius:7px;text-decoration:none;display:inline-block}
+</style></head><body>
+<header><h1>Universal Organiser</h1><nav class="top"><a href="/home">Home</a><a href="/">Files</a><a href="/browse">Browse</a><a href="/analytics">Analytics</a></nav><span class="sp"></span></header>
+<main id="main"></main>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1"};
+async function api(p){const r=await fetch(p,{headers:H});if(r.status===401){location.href="/login";throw 0}const j=await r.json();if(!r.ok)throw new Error(j.error);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const size=n=>{if(!n)return"0 B";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+" "+u[i]};
+const fl=f=>`<div class="f"><a href="/?open=${f.id}" title="${esc(f.path)}">${esc(f.name)}</a><span>${f.date||""}${f.cloud_only?" ☁︎":""}</span></div>`;
+(async()=>{const name=new URLSearchParams(location.search).get("name");let P;
+ try{P=await api("/api/person?name="+encodeURIComponent(name))}catch(e){$("main").innerHTML=`<div class="card">${esc(e.message)}</div>`;return}
+ document.title=P.name+" · Universal Organiser";const enc=encodeURIComponent(P.name);const mx=Math.max(1,...P.topics.map(t=>t[1]));const my=Math.max(1,...P.years.map(t=>t[1]));
+ $("main").innerHTML=`<div class="head"><h2>${esc(P.name)}</h2><span>${esc(P.relation||P.type)} · ${P.files.toLocaleString()} files · ${size(P.size)}</span><span class="sp" style="flex:1"></span>
+  <a class="btn" href="/?entity=${enc}">All files</a>${P.suggested?` <a class="btn" href="/triage">${P.suggested} more may be theirs → Triage</a>`:""}</div>
+ ${P.alerts.length?`<div class="card" style="grid-column:1/-1"><h3>Needs attention</h3>${P.alerts.map(a=>`<div class="alert"><b>${esc(a.title)}</b><div class="help">${esc(a.why)}</div></div>`).join("")}</div>`:""}
+ <div class="card"><h3>Identity documents</h3>${P.ids.map(i=>`<div class="id"><span class="dot ${i.n?"":"no"}"></span><div><b>${esc(i.type)}</b> <span class="help">${i.n?i.n+" file(s)":"not found"+(i.expected?" · expected":"")}</span>${i.files.map(fl).join("")}</div></div>`).join("")||'<p class="help">None found yet.</p>'}</div>
+ ${P.sections.map(s=>`<div class="card"><h3>${esc(s.title)} <a href="/?q=${encodeURIComponent(s.q)}">${s.n} →</a></h3>${s.files.map(fl).join("")}</div>`).join("")}
+ <div class="card"><h3>Recently changed</h3>${P.recent.map(fl).join("")||'<p class="help">Nothing yet.</p>'}</div>
+ <div class="card bars"><h3>By topic</h3>${P.topics.map(([t,n])=>`<div class="b"><span>${esc(t)}</span><i style="width:${n/mx*100}%"></i><span>${n}</span></div>`).join("")}
+  <h3 style="margin-top:12px">By year</h3>${P.years.map(([y,n])=>`<div class="b"><span>${esc(y)}</span><i style="width:${n/my*100}%"></i><span>${n}</span></div>`).join("")}</div>`})();
+</script></body></html>

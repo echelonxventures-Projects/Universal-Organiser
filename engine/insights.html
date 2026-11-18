@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Insights · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--warnsoft:#f6e4e0;--amber:#8a5a00;--ambersoft:#f7ecd4;--shade:rgba(20,25,22,.45);
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--warnsoft:#3a2420;--amber:#e5b75c;--ambersoft:#352a14;--shade:rgba(0,0,0,.6);color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f)}
+header{position:sticky;top:0;z-index:3;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}header a{color:var(--accent);text-decoration:none;font-size:13px}.sp{flex:1}
+nav{display:flex;gap:4px;flex-wrap:wrap;padding:10px 16px 0;max-width:1100px;margin:0 auto}
+nav button{border:1px solid transparent;background:transparent;border-radius:7px 7px 0 0;padding:7px 12px;font:13.5px var(--f);color:var(--muted);cursor:pointer}
+nav button.on{background:var(--surface);border-color:var(--line);border-bottom-color:var(--surface);color:var(--ink);font-weight:600}
+nav .c{font:11px var(--m);background:var(--soft);border-radius:9px;padding:0 6px;margin-left:5px;color:var(--ink)}
+main{max-width:1100px;margin:0 auto;padding:0 16px 80px}
+section{background:var(--surface);border:1px solid var(--line);border-radius:0 10px 10px 10px;padding:16px 18px;margin-top:-1px}
+h2{font-size:15px;margin:0 0 4px}p.help{color:var(--muted);margin:0 0 14px;font-size:13px;max-width:78ch}
+.item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}.item.off{opacity:.55}
+.dot{width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--muted)}
+.dot.important{background:var(--warn)}.dot.soon{background:var(--amber)}.dot.space{background:var(--accent)}.dot.label{background:var(--accent)}
+.item .t{font-weight:600}.item .w{color:var(--muted);font-size:13px;margin-top:2px}
+.item .n{font:12px var(--m);color:var(--muted);margin-top:4px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+button,a.btn{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 11px;border-radius:6px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}button.q{border-color:transparent;color:var(--muted);background:transparent}
+input:focus,select:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+select{font:13px var(--f);padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0 18px}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:10px 12px}.kpi b{display:block;font-size:20px;font-variant-numeric:tabular-nums}.kpi span{font-size:12px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+table{border-collapse:collapse;width:100%;font-size:13px}td{padding:4px 6px;border-bottom:1px solid var(--line)}td.r{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--m);font-size:12px;color:var(--muted)}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 6px}
+.chart{display:flex;align-items:flex-end;gap:4px;height:120px;border-bottom:1px solid var(--line);padding-top:8px}
+.chart div{flex:1;background:var(--soft);border:1px solid var(--accent);border-bottom:0;border-radius:3px 3px 0 0;min-height:2px;position:relative}
+.chart div.cur{background:var(--accent)}
+.axis{display:flex;gap:4px;font:10.5px var(--m);color:var(--muted)}.axis span{flex:1;text-align:center}
+.notes{background:var(--soft);border-radius:8px;padding:10px 14px;margin-bottom:16px}.notes li{margin:2px 0}
+.empty{color:var(--muted);padding:20px 0;text-align:center}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:8;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(640px,100%);max-height:86vh;overflow:auto}
+.modal h3{margin:0 0 8px;font-size:16px;text-transform:none;letter-spacing:0;color:var(--ink)}.modal .act{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.chg{font:12px var(--m);overflow-wrap:anywhere}.chg s{color:var(--warn)}.chg ins{color:var(--accent);text-decoration:none}
+.bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:var(--accent);width:0}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;display:flex;gap:14px;align-items:center;max-width:calc(100% - 32px);font-size:13px}
+#toast button{background:transparent;color:var(--bg);border-color:var(--bg)}
+@media (max-width:640px){.item{grid-template-columns:auto minmax(0,1fr)}.acts{grid-column:2;justify-content:flex-start}}
+</style></head><body>
+<header><h1>Insights</h1><span class="sp"></span><a href="/home">Home</a><a href="/">Files</a><a href="/browse">Browse</a><a href="/analytics">Analytics</a><a href="/sorter">Sorter</a><a href="/settings">Settings</a></header>
+<nav id="tabs"></nav><main id="main"></main>
+<div class="shade" id="shade" hidden></div><div id="toast" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}const j=await r.json();if(!r.ok&&!j.errors)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const size=n=>{if(!n)return"0 B";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+" "+u[i]};
+let tab=(location.hash||"#alerts").slice(1),SUM=null,showOff=false;
+const TABS=[["alerts","Alerts","alerts"],["recs","Recommendations","recs"],["learn","Learning","proposals"],["report","Monthly report",null]];
+function toast(msg,cid){const t=$("toast");t.innerHTML=`<span>${esc(msg)}</span>${cid?'<button id="undo">Undo</button>':""}`;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,12000);
+ if(cid)$("undo").onclick=async()=>{const r=await api("/api/undo",{id:cid});t.hidden=true;toast(`Undone (${r.n} files).`);draw()}}
+function shade(html){const s=$("shade");s.innerHTML=`<div class="modal" role="dialog" aria-modal="true">${html}</div>`;s.hidden=false;return s}
+const close=()=>$("shade").hidden=true;
+async function drawTabs(){SUM=await api("/api/insights/summary");
+ $("tabs").innerHTML=TABS.map(([k,l,c])=>`<button class="${k===tab?"on":""}" data-t="${k}">${l}${c&&SUM[c]?`<span class="c">${SUM[c]}</span>`:""}</button>`).join("")}
+$("tabs").onclick=e=>{const b=e.target.closest("[data-t]");if(!b)return;tab=b.dataset.t;history.replaceState(null,"","#"+tab);drawTabs();draw()};
+const snooze=key=>`<select data-snooze="${esc(key)}" aria-label="Hide"><option value="">Hide…</option><option value="30">for 30 days</option><option value="90">for 90 days</option><option value="0">for good</option></select>`;
+function wire(m){
+ m.querySelectorAll("[data-snooze]").forEach(s=>s.onchange=async()=>{if(!s.value)return;await api("/api/insights/dismiss",{key:s.dataset.snooze,days:+s.value||null});toast("Hidden.");drawTabs();draw()});
+ m.querySelectorAll("[data-unhide]").forEach(b=>b.onclick=async()=>{await api("/api/insights/undismiss",{key:b.dataset.unhide});drawTabs();draw()});
+ const t=m.querySelector("#showoff");if(t)t.onchange=()=>{showOff=t.checked;draw()}}
+function q(params){return "/?"+new URLSearchParams(params)}
+async function draw(){const m=$("main");let h="";
+ if(tab==="alerts"){const A=await api("/api/insights/alerts");const vis=A.filter(a=>showOff||!a.dismissed);
+  h=`<section><h2>Missing, expiring and overdue documents</h2><p class="help">Worked out from your catalogue. <b>Missing</b>: a document every owner of that type should have (set in the profile). <b>Expiry</b>: dates read from the document text. <b>Overdue</b>: something that arrives on a rhythm (learned from your files) has stopped. Labels you set count: if a document exists but was not recognised, open it and set its owner and type.</p>
+  <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="showoff" ${showOff?"checked":""}> Show hidden (${A.filter(a=>a.dismissed).length})</label>
+  ${vis.map(a=>`<div class="item ${a.dismissed?"off":""}"><span class="dot ${a.level}"></span><div><div class="t">${esc(a.title)}</div><div class="w">${esc(a.why)}</div></div>
+   <div class="acts">${a.id?`<a class="btn" href="${q({open:a.id})}">Open document</a>`:a.owner&&a.owner!=="owner unknown"?`<a class="btn" href="${q({entity:a.owner})}">${esc(a.owner)}'s files</a>`:""}
+   ${a.kind==="missing"?`<a class="btn" href="${q({q:a.doc_type.split(/[ \/]/)[0]})}">Search “${esc(a.doc_type.split(/[ \/]/)[0])}”</a>`:""}
+   ${a.dismissed?`<button class="q" data-unhide="${esc(a.key)}">Show again</button>`:snooze(a.key)}</div></div>`).join("")||'<div class="empty">Nothing missing or expiring. 🎉</div>'}</section>`}
+ if(tab==="recs"){const R=await api("/api/insights/recs");const vis=R.filter(r=>showOff||!r.dismissed);const LV={important:"Privacy",space:"Space",tidy:"Tidy",label:"Labels"};
+  h=`<section><h2>Recommendations</h2><p class="help">Read-only lists. Open one to see its files on the search page. Nothing is moved or deleted from here: moving and cleaning come with the sorter (next milestone), always with a preview and undo.</p>
+  <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="showoff" ${showOff?"checked":""}> Show hidden (${R.filter(r=>r.dismissed).length})</label>
+  ${vis.map(r=>`<div class="item ${r.dismissed?"off":""}"><span class="dot ${r.level}"></span><div><div class="t">${esc(r.title)}</div><div class="w">${esc(r.why)}</div>
+   <div class="n">${LV[r.level]||""} · ${r.n.toLocaleString()} files · ${size(r.size)}${r.extra!=null?` reclaimable (${r.extra.toLocaleString()} extra copies)`:""}</div></div>
+   <div class="acts"><a class="btn" href="${q({rec:r.id,rect:r.title})}">Show files</a>${r.dismissed?`<button class="q" data-unhide="rec:${esc(r.id)}">Show again</button>`:snooze("rec:"+r.id)}</div></div>`).join("")||'<div class="empty">No recommendations.</div>'}</section>`}
+ if(tab==="learn"){const P=await api("/api/insights/proposals");
+  h=`<section><h2>Learned proposals</h2><p class="help">Patterns the engine noticed. <b>Label</b> proposals set an owner on a few files (undoable). <b>Rule</b> proposals come from the labels <i>you</i> set: approving one adds the rule to your settings (saved as a new version), then shows which files it would label before applying. The more you label, the more it can learn.</p>
+  ${P.map(p=>`<div class="item"><span class="dot label"></span><div><div class="t">${esc(p.title)}</div><div class="w">${esc(p.evidence)}</div>
+   <div class="n">${p.kind==="rule"?"Rule":"Label"} · confidence ${Math.round(p.confidence*100)}%${p.folder?" · "+esc(p.folder.replace(/^\/Users\/[^/]+/,"~")):""}</div></div>
+   <div class="acts"><button class="pri" data-ap="${esc(p.key)}">Review</button>${snooze(p.key)}</div></div>`).join("")||'<div class="empty">No proposals right now. Label some files on the search page (owner, topic) and the engine will look for rules in them.</div>'}</section>`}
+ if(tab==="report"){const L=await api("/api/insights/reports");const months=[L.current,...L.saved.filter(x=>x!==L.current)];
+  const sel=window._month||months[0];const R=await api("/api/insights/report?month="+sel);
+  const mx=Math.max(1,...R.trend.map(t=>t[1]));const pct=(a,b)=>b?((a-b)/b*100).toFixed(0)+"%":"–";
+  const tb=(rows,max=8)=>`<table><tbody>${rows.slice(0,max).map(r=>`<tr><td>${esc(r[0])}</td><td class="r">${r[1].toLocaleString()}</td>${r[2]!==undefined?`<td class="r">${size(r[2])}</td>`:""}</tr>`).join("")||'<tr><td class="r">none</td></tr>'}</tbody></table>`;
+  h=`<section><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h2 style="margin:0">Pattern report</h2><select id="month">${months.map(x=>`<option ${x===sel?"selected":""}>${x}</option>`).join("")}</select>
+   <span class="n" style="font:12px var(--m);color:var(--muted)">${R.partial?"month so far":"saved "+new Date(R.generated*1000).toLocaleDateString()}</span></div>
+  <p class="help" style="margin-top:8px">Built from file dates in the catalogue. A report is saved automatically for each finished month; a snapshot each month lets the next report compare growth.</p>
+  <div class="kpis"><div class="kpi"><b>${R.files.toLocaleString()}</b><span>files dated this month</span></div><div class="kpi"><b>${size(R.bytes)}</b><span>their size</span></div>
+   <div class="kpi"><b>${pct(R.files,R.prev_files)}</b><span>vs previous month (${R.prev_files.toLocaleString()})</span></div><div class="kpi"><b>${R.avg_files}</b><span>12-month average / month</span></div>
+   <div class="kpi"><b>${R.alerts}</b><span>open alerts</span></div><div class="kpi"><b>${R.label_changes[1].toLocaleString()}</b><span>files you labelled</span></div></div>
+  ${R.notes.length?`<ul class="notes">${R.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:""}
+  <h3>Last 12 months (files per month)</h3><div class="chart" role="img" aria-label="Files per month">${R.trend.map(t=>`<div class="${t[0]===R.month?"cur":""}" style="height:${Math.max(2,t[1]/mx*100)}%" title="${t[0]}: ${t[1]} files, ${size(t[2])}"></div>`).join("")}</div>
+  <div class="axis">${R.trend.map(t=>`<span>${t[0].slice(5)}</span>`).join("")}</div>
+  <div class="grid2" style="margin-top:18px"><div><h3>By type</h3>${tb(R.by_kind)}</div><div><h3>By owner</h3>${tb(R.by_owner)}</div><div><h3>By topic</h3>${tb(R.by_topic)}</div><div><h3>By document type</h3>${tb(R.by_doc_type)}</div>
+   <div><h3>Busiest folders</h3>${tb(R.folders)}</div><div><h3>Open recommendations</h3>${tb(R.recs)}</div></div></section>`}
+ m.innerHTML=h;wire(m);
+ if($("month"))$("month").onchange=e=>{window._month=e.target.value;draw()};
+ m.querySelectorAll("[data-ap]").forEach(b=>b.onclick=()=>approve(b.dataset.ap))}
+async function approve(key){let p;try{p=await api("/api/insights/proposal",{key,preview:true})}catch(e){toast(e.message);draw();return}
+ shade(`<h3>Check before applying</h3><p class="help">${esc(p.summary)}</p><div class="act"><button id="c0">Cancel</button><button class="pri" id="c1">Approve</button></div>`);
+ $("c0").onclick=close;$("c1").onclick=async()=>{const r=await api("/api/insights/proposal",{key});if(r.errors){shade(`<h3>Could not add the rule</h3><p class="help">${esc(r.errors.join(" "))}</p><div class="act"><button id="c0">OK</button></div>`);$("c0").onclick=close;return}
+  close();toast(r.summary+".",r.change);if(r.next==="rules")runRules();drawTabs();draw()}}
+async function runRules(){try{await api("/api/rules/start",{})}catch(e){toast(e.message);return}
+ shade(`<h3>Working out what the new rule changes…</h3><div class="bar"><i id="pb"></i></div><p class="help" id="pt">Starting…</p>`);
+ const tick=async()=>{const j=await api("/api/rules/status");if(!j){close();return}
+  if(j.phase==="running"){const p=j.total?Math.round(100*j.done/j.total):0;$("pb").style.width=p+"%";$("pt").textContent=`${j.done.toLocaleString()} of ${j.total.toLocaleString()} files`;setTimeout(tick,700);return}
+  if(j.phase==="failed"){shade(`<h3>Could not finish</h3><p class="help">${esc(j.error)}</p><div class="act"><button id="c0">Close</button></div>`);$("c0").onclick=close;return}
+  const R=j.result,LB={entity:"Owner",doc_type:"Type",topic:"Topic"};
+  shade(`<h3>${R.files?R.files.toLocaleString()+" files would change":"Nothing would change"}</h3>
+   ${R.files?`<div style="max-height:44vh;overflow:auto;margin-bottom:14px"><table><tbody>${R.sample.map(s=>`<tr><td class="chg">${esc(s.path.replace(/^\/Users\/[^/]+/,"~"))}<br>${s.changes.map(([k,a,b])=>`${LB[k]}: <s>${esc(a||"none")}</s> → <ins>${esc(b||"none")}</ins>`).join(" · ")}</td></tr>`).join("")}</tbody></table></div>`:"<p class='help'>The rule is saved; it will apply to new files on the next scan.</p>"}
+   <div class="act"><button id="c0">${R.files?"Not now":"Close"}</button>${R.files?'<button class="pri" id="c1">Apply</button>':""}</div>`);
+  $("c0").onclick=close;if($("c1"))$("c1").onclick=async()=>{const a=await api("/api/rules/apply",{});close();toast(`Applied to ${R.files.toLocaleString()} files.`,a.change);drawTabs();draw()}};
+ tick()}
+drawTabs().then(draw);
+</script></body></html>

@@ -1,0 +1,1135 @@
+{
+  "_about": "Base profile: generic rules for every computer. A region pack (profiles/regions/<name>.json) adds country documents; your own profile overrides anything. No personal names here.",
+  "engine": {
+    "mode": "read-only",
+    "organisation_model": "hybrid",
+    "network": "offline",
+    "ai": {
+      "apple_builtin": true,
+      "ollama": {
+        "enabled": false,
+        "url": "http://127.0.0.1:11434",
+        "model": ""
+      },
+      "cloud": "never"
+    }
+  },
+  "catalogue": {
+    "encrypted": true,
+    "vault_size": "20g",
+    "text": "full",
+    "max_text_chars": 400000,
+    "spotlight_also": true,
+    "history": true
+  },
+  "entity_types": [
+    "Self",
+    "Family",
+    "Friend",
+    "Office",
+    "Organisation",
+    "Client",
+    "Property",
+    "Vehicle"
+  ],
+  "lifecycles": {
+    "Permanent": null,
+    "Temporary": "90d",
+    "Testing": "30d"
+  },
+  "plugins": {
+    "metadata": {
+      "enabled": true
+    },
+    "hash": {
+      "enabled": true,
+      "full_hash_max_mb": 300
+    },
+    "text": {
+      "enabled": true,
+      "pdf_ocr_if_no_text": true,
+      "pdf_ocr_pages": 3
+    },
+    "archive": {
+      "enabled": true,
+      "max_entries": 2000
+    },
+    "image_meta": {
+      "enabled": true
+    },
+    "ocr": {
+      "enabled": true,
+      "max_mb": 40,
+      "languages": [
+        "en-US"
+      ]
+    },
+    "image_classify": {
+      "enabled": true,
+      "min_confidence": 0.35,
+      "max_labels": 6
+    },
+    "faces": {
+      "enabled": true,
+      "mode": "suggest-only"
+    },
+    "transcribe": {
+      "enabled": true,
+      "mode": "auto for speech files, others on demand",
+      "languages": [
+        "en-US"
+      ],
+      "max_minutes": 180,
+      "auto_doc_types": [
+        "Meeting recording",
+        "Screen recording"
+      ],
+      "auto_entity_types": [
+        "Office",
+        "Client"
+      ],
+      "auto_exts": [
+        "wav",
+        "m4a",
+        "amr",
+        "opus",
+        "aac",
+        "caf"
+      ],
+      "skip_under": [
+        "{HOME}/Music"
+      ],
+      "workers": 2,
+      "_note": "on-device Apple SpeechTranscriber; a language model that is not installed is never downloaded automatically",
+      "label_from_transcript": false,
+      "_languages_note": "tried on a 60 s sample of each recording; the most confident one transcribes it. Any installed language can be chosen per file.",
+      "keep_reserved": []
+    },
+    "doc_type": {
+      "enabled": true
+    },
+    "entities": {
+      "enabled": true
+    },
+    "topics": {
+      "enabled": true
+    },
+    "near_duplicate_photos": {
+      "enabled": true,
+      "mode": "suggest-only",
+      "max_distance": 0.3,
+      "max_hamming": 12,
+      "burst_seconds": 10,
+      "max_distance_screens": 0.05,
+      "_note": "calibrated 2026-11-13: camera photos <=0.3 are the same moment (bursts); screenshots look alike even when the content differs, so they must be ~identical",
+      "min_pixels": 16384
+    }
+  },
+  "kinds": {
+    "Photo": "jpg jpeg png heic heif gif webp bmp tiff tif raw cr2 nef dng",
+    "Video": "mp4 mov m4v avi mkv webm wmv flv 3gp",
+    "Audio": "mp3 m4a wav aac flac ogg aiff opus",
+    "PDF": "pdf",
+    "Document": "doc docx rtf odt pages txt md",
+    "Spreadsheet": "xls xlsx csv numbers ods",
+    "Presentation": "ppt pptx key odp",
+    "Web page": "html htm webarchive mhtml",
+    "Archive": "zip rar 7z tar gz tgz bz2 xz",
+    "Installer": "dmg pkg exe msi iso apk dll msu cab",
+    "Code": "py js ts tsx jsx json css scss java c cpp h go rs rb php sh yml yaml toml lock ipynb sql xml svg",
+    "Font": "ttf otf woff woff2",
+    "Email": "eml msg mbox"
+  },
+  "text_extract": {
+    "zip_xml": "docx xlsx pptx odt ods odp",
+    "textutil": "doc rtf html htm webarchive",
+    "plain": "txt md csv json xml yml yaml toml sql py js ts sh log",
+    "pdf": "pdf"
+  },
+  "skip_dirs": [
+    "node_modules",
+    "__pycache__",
+    ".git",
+    ".next",
+    "dist",
+    "build",
+    ".cache",
+    ".venv",
+    "venv",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".turbo",
+    "target",
+    ".gradle",
+    ".Trash",
+    ".fseventsd",
+    ".Spotlight-V100",
+    ".DocumentRevisions-V100"
+  ],
+  "package_exts": [
+    "app",
+    "photoslibrary",
+    "musiclibrary",
+    "tvlibrary",
+    "photolibrary",
+    "fcpbundle",
+    "logicx",
+    "xcodeproj",
+    "xcworkspace",
+    "sparsebundle",
+    "bundle",
+    "framework",
+    "pkg",
+    "rtfd",
+    "pages",
+    "numbers",
+    "key"
+  ],
+  "project_markers": [
+    ".git",
+    "package.json",
+    "requirements.txt",
+    "pyproject.toml",
+    "setup.py",
+    "pom.xml",
+    "build.gradle",
+    "go.mod",
+    "Cargo.toml",
+    "composer.json",
+    "Gemfile",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    "Dockerfile",
+    "Makefile",
+    "tsconfig.json",
+    "manage.py",
+    "pubspec.yaml",
+    "CMakeLists.txt",
+    ".claude",
+    "CLAUDE.md",
+    ".vscode",
+    ".idea",
+    ".cursor",
+    ".github",
+    "AGENTS.md",
+    "Pipfile",
+    "poetry.lock",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "Cargo.lock",
+    "package-lock.json",
+    ".eslintrc.json",
+    "vite.config.ts",
+    "next.config.js"
+  ],
+  "sensitive": {
+    "name_regex": "password|passwd|keychain|credential|secret|id_rsa|id_ed25519|\\.pem$|\\.p12$|\\.pfx$|\\.key$|(^|/)\\.env|recovery.?(key|code)|2fa|backup.?codes|otp.?secret|seed.?phrase|mnemonic|wallet.?backup|client.?secret|(^|/)\\.[^/]*token",
+    "read_content": false,
+    "allow_icloud": false,
+    "allow_ai": false
+  },
+  "doc_types": [
+    {
+      "name": "Passport",
+      "any_text": [
+        "passport no",
+        "passport number",
+        "type\\s*p\\b.{0,40}passport"
+      ],
+      "any_name": [
+        "passport"
+      ],
+      "max_text_chars": 2500,
+      "tags": [
+        "id",
+        "holder",
+        "dob",
+        "important",
+        "paper"
+      ]
+    },
+    {
+      "name": "Driving licence",
+      "any_text": [
+        "driving licen[cs]e",
+        "transport department"
+      ],
+      "any_name": [
+        "driving",
+        "\\bdl\\b"
+      ],
+      "max_text_chars": 2500,
+      "tags": [
+        "id",
+        "holder",
+        "dob",
+        "important",
+        "paper"
+      ]
+    },
+    {
+      "name": "Vehicle RC",
+      "any_text": [
+        "registration certificate",
+        "chassis no"
+      ],
+      "any_name": [
+        "\\brc\\b"
+      ],
+      "max_text_chars": 2500,
+      "tags": [
+        "id",
+        "vehicle",
+        "important",
+        "paper"
+      ]
+    },
+    {
+      "name": "Bank statement",
+      "all_text": [
+        "statement"
+      ],
+      "any_text": [
+        "opening balance",
+        "closing balance",
+        "account no",
+        "a/c no"
+      ],
+      "any_name": [
+        "statement"
+      ],
+      "tags": [
+        "money",
+        "important",
+        "paper"
+      ]
+    },
+    {
+      "name": "Payslip",
+      "any_text": [
+        "pay ?slip",
+        "salary slip",
+        "net pay",
+        "earnings.{0,200}deductions"
+      ],
+      "any_name": [
+        "payslip",
+        "pay slip",
+        "salary"
+      ],
+      "tags": [
+        "money",
+        "tax",
+        "important",
+        "paper"
+      ]
+    },
+    {
+      "name": "Invoice",
+      "all_text": [
+        "invoice"
+      ],
+      "any_text": [
+        "total",
+        "gstin",
+        "amount",
+        "tax"
+      ],
+      "any_name": [
+        "invoice"
+      ],
+      "tags": [
+        "money",
+        "important"
+      ]
+    },
+    {
+      "name": "Receipt",
+      "any_text": [
+        "receipt no",
+        "payment receipt",
+        "received with thanks",
+        "transaction id"
+      ],
+      "any_name": [
+        "receipt"
+      ],
+      "tags": [
+        "money",
+        "important"
+      ]
+    },
+    {
+      "name": "Insurance policy",
+      "all_text": [
+        "policy"
+      ],
+      "any_text": [
+        "premium",
+        "sum assured",
+        "insured",
+        "life insurance"
+      ],
+      "any_name": [
+        "policy",
+        "insurance",
+        "\\blic\\d*\\b",
+        "mediclaim"
+      ],
+      "tags": [
+        "insurance",
+        "important",
+        "paper"
+      ]
+    },
+    {
+      "name": "Offer / appointment letter",
+      "any_text": [
+        "offer letter",
+        "letter of appointment",
+        "we are pleased to offer"
+      ],
+      "any_name": [
+        "offer letter",
+        "appointment"
+      ],
+      "tags": [
+        "work",
+        "important"
+      ]
+    },
+    {
+      "name": "Relieving / experience letter",
+      "any_text": [
+        "relieving letter",
+        "experience certificate",
+        "relieved from"
+      ],
+      "any_name": [
+        "relieving",
+        "experience letter"
+      ],
+      "tags": [
+        "work",
+        "important"
+      ]
+    },
+    {
+      "name": "Resume / CV",
+      "any_text": [
+        "curriculum vitae",
+        "professional summary",
+        "work experience"
+      ],
+      "any_name": [
+        "resume",
+        "\\bcv\\b"
+      ],
+      "tags": [
+        "work"
+      ]
+    },
+    {
+      "name": "Certificate",
+      "any_text": [
+        "certificate of",
+        "this is to certify",
+        "certificate of completion"
+      ],
+      "any_name": [
+        "certificate"
+      ],
+      "tags": [
+        "education",
+        "important",
+        "paper"
+      ]
+    },
+    {
+      "name": "Marksheet",
+      "any_text": [
+        "marks? ?sheet",
+        "statement of marks",
+        "grade card"
+      ],
+      "any_name": [
+        "marksheet",
+        "mark sheet"
+      ],
+      "tags": [
+        "education",
+        "important",
+        "paper"
+      ]
+    },
+    {
+      "name": "Boarding pass",
+      "any_text": [
+        "boarding pass",
+        "gate.{0,30}seat"
+      ],
+      "any_name": [
+        "boarding"
+      ],
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "name": "Train / travel ticket",
+      "any_text": [
+        "irctc",
+        "\\bpnr\\b",
+        "e-ticket"
+      ],
+      "any_name": [
+        "ticket",
+        "irctc",
+        "\\bpnr\\b"
+      ],
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "name": "Medical report / prescription",
+      "any_text": [
+        "prescription",
+        "pathology",
+        "lab report",
+        "diagnosis",
+        "patient name"
+      ],
+      "any_name": [
+        "prescription",
+        "report",
+        "lab"
+      ],
+      "tags": [
+        "medical",
+        "important"
+      ]
+    },
+    {
+      "name": "Rent agreement",
+      "any_text": [
+        "rent agreement",
+        "lease agreement",
+        "leave and licen[cs]e"
+      ],
+      "any_name": [
+        "rent agreement",
+        "lease"
+      ],
+      "tags": [
+        "property",
+        "important"
+      ]
+    },
+    {
+      "name": "Contract / agreement",
+      "any_text": [
+        "this agreement",
+        "non-disclosure",
+        "master services agreement",
+        "statement of work"
+      ],
+      "any_name": [
+        "agreement",
+        "contract",
+        "\\bnda\\b",
+        "\\bsow\\b"
+      ],
+      "tags": [
+        "important"
+      ]
+    },
+    {
+      "name": "Property document",
+      "any_text": [
+        "sale deed",
+        "conveyance deed",
+        "khata",
+        "khasra",
+        "sub[- ]?registrar",
+        "registration of (?:sale|property|deed)",
+        "mutation (?:of|no\\.?|certificate|order|case)",
+        "\\bplot no",
+        "flat no\\.?.{0,25}(?:tower|floor|block|wing)",
+        "property tax"
+      ],
+      "any_name": [
+        "\\bdeed\\b",
+        "khata",
+        "khasra",
+        "mutation",
+        "sale ?deed",
+        "registry",
+        "property tax"
+      ],
+      "tags": [
+        "property",
+        "important",
+        "paper"
+      ]
+    },
+    {
+      "name": "Meeting recording",
+      "kinds": [
+        "Video",
+        "Audio"
+      ],
+      "any_name": [
+        "meeting recording",
+        "recording"
+      ],
+      "tags": []
+    },
+    {
+      "name": "Screenshot",
+      "kinds": [
+        "Photo"
+      ],
+      "any_name": [
+        "^screenshot",
+        "screen shot",
+        "^simulator screen"
+      ],
+      "tags": []
+    },
+    {
+      "name": "Screen recording",
+      "kinds": [
+        "Video"
+      ],
+      "any_name": [
+        "^screen recording"
+      ],
+      "tags": []
+    }
+  ],
+  "presets": {
+    "layouts": {
+      "by-owner": "{entity_type}/{entity}/{topic}/{year}",
+      "by-year": "{year}/{entity_type}/{entity}/{topic}",
+      "media": "{kind}/{year}/{month}",
+      "classic-numbered": "{group_label}/{entity}/{topic_top}"
+    },
+    "naming": {
+      "dated": "{date}_{entity_tag}_{title}",
+      "original": "{original}",
+      "id-docs": "{entity_tag}_{doc_type}",
+      "invoice": "{date}_{vendor}_Invoice_{amount}",
+      "screenshot": "{date}_{time}_Screenshot"
+    },
+    "month_format": "{mm}-{MonthName}"
+  },
+  "ui": {
+    "port": 8765,
+    "idle_hours": 4,
+    "bind": "127.0.0.1",
+    "lan": {
+      "enabled": false,
+      "port": 8766,
+      "_about": "phones/tablets on home Wi-Fi: HTTPS, private addresses only, each device approved on the computer"
+    }
+  },
+  "naming_preset": "original",
+  "insights": {
+    "_about": "Learning, recommendations, pattern report and missing-document alerts. Proposals are never applied without approval.",
+    "expected_docs": {},
+    "annual_docs": {},
+    "year_start_month": 1,
+    "annual_due_month": 4,
+    "annual_lookback_years": 5,
+    "expiry_doc_types": [
+      "Passport",
+      "Driving licence",
+      "Insurance policy",
+      "Vehicle RC"
+    ],
+    "expiry_patterns": [
+      "(?:date of expiry|expiry date|date of expiration|valid (?:till|upto|up to|until)|expires? on|policy end date|end date|maturity date|validity)[^0-9]{0,30}(\\d{1,2}[/.-]\\d{1,2}[/.-]\\d{2,4}|\\d{1,2}[ -]?[A-Za-z]{3,9}[ -,]*\\d{4})"
+    ],
+    "date_order": "dmy",
+    "expiry_warn_days": 180,
+    "series": {
+      "min_docs": 4,
+      "min_gap_days": 20,
+      "max_gap_days": 400,
+      "regularity": 0.75,
+      "overdue_factor": 2.0,
+      "active_years": 2
+    },
+    "recommendations": {
+      "large_file_mb": 500,
+      "large_old_years": 2,
+      "screenshot_old_months": 6,
+      "downloads_old_days": 180
+    },
+    "folder_consensus": {
+      "min_owned": 3,
+      "purity": 0.9,
+      "coverage": 0.5
+    },
+    "mining": {
+      "min_support": 3,
+      "precision": 0.9,
+      "min_len": 4,
+      "stopwords": "scan scanned copy final draft new old file files document documents doc docs page pages image images photo photos img pdf jpeg jpg png heic screenshot screen shot recording video audio part front back side signed sign version updated update latest original edited compressed with from that this have your their 2fa jan feb mar apr may jun jul aug sep oct nov dec january february march april june july august september october november december organized sort media archive archives misc other others personal family office desktop downloads users library mobile clouddocs"
+    },
+    "auto_report": true
+  },
+  "sorter": {
+    "_about": "Moves files only after a previewed, approved plan. Every run is logged and can be undone.",
+    "sources": [
+      "{LIBRARY}/{Unsorted}"
+    ],
+    "owner_confidence": {
+      "auto": [
+        "high",
+        "you"
+      ],
+      "ask": [
+        "medium"
+      ]
+    },
+    "learn_from_library": true,
+    "learn_min_share": 0.6,
+    "learn_min_files": 2,
+    "topic_fallback": "Misc",
+    "media_kinds": {
+      "Photo": "Photos",
+      "Video": "Videos",
+      "Audio": "Audio"
+    },
+    "media_doc_types": {
+      "Screenshot": "Screenshots",
+      "Screen recording": "Screen Recordings"
+    },
+    "media_template": "{group:Media}/{media_folder}/{year}/{month}",
+    "archive_template": "{LIBRARY}/{group:Archive}/{year}",
+    "default_group_labels": {
+      "Archive": "70_Archive",
+      "Media": "Media",
+      "Unsorted": "To Sort"
+    },
+    "local_only_folder": "{HOME}/Private (local only)",
+    "remove_empty_folders": true,
+    "max_errors": 25,
+    "year_level_min": 30,
+    "misc_names": [
+      "Misc",
+      "Others",
+      "Other",
+      "General",
+      "Miscellaneous"
+    ],
+    "archive_after_years": 2,
+    "archive_kinds": {
+      "Code": "Code",
+      "Installer": "Installers",
+      "Archive": "Archives"
+    }
+  },
+  "search": {
+    "_about": "Plain-language search. Words here become filters; synonyms widen the text match. Edit freely.",
+    "doc_type_words": {
+      "passport": "Passport",
+      "licence": "Driving licence",
+      "license": "Driving licence",
+      "dl": "Driving licence",
+      "rc": "Vehicle RC",
+      "statement": "Bank statement",
+      "payslip": "Payslip",
+      "payslips": "Payslip",
+      "invoice": "Invoice",
+      "invoices": "Invoice",
+      "receipt": "Receipt",
+      "receipts": "Receipt",
+      "resume": "Resume / CV",
+      "cv": "Resume / CV",
+      "certificate": "Certificate",
+      "certificates": "Certificate",
+      "marksheet": "Marksheet",
+      "boarding": "Boarding pass",
+      "ticket": "Train / travel ticket",
+      "tickets": "Train / travel ticket",
+      "prescription": "Medical report / prescription",
+      "agreement": "Contract / agreement",
+      "contract": "Contract / agreement",
+      "deed": "Property document",
+      "rent": "Rent agreement"
+    },
+    "synonyms": {
+      "bill": [
+        "invoice",
+        "receipt"
+      ],
+      "salary": [
+        "payslip",
+        "salary slip"
+      ],
+      "id": [
+        "passport",
+        "licence",
+        "identity"
+      ],
+      "tax": [
+        "tax return",
+        "tax"
+      ],
+      "insurance": [
+        "policy",
+        "premium"
+      ],
+      "policy": [
+        "insurance"
+      ],
+      "photo": [
+        "image",
+        "picture"
+      ],
+      "marks": [
+        "marksheet",
+        "grade"
+      ],
+      "degree": [
+        "certificate",
+        "marksheet"
+      ],
+      "flight": [
+        "boarding",
+        "airline"
+      ],
+      "train": [
+        "pnr",
+        "railway"
+      ],
+      "doctor": [
+        "prescription",
+        "medical"
+      ],
+      "house": [
+        "property",
+        "flat",
+        "rent"
+      ]
+    }
+  },
+  "skip": {
+    "_about": "Never catalogued: hidden folders, app-managed libraries, logs and temporary files. Hidden files are kept only when sensitive.",
+    "hidden_folders": true,
+    "dir_suffixes": [
+      ".localized"
+    ],
+    "file_patterns": [
+      "*.log",
+      "*.lock",
+      "Thumbs.db",
+      "desktop.ini",
+      "~$*",
+      ".~lock*",
+      "*.tmp",
+      "*.pyc",
+      "*.swp",
+      ".nomedia"
+    ],
+    "keep_hidden_files_if_sensitive": true,
+    "code_folder": {
+      "min_files": 5,
+      "share": 0.6
+    }
+  },
+  "technical_kinds": [
+    "Code",
+    "Font",
+    "Installer"
+  ],
+  "person_sections": [
+    {
+      "title": "Money & tax",
+      "tags": [
+        "money"
+      ],
+      "topics": [
+        "Finance"
+      ]
+    },
+    {
+      "title": "Insurance",
+      "tags": [
+        "insurance"
+      ],
+      "topics": [
+        "Insurance"
+      ]
+    },
+    {
+      "title": "Medical",
+      "tags": [
+        "medical"
+      ],
+      "topics": [
+        "Medical"
+      ]
+    },
+    {
+      "title": "Education & work",
+      "tags": [
+        "education",
+        "work"
+      ],
+      "topics": [
+        "Education",
+        "Work"
+      ]
+    },
+    {
+      "title": "Property & vehicle",
+      "tags": [
+        "property",
+        "vehicle"
+      ],
+      "topics": [
+        "Property",
+        "Vehicle"
+      ]
+    },
+    {
+      "title": "Travel",
+      "tags": [
+        "travel"
+      ],
+      "topics": [
+        "Travel"
+      ]
+    }
+  ],
+  "region": "none",
+  "topics": [
+    {
+      "name": "IDs & Legal",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "incorporation",
+        "passport",
+        "driving",
+        "licence",
+        "license",
+        "birth",
+        "cert",
+        "marriage",
+        "deed",
+        "affidavit",
+        "registration",
+        "identity",
+        "\\bid",
+        "card\\b"
+      ]
+    },
+    {
+      "name": "Finance/Tax",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "income",
+        "tax",
+        "\\btax\\b",
+        "tax",
+        "return",
+        "w-2",
+        "\\bp60\\b",
+        "\\bvat\\b"
+      ]
+    },
+    {
+      "name": "Finance/Bank",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "statement",
+        "\\bbank\\b",
+        "passbook",
+        "cheque",
+        "check",
+        "\\bloan\\b",
+        "mortgage",
+        "\\bemi\\b",
+        "mutual",
+        "fund",
+        "brokerage"
+      ]
+    },
+    {
+      "name": "Insurance",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "insurance",
+        "policy",
+        "premium"
+      ]
+    },
+    {
+      "name": "Property",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "property",
+        "\\bflat\\b",
+        "apartment",
+        "\\bplot\\b",
+        "\\bland\\b",
+        "house",
+        "tax",
+        "\\brent\\b",
+        "lease"
+      ]
+    },
+    {
+      "name": "Vehicle",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "vehicle",
+        "\\bcar\\b",
+        "\\bbike\\b",
+        "registration"
+      ]
+    },
+    {
+      "name": "Travel",
+      "lifecycle": "Temporary",
+      "keywords": [
+        "boarding",
+        "ticket",
+        "flight",
+        "\\bpnr\\b",
+        "hotel",
+        "booking",
+        "\\bvisa\\b",
+        "itinerary"
+      ]
+    },
+    {
+      "name": "Finance/Invoices & Receipts",
+      "lifecycle": "Temporary",
+      "keywords": [
+        "invoice",
+        "receipt",
+        "\\bbill\\b",
+        "payment"
+      ]
+    },
+    {
+      "name": "Medical",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "medical",
+        "prescription",
+        "hospital",
+        "\\blab\\b",
+        "health",
+        "doctor",
+        "diagnos",
+        "vaccin"
+      ]
+    },
+    {
+      "name": "Work/Training",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "\\bkt\\b",
+        "training",
+        "meeting",
+        "recording",
+        "onboarding"
+      ]
+    },
+    {
+      "name": "Work/HR & Payslips",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "payslip",
+        "pay",
+        "slip",
+        "salary",
+        "offer",
+        "letter",
+        "appointment",
+        "relieving",
+        "experience",
+        "letter"
+      ]
+    },
+    {
+      "name": "Work/Contracts",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "agreement",
+        "contract",
+        "\\bnda\\b",
+        "\\bsow\\b"
+      ]
+    },
+    {
+      "name": "Work/Resume",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "resume",
+        "\\bcv\\b"
+      ]
+    },
+    {
+      "name": "Education",
+      "lifecycle": "Permanent",
+      "keywords": [
+        "marksheet",
+        "transcript",
+        "degree",
+        "school",
+        "college",
+        "course",
+        "certificate",
+        "exam",
+        "tutorial"
+      ]
+    }
+  ],
+  "doc_type_topics": {
+    "Passport": "IDs & Legal",
+    "Driving licence": "IDs & Legal",
+    "Vehicle RC": "Vehicle",
+    "Bank statement": "Finance/Bank",
+    "Payslip": "Work/HR & Payslips",
+    "Invoice": "Finance/Invoices & Receipts",
+    "Receipt": "Finance/Invoices & Receipts",
+    "Insurance policy": "Insurance",
+    "Offer / appointment letter": "Work/HR & Payslips",
+    "Relieving / experience letter": "Work/HR & Payslips",
+    "Resume / CV": "Work/Resume",
+    "Certificate": "Education",
+    "Marksheet": "Education",
+    "Boarding pass": "Travel",
+    "Train / travel ticket": "Travel",
+    "Medical report / prescription": "Medical",
+    "Rent agreement": "Property",
+    "Contract / agreement": "Work/Contracts",
+    "Property document": "Property",
+    "Meeting recording": "Work/Training"
+  },
+  "layout_preset": "by-owner",
+  "hub": {
+    "enabled": false,
+    "_about": "accept catalogue records from paired computers (agents) over the HTTPS server"
+  },
+  "access": {
+    "mode": "local",
+    "_modes": "local = this computer only; lan = + phones/tablets/computers on home Wi-Fi; remote = + your own VPN (Tailscale/WireGuard)",
+    "remote": {
+      "bind": "auto",
+      "networks": [
+        "100.64.0.0/10",
+        "fd7a:115c:a1e0::/48"
+      ],
+      "names": []
+    }
+  },
+  "role": "standalone"
+}

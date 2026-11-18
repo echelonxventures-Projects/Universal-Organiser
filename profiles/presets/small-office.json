@@ -1,0 +1,59 @@
+{
+  "_about": "Ready-made starting profile. The setup wizard copies it into your own profile; change anything later in Settings.",
+  "title": "Small office",
+  "about": "A small business: clients, vendors, staff and the company's own papers.",
+  "profile": {
+    "entity_types": [
+      "Office",
+      "Client",
+      "Organisation",
+      "Self",
+      "Property",
+      "Vehicle"
+    ],
+    "layout_preset": "classic-numbered",
+    "group_labels": {
+      "Office": "10_Company",
+      "Client": "20_Clients",
+      "Organisation": "30_Vendors & Partners",
+      "Self": "40_Staff",
+      "Media": "50_Media",
+      "Unsorted": "99_To Sort"
+    },
+    "extra_topics": [
+      {
+        "name": "Clients/Proposals",
+        "lifecycle": "Permanent",
+        "keywords": [
+          "proposal",
+          "quotation",
+          "quote",
+          "estimate"
+        ]
+      },
+      {
+        "name": "Company/Compliance",
+        "lifecycle": "Permanent",
+        "keywords": [
+          "compliance",
+          "audit",
+          "licence",
+          "license",
+          "registration",
+          "filing"
+        ]
+      },
+      {
+        "name": "Company/Marketing",
+        "lifecycle": "Temporary",
+        "keywords": [
+          "brochure",
+          "campaign",
+          "flyer",
+          "logo",
+          "brand"
+        ]
+      }
+    ]
+  }
+}

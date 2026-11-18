@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Browse · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--shade:rgba(20,25,22,.45);
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--shade:rgba(0,0,0,.6);color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f)}
+header{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}nav.top{display:flex;gap:14px;flex-wrap:wrap}nav.top a{color:var(--accent);text-decoration:none;font-size:13px}nav.top a.on{color:var(--ink);font-weight:600}.sp{flex:1}
+.wrap{display:grid;grid-template-columns:300px minmax(0,1fr);height:calc(100vh - 50px)}
+aside{border-right:1px solid var(--line);overflow:auto;padding:10px 8px;background:var(--surface)}
+aside h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 6px 4px}
+.node{display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1.5px solid transparent}
+.node:hover{background:var(--soft)}.node.on{background:var(--accent);color:var(--surface)}.node.over{border-color:var(--accent);background:var(--soft)}
+.tw{width:14px;flex:none;text-align:center;color:var(--muted);font-size:10px}.node.on .tw{color:var(--surface)}
+.node .c{margin-left:auto;font:11px var(--m);opacity:.7}
+main{overflow:auto;padding:12px 18px 60px;min-width:0}
+.crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:13px;margin-bottom:8px}.crumbs a{color:var(--accent);cursor:pointer}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:13px}
+button{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 10px;border-radius:6px;cursor:pointer}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}button:disabled{opacity:.45;cursor:default}
+button:focus-visible,.node:focus-visible,tr:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+table{border-collapse:collapse;width:100%;font-size:13px}th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px;border-bottom:1px solid var(--line);font-weight:600}
+td{padding:6px;border-bottom:1px solid var(--line);vertical-align:middle}tr.it{cursor:pointer}tr.it:hover{background:var(--soft)}tr.sel{background:var(--soft);outline:1.5px solid var(--accent)}
+td.r{text-align:right;font:12px var(--m);color:var(--muted);white-space:nowrap}.nm{overflow-wrap:anywhere}
+.b{font-size:11px;border:1px solid var(--line);border-radius:4px;padding:0 6px;color:var(--muted);margin-left:4px;white-space:nowrap}.b.own{border-color:var(--accent);color:var(--accent)}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:30;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(520px,100%)}.modal h3{margin:0 0 8px;font-size:16px}.modal p{color:var(--muted)}.modal .act{display:flex;gap:8px;justify-content:flex-end}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:40;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;font-size:13px;display:flex;gap:12px;align-items:center}
+#toast button{background:transparent;color:var(--bg);border-color:var(--bg)}
+.help{color:var(--muted);font-size:12.5px}
+@media (max-width:800px){.wrap{grid-template-columns:1fr;height:auto}aside{max-height:40vh}}
+</style></head><body>
+<header><h1>Universal Organiser</h1><nav class="top"><a href="/home">Home</a><a href="/">Files</a><a href="/browse" class="on">Browse</a><a href="/triage" class="adm">Triage</a><a href="/sorter" class="adm">Sorter</a><a href="/analytics">Analytics</a></nav><span class="sp"></span></header>
+<div class="wrap"><aside id="tree" aria-label="Folders"></aside><main><div class="crumbs" id="crumbs"></div><div class="bar" id="bar"></div><div id="list"></div></main></div>
+<div class="shade" id="shade" hidden></div><div id="toast" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const size=n=>{if(!n)return"0 B";const u=["B","KB","MB","GB","TB"];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+" "+u[i]};
+const short=p=>String(p||"").replace(/^\/Users\/[^/]+/,"~");
+let ME=null,cur="",open=new Set(),kids={},sel=new Set(),clip=null,LIST=null;
+function toast(m,run){const t=$("toast");t.innerHTML=`<span>${esc(m)}</span>${run?'<button id="un">Undo</button>':""}`;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,10000);
+ if(run)$("un").onclick=async()=>{const r=await api("/api/sort/undo",{run});t.hidden=true;toast(`Undone (${r.undone} file(s) back).`);kids={};drawTree();go(cur)}}
+function modal(t,txt,ok){return new Promise(res=>{const s=$("shade");s.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h3>${esc(t)}</h3><p>${esc(txt)}</p><div class="act"><button id="mn">Cancel</button><button class="pri" id="my">${esc(ok)}</button></div></div>`;
+ s.hidden=false;$("my").focus();const d=v=>{s.hidden=true;res(v)};$("my").onclick=()=>d(true);$("mn").onclick=()=>d(false)})}
+async function children(path){if(!kids[path])kids[path]=await api("/api/analytics/tree?raw=1&path="+encodeURIComponent(path));return kids[path]}
+async function drawTree(){const T=await children("");const lines=[];
+ async function walk(nodes,depth){for(const d of nodes){const isOpen=open.has(d.path);
+  lines.push(`<div class="node ${d.path===cur?"on":""}" tabindex="0" data-p="${esc(d.path)}" style="padding-left:${6+depth*14}px"><span class="tw" data-t="${esc(d.path)}">${isOpen?"▾":"▸"}</span>📁 <span>${esc(depth?d.name:short(d.name))}</span><span class="c">${d.n.toLocaleString()}</span></div>`);
+  if(isOpen){const C=await children(d.path);await walk(C.dirs,depth+1)}}}
+ await walk(T.dirs,0);
+ let sm="";try{const S=await api("/api/smart");sm=`<h3>Smart folders</h3>`+S.map(s=>`<div class="node" onclick="location.href='/?smart=${s.id}'"><span class="tw"></span>🔎 ${esc(s.name)}<span class="c">${s.n==null?"":s.n.toLocaleString()}</span></div>`).join("")}catch(e){}
+ $("tree").innerHTML=`<h3>Folders</h3>`+lines.join("")+sm;
+ $("tree").querySelectorAll(".node[data-p]").forEach(n=>{const p=n.dataset.p;
+  n.onclick=e=>{if(e.target.dataset.t!==undefined){open.has(p)?open.delete(p):open.add(p);drawTree();return}open.add(p);go(p);drawTree()};
+  n.onkeydown=e=>{if(e.key==="Enter")n.click()};
+  if(ME.role==="admin"){n.addEventListener("dragover",e=>{e.preventDefault();n.classList.add("over")});n.addEventListener("dragleave",()=>n.classList.remove("over"));
+   n.addEventListener("drop",e=>{e.preventDefault();n.classList.remove("over");const it=JSON.parse(e.dataTransfer.getData("text/plain")||"null");if(it)move(it,p)})}})}
+async function go(path){cur=path;sel.clear();const T=await children(path);LIST=T;
+ $("crumbs").innerHTML=`<a data-c="">All</a>`+(T.crumbs||[]).map(c=>` › <a data-c="${esc(c.path)}">${esc(c.name)}</a>`).join("");
+ $("crumbs").querySelectorAll("[data-c]").forEach(a=>a.onclick=()=>{go(a.dataset.c);drawTree()});
+ const rows=[...T.dirs.map(d=>({...d,dir:true})),...T.files];
+ $("list").innerHTML=rows.length?`<table><thead><tr><th>Name</th><th></th><th style="text-align:right">Files</th><th style="text-align:right">Size</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="it" tabindex="0" draggable="${ME.role==="admin"&&(r.dir||r.type==="file")}" data-i="${i}">
+  <td class="nm">${r.dir?"📁":r.type==="unit"?"📦":"📄"} ${esc(r.name)}</td><td>${r.dir?(r.owners||[]).slice(0,2).map(o=>`<span class="b own">${esc(o[0])}</span>`).join(""):`${r.owner?`<span class="b own">${esc(r.owner)}</span>`:""}<span class="b">${esc(r.kind)}</span>${r.cloud?'<span class="b">☁︎ iCloud</span>':""}${r.dup?'<span class="b">copy</span>':""}${r.type==="unit"?'<span class="b">kept whole</span>':""}`}</td>
+  <td class="r">${r.dir?r.n.toLocaleString():""}</td><td class="r">${size(r.size)}</td></tr>`).join("")}</tbody></table>${T.rest?`<p class="help">…and ${T.rest.n.toLocaleString()} smaller files (${size(T.rest.size)}).</p>`:""}`:'<p class="help">Empty folder.</p>';
+ $("list").querySelectorAll("tr.it").forEach(tr=>{const r=rows[+tr.dataset.i];
+  tr.onclick=e=>{if(e.metaKey||e.ctrlKey){sel.has(r)?sel.delete(r):sel.add(r)}else{sel.clear();sel.add(r)}$("list").querySelectorAll("tr.it").forEach(x=>x.classList.toggle("sel",sel.has(rows[+x.dataset.i])));drawBar()};
+  tr.ondblclick=()=>{if(r.dir){open.add(cur);go(r.path);drawTree()}else if(r.id)location.href="/?open="+r.id};
+  tr.onkeydown=e=>{if(e.key==="Enter")tr.ondblclick()};
+  tr.addEventListener("dragstart",e=>{const items=sel.has(r)?[...sel]:[r];e.dataTransfer.setData("text/plain",JSON.stringify(items.map(x=>x.dir?{folder:x.path,name:x.name}:{id:x.id,name:x.name})))})});
+ drawBar()}
+function drawBar(){const a=ME.role==="admin";const s=[...sel];
+ $("bar").innerHTML=`<span class="help">${LIST?`${(LIST.dirs.length+LIST.files.length).toLocaleString()} items here`:""}${s.length?` · ${s.length} selected`:""}</span><span class="sp" style="flex:1"></span>
+  ${a?`<button id="cut" ${s.length?"":"disabled"}>✂ Cut</button><button class="pri" id="paste" ${clip&&cur?"":"disabled"}>Paste here${clip?` (${clip.length})`:""}</button>`:""}
+  ${s.length===1&&!s[0].dir&&s[0].id?`<button id="openf">Open details</button>`:""}<span class="help">${a?"Drag onto a folder on the left, or Cut and Paste. Every move asks first and can be undone.":""}</span>`;
+ if($("cut"))$("cut").onclick=()=>{clip=s.map(x=>x.dir?{folder:x.path,name:x.name}:{id:x.id,name:x.name});toast(`${clip.length} item(s) cut. Open the destination folder and press Paste here.`);drawBar()};
+ if($("paste"))$("paste").onclick=()=>{move(clip,cur).then(ok=>{if(ok){clip=null;drawBar()}})};
+ if($("openf"))$("openf").onclick=()=>location.href="/?open="+s[0].id}
+async function move(items,dest){const body={ids:items.filter(x=>x.id).map(x=>x.id),folders:items.filter(x=>x.folder).map(x=>x.folder),dest};
+ try{const p=await api("/api/move",{...body,preview:true});   // one run per drop, so one Undo puts everything back
+  if(!await modal(`Move ${p.n.toLocaleString()} file(s)?`,`To ${short(dest)} (${size(p.size)}). Each file is checked again before it moves, and you can undo the move.`,"Move"))return false;
+  const res=await api("/api/move",body);toast(`Moved ${res.moved.toLocaleString()} file(s)${res.skipped?`, ${res.skipped} skipped`:""}.`,res.run);
+  kids={};await drawTree();await go(cur);return true}catch(e){toast(e.message);return false}}
+(async()=>{ME=await api("/api/me");if(ME.role!=="admin")document.querySelectorAll(".adm").forEach(a=>a.hidden=true);await drawTree();
+ const T=await children("");const lib=T.dirs.find(d=>/Organized/.test(d.path))||T.dirs[0];if(lib){open.add(lib.path);go(lib.path);drawTree()}})();
+</script></body></html>

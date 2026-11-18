@@ -1,0 +1,43 @@
+{
+  "_about": "Ready-made starting profile. The setup wizard copies it into your own profile; change anything later in Settings.",
+  "title": "Student",
+  "about": "Courses, assignments, notes and certificates, sorted by year.",
+  "profile": {
+    "entity_types": [
+      "Self",
+      "Family",
+      "Organisation"
+    ],
+    "layout_preset": "by-year",
+    "group_labels": {
+      "Self": "10_Me",
+      "Family": "20_Family",
+      "Organisation": "30_Schools & Clubs",
+      "Media": "50_Media",
+      "Unsorted": "99_To Sort"
+    },
+    "extra_topics": [
+      {
+        "name": "Education/Assignments",
+        "lifecycle": "Permanent",
+        "keywords": [
+          "assignment",
+          "homework",
+          "project report",
+          "thesis",
+          "essay"
+        ]
+      },
+      {
+        "name": "Education/Notes",
+        "lifecycle": "Permanent",
+        "keywords": [
+          "notes",
+          "lecture",
+          "slides",
+          "syllabus"
+        ]
+      }
+    ]
+  }
+}

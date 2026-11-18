@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Computers · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--warnsoft:#f6e4e0;--amber:#8a6100;--ambersoft:#fbf0d6;--shade:rgba(20,25,22,.45);
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--warnsoft:#3a2420;--amber:#e8c26e;--ambersoft:#3a3020;--shade:rgba(0,0,0,.6);color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 var(--f)}
+header{position:sticky;top:0;z-index:3;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}header a{color:var(--accent);text-decoration:none;font-size:13px}.sp{flex:1}
+main{max-width:980px;margin:0 auto;padding:16px 16px 80px;display:grid;gap:14px}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+h2{font-size:15px;margin:0 0 4px}p.help{color:var(--muted);margin:0 0 12px;font-size:13px;max-width:75ch}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}td.num{text-align:right;font-variant-numeric:tabular-nums}
+button{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:7px;cursor:pointer}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}button.x{color:var(--warn)}button:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;background:var(--bg)}
+.card:has(input:checked){border-color:var(--accent);background:var(--soft)}.card input{margin-top:3px;accent-color:var(--accent)}.card b{display:block}.card span{font-size:12.5px;color:var(--muted)}
+.sw{display:flex;gap:10px;align-items:center}.sw input{width:18px;height:18px;accent-color:var(--accent)}
+code,pre{font:12.5px var(--m);background:var(--bg);border:1px solid var(--line);border-radius:6px;overflow-wrap:anywhere}
+code{padding:1px 5px}pre{padding:10px 12px;white-space:pre-wrap;margin:6px 0}
+.big{font:600 26px var(--m);letter-spacing:.08em}
+.note{background:var(--ambersoft);border-radius:8px;padding:10px 12px;font-size:13px;margin:10px 0}
+.err{background:var(--warnsoft);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:13px;margin:10px 0}
+.n{color:var(--muted);font-size:12.5px}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:8;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(680px,100%);max-height:88vh;overflow:auto}
+.modal h3{margin:0 0 8px;font-size:16px}.act{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.tabs{display:flex;gap:6px;margin:10px 0 0;flex-wrap:wrap}.tabs button.on{border-color:var(--accent);background:var(--soft)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;font-size:13px;max-width:calc(100% - 32px)}
+</style></head><body>
+<header><h1>Computers</h1><span class="sp"></span><a href="/home">Home</a><a href="/">Files</a><a href="/settings">Settings</a></header>
+<main>
+<section><h2>Who can open the page</h2><p class="help">Files stay on their own computer. The page and the catalogue are reached only over HTTPS with a certificate made on this computer, and every new phone or tablet must be approved here with a 6-digit code.</p>
+ <div class="cards" id="acc"></div><div id="accmsg"></div></section>
+<section><h2>Hub</h2><p class="help">Make this computer the hub: other computers at home send their catalogues here, so one search covers everything. They need the hub to be reachable on home Wi-Fi (or your VPN).</p>
+ <label class="sw"><input type="checkbox" id="hubon"><span><b>This computer is the hub</b></span></label><div id="hubinfo"></div></section>
+<section id="msec"><div class="row"><h2 style="flex:1">Paired computers</h2><button class="pri" id="add">Add a computer</button></div>
+ <div class="tw"><table><thead><tr><th>Computer</th><th>System</th><th class="num">Files</th><th>Last sync</th><th>Paired</th><th></th></tr></thead><tbody id="ml"></tbody></table></div>
+ <p class="help" id="none" style="margin-top:10px">No computers paired yet.</p></section>
+<section><h2>Network folders instead</h2><p class="help">A computer or NAS that cannot run Universal Organiser (a NAS, an old PC) can still be included: share its folder on the network, connect it on this computer (Finder → Go → Connect to Server, File Explorer → Map network drive, or your Linux file manager), then add it in Settings → Folders & layout. Its files are then scanned from here.</p></section>
+</main>
+<div class="shade" id="shade" hidden></div><div id="toast" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}const j=await r.json();if(!r.ok)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const when=t=>t?new Date(t*1000).toLocaleString([], {dateStyle:"medium",timeStyle:"short"}):"never";
+const toast=m=>{const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,4000)};
+let D=null;
+async function load(){D=await api("/api/hub");draw()}
+function draw(){
+ const A=[["local","Only this computer","Nothing listens on the network."],["lan","Home Wi-Fi","Phones, tablets and other computers at home."],["remote","Also away from home","Only through your own VPN (Tailscale or WireGuard)."]];
+ $("acc").innerHTML=A.map(([v,t,d])=>`<label class="card"><input type="radio" name="acc" value="${v}" ${D.access===v?"checked":""}><div><b>${t}</b><span>${d}</span></div></label>`).join("");
+ $("accmsg").innerHTML=(D.error?`<div class="err">${esc(D.error)}</div>`:"")+(D.url?`<p class="n" style="margin:10px 0 0">Address on home Wi-Fi: <code>${esc(D.url)}</code>${D.vpn_url?` · on your VPN: <code>${esc(D.vpn_url)}</code>`:""}<br>Certificate fingerprint: <code>${esc(D.fingerprint)}</code></p>`:"");
+ document.querySelectorAll("[name=acc]").forEach(x=>x.onchange=async()=>{try{const r=await api("/api/access",{mode:x.value});toast(r.error||"Saved.")}catch(e){toast(e.message)}load()});
+ $("hubon").checked=D.enabled;
+ $("hubinfo").innerHTML=D.enabled&&!D.running?'<div class="note">The hub is on, but nothing is listening on the network yet: choose “Home Wi-Fi” above.</div>':"";
+ $("msec").hidden=!D.enabled;
+ $("ml").innerHTML=D.machines.map(m=>`<tr><td><b>${esc(m.name)}</b><div class="n">${esc(m.ip||"")}</div></td><td>${esc(m.os||"")}</td><td class="num">${(m.files||0).toLocaleString()}</td><td>${when(m.last_sync)}</td><td>${when(m.created)}</td>
+  <td><button class="x" data-rm="${esc(m.id)}" data-n="${esc(m.name)}">Remove</button></td></tr>`).join("");
+ $("none").hidden=D.machines.length>0;
+ document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>confirmRemove(b.dataset.rm,b.dataset.n))}
+$("hubon").onchange=async e=>{try{const r=await api("/api/hub/enable",{enabled:e.target.checked});if(r.error)toast(r.error)}catch(x){toast(x.message)}load()};
+function modal(h){$("shade").innerHTML=`<div class="modal" role="dialog" aria-modal="true">${h}</div>`;$("shade").hidden=false}
+const close=()=>{$("shade").hidden=true;$("shade").innerHTML=""};
+function confirmRemove(id,name){modal(`<h3>Remove ${esc(name)}?</h3><p class="help">Its records are deleted from this hub's catalogue and it can no longer send. Nothing on ${esc(name)} is changed; pair it again any time.</p>
+ <div class="act"><button id="c0">Cancel</button><button class="pri" id="c1">Remove</button></div>`);
+ $("c0").onclick=close;$("c1").onclick=async()=>{close();const r=await api("/api/hub/remove",{id});toast(`Removed ${name} (${r.removed.toLocaleString()} records).`);load()}}
+$("add").onclick=async()=>{let c;try{c=await api("/api/hub/code",{})}catch(e){return toast(e.message)}
+ const url=(D.url||D.vpn_url||`https://${D.hostname}.local:${D.port}`);const host=`https://${D.hostname}.local:${D.port}`;
+ const cmd={mac:`uo agent pair ${host} ${c.code}`,win:`uo.cmd agent pair ${host} ${c.code}`};
+ const tab=k=>`<pre>${esc(k==="win"?cmd.win:cmd.mac)}</pre>`;
+ modal(`<h3>Add a computer</h3><p class="help">1. Install Universal Organiser on the other computer and finish its set-up wizard, choosing <b>Send to a hub</b>.<br>2. In a terminal there, type:</p>
+ <div class="tabs"><button class="on" data-t="mac">Mac / Linux</button><button data-t="win">Windows</button></div><div id="cmd">${tab("mac")}</div>
+ <p class="help">Pairing code <span class="big">${esc(c.code)}</span> — works once, for 15 minutes.</p>
+ <p class="help">3. It shows the hub's certificate fingerprint. It must be exactly:<br><code>${esc(D.fingerprint||"(turn on Home Wi-Fi first)")}</code></p>
+ <p class="help">If <code>${esc(D.hostname)}.local</code> is not found, use the address instead: <code>${esc(url)}</code></p>
+ <div class="act"><button class="pri" id="c0">Done</button></div>`);
+ document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-t]").forEach(x=>x.classList.toggle("on",x===b));$("cmd").innerHTML=tab(b.dataset.t)});
+ $("c0").onclick=()=>{close();load()}};
+load();setInterval(()=>{if($("shade").hidden)load()},15000);
+</script></body></html>

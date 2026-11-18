@@ -1,0 +1,3 @@
+#!/bin/sh
+# Earlier name of the launcher, kept so old shortcuts still work. Same as ./uo
+exec /usr/bin/env python3 -I "$(dirname "$0")/engine/cli.py" "$@"

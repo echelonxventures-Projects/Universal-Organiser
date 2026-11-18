@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Settings · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;--warnsoft:#f6e4e0;--shade:rgba(20,25,22,.45);
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--m:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;--warnsoft:#3a2420;--shade:rgba(0,0,0,.6);color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f)}
+header{position:sticky;top:0;z-index:3;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}header a{color:var(--accent);text-decoration:none;font-size:13px}.sp{flex:1}
+nav{display:flex;gap:4px;flex-wrap:wrap;padding:10px 16px 0;max-width:1180px;margin:0 auto}
+nav button{border:1px solid transparent;background:transparent;border-radius:7px 7px 0 0;padding:7px 12px;font:13.5px var(--f);color:var(--muted);cursor:pointer}
+nav button.on{background:var(--surface);border-color:var(--line);border-bottom-color:var(--surface);color:var(--ink);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:0 16px 120px}
+section{background:var(--surface);border:1px solid var(--line);border-radius:0 10px 10px 10px;padding:16px 18px;margin-top:-1px}
+h2{font-size:15px;margin:0 0 4px}p.help{color:var(--muted);margin:0 0 14px;font-size:13px;max-width:75ch}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:4px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+input[type=text],input[type=password],select,textarea{font:13px var(--f);padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%}
+textarea{font:12px var(--m);resize:vertical;min-height:34px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{font:13px var(--f);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 11px;border-radius:6px;cursor:pointer;white-space:nowrap}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}button.x{color:var(--warn);border-color:transparent;background:transparent;padding:4px 8px}
+button:disabled{opacity:.5;cursor:default}
+.n{font:12px var(--m);color:var(--muted)}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.card{border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.card h3{font-size:13px;margin:0 0 6px}
+.plug{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.plug:last-child{border-bottom:0}.plug input{width:18px;height:18px;accent-color:var(--accent);margin-top:2px}
+.plug .d{font-size:12px;color:var(--muted)}
+.lock{font-size:12px;color:var(--muted);background:var(--bg);border:1px dashed var(--line);border-radius:6px;padding:8px 10px;margin-top:10px}
+.save{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.save b{color:var(--accent)}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:8;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(640px,100%);max-height:86vh;overflow:auto}
+.modal h3{margin:0 0 8px;font-size:16px}.modal ul{margin:0 0 14px;padding-left:20px;font-size:13px}.modal .act{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.err li{color:var(--warn)}.box{background:var(--warnsoft);border-radius:8px;padding:8px 12px;margin-bottom:12px}
+.chg{font:12px var(--m);overflow-wrap:anywhere}.chg s{color:var(--warn)}.chg ins{color:var(--accent);text-decoration:none}
+.bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:var(--accent);width:0}
+#toast{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:9;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;display:flex;gap:14px;align-items:center;max-width:calc(100% - 32px);font-size:13px}
+#toast button{background:transparent;color:var(--bg);border-color:var(--bg)}
+.scope{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px}.scope label{display:flex;gap:4px;align-items:center}
+</style></head><body>
+<header><h1>Settings</h1><span class="n" id="prof"></span><span class="sp"></span><a href="/home">Home</a><a href="/">Files</a><a href="/browse">Browse</a><a href="/analytics">Analytics</a><a href="/computers">Computers</a><a href="/welcome">Set-up wizard</a></header>
+<nav id="tabs"></nav>
+<main id="main"></main>
+<div class="save" id="savebar" hidden><span><b>Unsaved changes</b></span><button id="discard">Discard</button><button class="pri" id="review">Review &amp; save</button></div>
+<div class="shade" id="shade" hidden></div><div id="toast" hidden></div>
+<script>
+const $=id=>document.getElementById(id);
+const H={"X-FE":"1","Content-Type":"application/json"};
+async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{method:"POST",headers:H,body:JSON.stringify(body)});
+ if(r.status===401){location.href="/login";throw new Error("signed out")}if(r.status===403&&!p.startsWith("/api/")){location.href="/"}
+ const j=await r.json();if(!r.ok&&!j.errors)throw new Error(j.error||r.statusText);return j}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const list=s=>s.split(",").map(x=>x.trim()).filter(Boolean), join=a=>(a||[]).join(", ");
+let S=null,V=null,SAVED="",COUNTS={},tab="owners";
+const TABS=[["owners","Owners"],["topics","Topics"],["doctypes","Document types"],["layout","Folders & layout"],["plugins","Plug-ins & AI"],["accounts","Accounts"],["history","History"]];
+function toast(msg,cid){const t=$("toast");t.innerHTML=`<span>${esc(msg)}</span>${cid?'<button id="undo">Undo</button>':""}`;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,12000);
+ if(cid)$("undo").onclick=async()=>{const r=await api("/api/undo",{id:cid});t.hidden=true;toast(`Undone (${r.n} files).`);if(tab==="history")draw()}}
+function shade(html){const s=$("shade");s.innerHTML=`<div class="modal" role="dialog" aria-modal="true">${html}</div>`;s.hidden=false;return s}
+const close=()=>$("shade").hidden=true;
+function dirty(){const n=JSON.stringify(V)!==SAVED;$("savebar").hidden=!n||["accounts","history"].includes(tab)}
+function bind(root){root.querySelectorAll("[data-p]").forEach(el=>{const ev=el.type==="checkbox"||el.tagName==="SELECT"?"change":"input";
+ el.addEventListener(ev,()=>{const path=el.dataset.p.split(".");let o=V;for(const k of path.slice(0,-1))o=o[k];const last=path[path.length-1];
+  o[last]=el.type==="checkbox"?el.checked:el.dataset.list!==undefined?list(el.value):el.value;dirty()})})}
+function drawTabs(){$("tabs").innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?"on":""}" data-t="${k}">${l}</button>`).join("");}
+$("tabs").onclick=e=>{const b=e.target.closest("[data-t]");if(!b)return;tab=b.dataset.t;drawTabs();draw();dirty()};
+const sel=(path,choices,cur)=>`<select data-p="${path}">${choices.map(c=>`<option ${c===cur?"selected":""}>${esc(c)}</option>`).join("")}</select>`;
+async function draw(){const m=$("main"),C=S.choices;let h="";
+ if(tab==="owners"){h=`<section><h2>Owners: people, family, office, organisations</h2>
+  <p class="help">Who files belong to. <b>Name words</b> match the file or folder name (start with \\b for a whole word, e.g. <code>\\bdad\\b</code>). <b>Content words</b> must <i>all</i> appear in a document's text. <b>Not if</b> stops a match (e.g. “bakery” keeps a person apart from the company that has their name). Owners are never guessed: anything uncertain becomes a suggestion.</p>
+  <div class="tw"><table><thead><tr><th>Name</th><th>Type</th><th>Relation</th><th>Name words</th><th>Content words (all)</th><th>Not if</th><th>Files</th><th></th></tr></thead><tbody>
+  ${V.entities.map((e,i)=>`<tr><td><input type="text" data-p="entities.${i}.name" value="${esc(e.name)}" style="min-width:150px"></td><td>${sel(`entities.${i}.type`,V.entity_types,e.type)}</td>
+   <td><input type="text" data-p="entities.${i}.relation" value="${esc(e.relation||"")}" style="min-width:90px"></td>
+   <td><textarea data-p="entities.${i}.aliases" data-list rows="1" style="min-width:170px">${esc(join(e.aliases))}</textarea></td>
+   <td><textarea data-p="entities.${i}.text_all" data-list rows="1" style="min-width:140px">${esc(join(e.text_all))}</textarea></td>
+   <td><textarea data-p="entities.${i}.not_if" data-list rows="1" style="min-width:120px">${esc(join(e.not_if))}</textarea></td>
+   <td class="n">${(COUNTS[e.name]||0).toLocaleString()}</td><td><button class="x" data-del="entities.${i}" title="Remove">✕</button></td></tr>`).join("")}</tbody></table></div>
+  <div class="row"><button id="add-ent">+ Add owner</button></div>
+  <h2 style="margin-top:18px">Owner types</h2><p class="help">Comma-separated. Add your own (e.g. Client, Property, Vehicle, Pet).</p>
+  <input type="text" data-p="entity_types" data-list value="${esc(join(V.entity_types))}"></section>`}
+ if(tab==="topics"){h=`<section><h2>Topics</h2><p class="help">What a file is about. Use “/” for nesting (Finance/Tax). <b>Lifecycle</b> says how long a file normally matters (Permanent, Temporary 90 days, Testing 30 days). Keywords are matched against the name and the first part of the text; \\b marks a whole word.</p>
+  <div class="tw"><table><thead><tr><th>Topic</th><th>Lifecycle</th><th>Keywords</th><th></th></tr></thead><tbody>
+  ${V.topics.map((t,i)=>`<tr><td><input type="text" data-p="topics.${i}.name" value="${esc(t.name)}" style="min-width:180px"></td><td>${sel(`topics.${i}.lifecycle`,C.lifecycles,t.lifecycle)}</td>
+   <td><textarea data-p="topics.${i}.keywords" data-list rows="2" style="min-width:380px">${esc(join(t.keywords))}</textarea></td><td><button class="x" data-del="topics.${i}">✕</button></td></tr>`).join("")}</tbody></table></div>
+  <div class="row"><button id="add-top">+ Add topic</button></div></section>`}
+ if(tab==="doctypes"){const tops=["",...V.topics.map(t=>t.name)];h=`<section><h2>Document type → topic</h2><p class="help">When a document type is detected with confidence, its file goes to this topic. Leave “by keywords” to let the topic keywords decide. The detectors themselves (PAN, Aadhaar, invoice…) are generic rules in the shared base profile.</p>
+  <div class="tw"><table><thead><tr><th>Document type</th><th>Topic</th></tr></thead><tbody>
+  ${C.doc_types.map(d=>`<tr><td>${esc(d)}</td><td><select data-dt="${esc(d)}">${tops.map(t=>`<option value="${esc(t)}" ${(V.doc_type_topics[d]||"")===t?"selected":""}>${t?esc(t):"by keywords"}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div></section>`}
+ if(tab==="layout"){const L=C.layouts,N=C.naming;h=`<section><div class="grid2">
+  <div class="card"><h3>Folder layout (used by the sorter, a later milestone)</h3>${Object.entries(L).map(([k,v])=>`<label class="plug"><input type="radio" name="lay" value="${esc(k)}" ${V.layout_preset===k?"checked":""}><span><b>${esc(k)}</b><div class="d">${esc(v)}</div></span></label>`).join("")}</div>
+  <div class="card"><h3>File naming</h3>${Object.entries(N).map(([k,v])=>`<label class="plug"><input type="radio" name="nam" value="${esc(k)}" ${V.naming_preset===k?"checked":""}><span><b>${esc(k)}</b><div class="d">${esc(v)}</div></span></label>`).join("")}</div>
+  <div class="card"><h3>Folder labels (for {group_label})</h3><table><tbody>${Object.entries(V.group_labels).map(([k,v])=>`<tr><td class="n">${esc(k)}</td><td><input type="text" data-p="group_labels.${esc(k)}" value="${esc(v)}"></td></tr>`).join("")}</tbody></table>
+   <p class="help" style="margin-top:8px">Number prefixes are optional: remove them here if you prefer plain names.</p></div>
+  <div class="card"><h3>Folders to scan</h3><p class="help">{HOME} = ${esc(C.tokens["{HOME}"])} · {ICLOUD} = iCloud Drive. Comma or one per line.</p>
+   <textarea data-p="roots" data-list rows="5">${esc(join(V.roots))}</textarea>
+   <h3 style="margin-top:12px">Folders to skip</h3><textarea data-p="exclude" data-list rows="3">${esc(join(V.exclude))}</textarea></div>
+  <div class="card"><h3>Protected folders (${V.protect.length})</h3><p class="help">Never opened, never moved: each is one catalogue entry. You can add folders here; removing one is deliberately not possible from this page.</p>
+   <textarea class="n" readonly rows="6">${esc(V.protect.join("\n"))}</textarea><div class="row"><input type="text" id="newprot" placeholder="{HOME}/Desktop/MyProject"><button id="addprot">Protect</button></div></div>
+  </div></section>`}
+ if(tab==="plugins"){h=`<section><div class="grid2"><div class="card"><h3>What the scanner may read</h3>
+  ${C.plugins.map(p=>`<label class="plug"><input type="checkbox" data-p="plugins.${p.key}" ${V.plugins[p.key]?"checked":""} ${p.fixed?"disabled":""}><span>${esc(p.label)}${p.mode?` <span class="n">(${esc(p.mode)})</span>`:""}<div class="d">${p.fixed?esc(p.fixed):""}</div></span></label>`).join("")}
+  <p class="help" style="margin-top:8px">Changes apply on the next <code>uo scan</code>. Turning a reader on for files already scanned needs <code>uo scan --full</code>.</p></div>
+  <div class="card"><h3>AI</h3>
+   <label class="plug"><input type="checkbox" checked disabled><span>Apple built-in (Vision, on this Mac)<div class="d">Used for text in images and photo labels. Nothing leaves the Mac.</div></span></label>
+   <label class="plug"><input type="checkbox" data-p="ollama.enabled" ${V.ollama.enabled?"checked":""}><span>Local AI with Ollama<div class="d">Runs on this Mac at 127.0.0.1 only. Never reads sensitive files.</div></span></label>
+   <div style="padding-left:28px"><input type="text" data-p="ollama.model" value="${esc(V.ollama.model)}" placeholder="model, e.g. llama3.2:3b"></div>
+   <div class="lock">Cloud AI: <b>${esc(C.cloud_ai)}</b>. Fixed by your design decision; cannot be turned on here.<br>Sensitive files: never read, never sent to AI, never moved into iCloud.</div></div></div></section>`}
+ if(tab==="accounts"){const U=await api("/api/users");const ents=V.entities.map(e=>e.name);
+  h=`<section><h2>Accounts on this computer</h2><p class="help">Family members sign in on this page with their own account. A <b>member</b> sees only the owners you tick, never sensitive files, and cannot change anything. An <b>admin</b> sees and changes everything.</p>
+  <div class="tw"><table><thead><tr><th>User</th><th>Name</th><th>Role</th><th>Can see files of</th><th>New password</th><th></th></tr></thead><tbody>
+  ${U.map(u=>`<tr data-u="${esc(u.username)}"><td class="n">${esc(u.username)}</td><td><input type="text" class="u-d" value="${esc(u.display)}"></td>
+   <td><select class="u-r"><option ${u.role==="member"?"selected":""}>member</option><option ${u.role==="admin"?"selected":""}>admin</option></select></td>
+   <td>${u.role==="admin"?'<span class="n">everything</span>':`<div class="scope">${ents.map(n=>`<label><input type="checkbox" class="u-s" value="${esc(n)}" ${u.scope.includes(n)?"checked":""}>${esc(n)}</label>`).join("")}</div>`}</td>
+   <td><input type="password" class="u-p" placeholder="leave blank" autocomplete="new-password"></td>
+   <td><button class="u-save">Save</button> <button class="x u-del">Remove</button></td></tr>`).join("")}</tbody></table></div>
+  <h2 style="margin-top:18px">Add a family member</h2>
+  <div class="grid2"><div><input type="text" id="nu-u" placeholder="user name, e.g. sam" autocapitalize="none"><div style="height:8px"></div><input type="text" id="nu-d" placeholder="display name"><div style="height:8px"></div>
+   <input type="password" id="nu-p" placeholder="password (8+ characters)" autocomplete="new-password"><div style="height:8px"></div><select id="nu-r"><option>member</option><option>admin</option></select></div>
+   <div><div class="n" style="margin-bottom:6px">Can see files of:</div><div class="scope" id="nu-s">${ents.map(n=>`<label><input type="checkbox" value="${esc(n)}">${esc(n)}</label>`).join("")}</div></div></div>
+  <div class="row"><button class="pri" id="nu-go">Add account</button></div>
+  <h2 style="margin-top:22px">Phones &amp; tablets on home Wi-Fi</h2>
+  <p class="help">Off unless you switch it on. Only devices on your home network can reach it (never the internet), over HTTPS with this computer's own certificate, and each new device must be approved here with the code it shows. Family members see only their own files, as on this computer. macOS may ask once to allow incoming connections for Python: allow it.</p>
+  <div id="lanbox" class="card"></div>
+  <h3 style="margin-top:14px;font-size:13px">Devices</h3><div class="tw"><table><thead><tr><th>Device</th><th>Person</th><th>Code</th><th>Status</th><th>Last seen</th><th></th></tr></thead><tbody id="devs"></tbody></table></div></section>`}
+ if(tab==="history"){const [Ch,Vs]=await Promise.all([api("/api/changes"),api("/api/settings/versions")]);
+  h=`<section><div class="grid2"><div><h2>Label changes</h2><p class="help">Every owner, topic or type change, and every rules re-run. Undo puts the old labels back.</p>
+  <div class="tw"><table><thead><tr><th>When</th><th>Who</th><th>What</th><th></th></tr></thead><tbody>${Ch.map(c=>`<tr><td class="n">${new Date(c.t*1000).toLocaleString()}</td><td>${esc(c.by)}</td><td>${esc(c.summary)}</td>
+   <td>${c.undone?'<span class="n">undone</span>':c.action==="undo"?"":`<button data-undo="${c.id}">Undo</button>`}</td></tr>`).join("")||'<tr><td colspan="4" class="n">No changes yet.</td></tr>'}</tbody></table></div></div>
+  <div><h2>Saved settings versions</h2><p class="help">The settings as they were before each save. Restoring keeps today's version too.</p>
+  <div class="tw"><table><thead><tr><th>Saved before</th><th>By</th><th></th></tr></thead><tbody>${Vs.map(v=>`<tr><td class="n">${esc(v.at.replace(/(\d{4})(\d\d)(\d\d)-(\d\d)(\d\d)(\d\d)/,"$1-$2-$3 $4:$5:$6"))}</td><td>${esc(v.by||"")}</td><td><button data-restore="${esc(v.name)}">Restore</button></td></tr>`).join("")||'<tr><td colspan="3" class="n">None yet.</td></tr>'}</tbody></table></div>
+  <div class="row"><button id="rerun">Re-apply rules to catalogue…</button></div></div></div></section>`}
+ m.innerHTML=h;bind(m);
+ m.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const[k,i]=b.dataset.del.split(".");V[k].splice(+i,1);draw();dirty()});
+ m.querySelectorAll("[data-dt]").forEach(s=>s.onchange=()=>{const d=s.dataset.dt;s.value?V.doc_type_topics[d]=s.value:delete V.doc_type_topics[d];dirty()});
+ m.querySelectorAll("input[name=lay]").forEach(r=>r.onchange=()=>{V.layout_preset=r.value;dirty()});
+ m.querySelectorAll("input[name=nam]").forEach(r=>r.onchange=()=>{V.naming_preset=r.value;dirty()});
+ if($("add-ent"))$("add-ent").onclick=()=>{V.entities.push({name:"",type:V.entity_types[0],aliases:[],text_all:[]});draw();dirty()};
+ if($("add-top"))$("add-top").onclick=()=>{V.topics.push({name:"",lifecycle:"Permanent",keywords:[]});draw();dirty()};
+ if($("addprot"))$("addprot").onclick=()=>{const v=$("newprot").value.trim();if(v&&!V.protect.includes(v)){V.protect.push(v);draw();dirty()}};
+ m.querySelectorAll("[data-undo]").forEach(b=>b.onclick=async()=>{const r=await api("/api/undo",{id:+b.dataset.undo});toast(`Undone (${r.n} files).`);draw()});
+ m.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>{const s=shade(`<h3>Restore settings?</h3><p class="help">Settings go back to how they were before ${esc(b.dataset.restore)}. Today's settings are kept as a version, so this can be reversed.</p><div class="act"><button id="c0">Cancel</button><button class="pri" id="c1">Restore</button></div>`);
+  $("c0").onclick=close;$("c1").onclick=async()=>{await api("/api/settings/restore",{name:b.dataset.restore});close();await load();toast("Settings restored.");askRules()}});
+ if($("rerun"))$("rerun").onclick=askRules;
+ if(tab==="accounts"){
+  m.querySelectorAll("tr[data-u]").forEach(tr=>{const u=tr.dataset.u;
+   tr.querySelector(".u-save").onclick=async()=>{const sc=[...tr.querySelectorAll(".u-s:checked")].map(x=>x.value);
+    try{await api("/api/users/update",{username:u,display:tr.querySelector(".u-d").value,role:tr.querySelector(".u-r").value,scope:tr.querySelector(".u-s")?sc:undefined,password:tr.querySelector(".u-p").value});toast("Saved "+u+".");draw()}catch(e){toast(e.message)}};
+   tr.querySelector(".u-del").onclick=()=>{shade(`<h3>Remove ${esc(u)}?</h3><p class="help">Only the account is removed. No files or labels change.</p><div class="act"><button id="c0">Cancel</button><button class="pri" id="c1">Remove</button></div>`);
+    $("c0").onclick=close;$("c1").onclick=async()=>{close();try{await api("/api/users/remove",{username:u});toast("Removed "+u+".");draw()}catch(e){toast(e.message)}}}});
+  const drawLan=async()=>{const L=await api("/api/lan"),D=await api("/api/devices");
+   $("lanbox").innerHTML=L.enabled?`<b>On.</b> On each phone or tablet open<br><code style="font-size:14px">${esc(L.url)}</code><br><span class="help">Certificate fingerprint (must match on the phone):</span><br><code style="font-size:11.5px;overflow-wrap:anywhere">${esc(L.fingerprint)}</code><div class="row"><button id="lan-off">Switch off</button></div>`
+    :`<b>Off.</b>${L.error?` <span style="color:var(--warn)">${esc(L.error)}</span>`:""}<div class="row"><button class="pri" id="lan-on">Switch on</button></div>`;
+   if($("lan-on"))$("lan-on").onclick=async()=>{try{await api("/api/lan",{enabled:true});toast("Wi-Fi access on.")}catch(e){toast(e.message)}drawLan()};
+   if($("lan-off"))$("lan-off").onclick=async()=>{await api("/api/lan",{enabled:false});toast("Wi-Fi access off.");drawLan()};
+   $("devs").innerHTML=D.map(d=>`<tr><td>${esc(d.label)}<div class="n">${esc(d.ip||"")}</div></td><td>${esc(d.username)}</td><td class="n" style="font-size:14px">${d.status==="pending"?esc(d.code):""}</td>
+    <td>${d.status==="approved"?"approved":d.status==="pending"?"<b>waiting</b>":"removed"}</td><td class="n">${d.last_seen?new Date(d.last_seen*1000).toLocaleString():""}</td>
+    <td>${d.status==="pending"?`<button class="pri" data-dv="${esc(d.id)}" data-st="approved">Approve</button> `:""}${d.status==="approved"?`<button data-dv="${esc(d.id)}" data-st="revoked">Block</button> `:""}<button class="x" data-dv="${esc(d.id)}" data-st="removed">Remove</button></td></tr>`).join("")||'<tr><td colspan="6" class="n">No devices yet.</td></tr>';
+   document.querySelectorAll("[data-dv]").forEach(b=>b.onclick=async()=>{await api("/api/devices/set",{id:b.dataset.dv,status:b.dataset.st});drawLan()})};
+  drawLan();
+  $("nu-go").onclick=async()=>{try{await api("/api/users/add",{username:$("nu-u").value,display:$("nu-d").value,password:$("nu-p").value,role:$("nu-r").value,
+   scope:[...$("nu-s").querySelectorAll("input:checked")].map(x=>x.value)});toast("Account added.");draw()}catch(e){toast(e.message)}}}}
+$("discard").onclick=()=>{V=JSON.parse(SAVED);draw();dirty()};
+$("review").onclick=async()=>{const r=await api("/api/settings/preview",V);
+ if(r.errors.length){shade(`<h3>Fix these first</h3><div class="box"><ul class="err">${r.errors.map(e=>`<li>${esc(e)}</li>`).join("")}</ul></div><div class="act"><button class="pri" id="c0">OK</button></div>`);$("c0").onclick=close;return}
+ shade(`<h3>Save these changes?</h3><ul>${r.changes.map(c=>`<li>${esc(c)}</li>`).join("")||"<li>No real changes.</li>"}</ul><p class="help">The current settings are kept as a version (History tab) so you can restore them. No files are touched.</p>
+  <div class="act"><button id="c0">Cancel</button><button class="pri" id="c1">Save</button></div>`);
+ $("c0").onclick=close;$("c1").onclick=async()=>{const s=await api("/api/settings/save",V);if(s.errors){toast(s.errors[0]);return}close();await load();toast("Settings saved.");askRules()}};
+function askRules(){shade(`<h3>Re-apply rules to the catalogue?</h3><p class="help">Works out again, for every file, its owner, document type and topic using the new settings, from text already in the catalogue (no file is opened). You see what would change before anything is applied. Labels you set yourself always stay.</p>
+ <div class="act"><button id="c0">Not now</button><button class="pri" id="c1">Preview changes</button></div>`);$("c0").onclick=close;$("c1").onclick=runRules}
+async function runRules(){try{await api("/api/rules/start",{})}catch(e){toast(e.message);return}
+ shade(`<h3>Working out changes…</h3><div class="bar"><i id="pb"></i></div><p class="help" id="pt">Starting…</p>`);
+ const tick=async()=>{const j=await api("/api/rules/status");if(!j){close();return}
+  if(j.phase==="running"){const p=j.total?Math.round(100*j.done/j.total):0;$("pb").style.width=p+"%";$("pt").textContent=`${j.done.toLocaleString()} of ${j.total.toLocaleString()} files`;setTimeout(tick,700);return}
+  if(j.phase==="failed"){shade(`<h3>Could not finish</h3><p class="help">${esc(j.error)}</p><div class="act"><button id="c0">Close</button></div>`);$("c0").onclick=close;return}
+  const R=j.result,c=R.counts,LB={entity:"Owner",doc_type:"Type",topic:"Topic"};
+  shade(`<h3>${R.files?R.files.toLocaleString()+" files would change":"Nothing would change"}</h3>
+   ${R.files?`<p class="help">Owner ${c.entity.toLocaleString()} · document type ${c.doc_type.toLocaleString()} · topic ${c.topic.toLocaleString()}. Labels only: nothing is moved. Showing up to 200:</p>
+   <div class="tw" style="max-height:44vh;overflow:auto;margin-bottom:14px"><table><tbody>${R.sample.map(s=>`<tr><td class="chg">${esc(s.path.replace(/^\/Users\/[^/]+/,"~"))}<br>${s.changes.map(([k,a,b])=>`${LB[k]}: <s>${esc(a||"none")}</s> → <ins>${esc(b||"none")}</ins>`).join(" · ")}</td></tr>`).join("")}</tbody></table></div>`:""}
+   <div class="act"><button id="c0">${R.files?"Cancel":"Close"}</button>${R.files?'<button class="pri" id="c1">Apply</button>':""}</div>`);
+  $("c0").onclick=close;if($("c1"))$("c1").onclick=async()=>{const a=await api("/api/rules/apply",{});close();toast(`Applied to ${R.files.toLocaleString()} files.`,a.change)}};
+ tick()}
+async function load(){S=await api("/api/settings");V=JSON.parse(JSON.stringify(S.values));SAVED=JSON.stringify(V);
+ $("prof").textContent=S.choices.profile+" · "+S.choices.platform;
+ try{const f=await api("/api/facets");COUNTS=Object.fromEntries(f.entity)}catch(e){}
+ drawTabs();draw();dirty()}
+window.addEventListener("beforeunload",e=>{if(V&&JSON.stringify(V)!==SAVED){e.preventDefault();e.returnValue=""}});
+load();
+</script></body></html>

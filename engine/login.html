@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in · Universal Organiser</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#f4f5f2;--surface:#fff;--ink:#1d2320;--muted:#5d6862;--line:#dde1dc;--accent:#2d6a4f;--soft:#e3efe8;--warn:#9a3b2e;
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--surface:#1a201d;--ink:#e4ebe6;--muted:#97a49c;--line:#2b342f;--accent:#7cc3a0;--soft:#1f3229;--warn:#e8907e;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f);padding:24px 16px}
+.card{width:min(380px,100%);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:26px 24px}
+h1{font-size:18px;margin:0 0 4px}p{color:var(--muted);margin:0 0 18px;font-size:13px}
+label{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.05em}
+input{width:100%;font:15px var(--f);padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+input:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{margin-top:18px;width:100%;font:15px var(--f);padding:10px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer}
+.err{color:var(--warn);font-size:13px;margin-top:12px;min-height:1em}.note{font-size:12px;color:var(--muted);margin-top:16px}
+</style></head><body>
+<form class="card" id="f" autocomplete="on">
+ <h1 id="h">Universal Organiser</h1><p id="sub">Sign in. This page runs on this computer only.</p>
+ <div id="setup" hidden>
+  <label for="display">Your name</label><input id="display" autocomplete="name">
+ </div>
+ <label for="username">User name</label><input id="username" autocomplete="username" required autocapitalize="none" spellcheck="false">
+ <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required minlength="8">
+ <div id="setup2" hidden><label for="password2">Password again</label><input id="password2" type="password" autocomplete="new-password" minlength="8"></div>
+ <button id="go">Sign in</button><div class="err" id="err" role="alert"></div>
+ <div class="note" id="note"></div>
+</form>
+<script>
+const $=id=>document.getElementById(id);
+const t=new URLSearchParams(location.search).get("t")||"";
+const post=(p,b)=>fetch(p,{method:"POST",headers:{"X-FE":"1","Content-Type":"application/json"},body:JSON.stringify(b)}).then(async r=>({ok:r.ok,...await r.json()}));
+let REMOTE=false;
+let setup=false;
+fetch("/api/login-state?t="+encodeURIComponent(t),{headers:{"X-FE":"1"}}).then(r=>r.json()).then(s=>{
+ if(s.setup_ok){setup=true;$("h").textContent="Create the admin account";$("sub").textContent="First run. This account can see and change everything. Family members get their own accounts later, from Settings.";
+  $("setup").hidden=$("setup2").hidden=false;$("password").autocomplete="new-password";$("go").textContent="Create account";$("note").textContent="Password: at least 8 characters. It is stored only as a salted hash inside the encrypted catalogue.";$("display").focus();}
+ else if(!s.has_users){$("sub").textContent="No account yet. Open the link that 'uo serve' printed in the terminal to create the admin account.";$("go").disabled=true;}
+ else $("username").focus();
+ if(s.remote){REMOTE=true;$("sub").textContent="Signing in from a phone or tablet on your home Wi-Fi.";$("note").innerHTML='First time on this device? <a href="/device-setup" style="color:var(--accent)">Set it up</a>.';}});
+$("f").addEventListener("submit",async e=>{e.preventDefault();$("err").textContent="";$("go").disabled=true;
+ const b={username:$("username").value,password:$("password").value};
+ const r=setup?await post("/api/setup",{...b,display:$("display").value,password2:$("password2").value,t}):await post("/api/login",b);
+ $("go").disabled=false;if(r.ok){location.href="/home";return}
+ if(r.pending){$("err").innerHTML=`New device. On the computer, open <b>Settings → Accounts → Phones &amp; tablets</b> and approve code <b style="font-size:18px;letter-spacing:.1em">${String(r.code).replace(/\D/g,"")}</b>. Then press Sign in again.`;return}
+ $("err").textContent=r.error||"Could not sign in.";});
+</script></body></html>

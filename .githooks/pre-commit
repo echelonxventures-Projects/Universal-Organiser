@@ -1,0 +1,3 @@
+#!/bin/sh
+# Blocks a commit that would add personal data (names from your own profile, keys, catalogues, logs).
+exec python3 -I "$(git rev-parse --show-toplevel)/tools/privacy_check.py"

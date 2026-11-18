@@ -212,7 +212,9 @@ def build_plan(cfg, cat, include_medium=False, extra_sources=None, include_plan=
 def manual_moves(cfg, cat, ids=None, folder=None, dest=None):
     """Moves asked for by drag and drop in the folder browser. Destination must be inside the library and not protected;
     projects, apps and protected folders are never moved. Returns (moves, refusal reason or None)."""
-    dest = (dest or "").rstrip("/")
+    from . import platforms
+    dest = platforms.norm(dest or "").rstrip("/")  # Windows paths may arrive with backslashes
+    folder = platforms.norm(folder) if folder else folder
     if not dest or not _under(dest, [cfg.library]) or _under(dest, cfg.protect):
         return [], "Drop onto a folder inside your library (not a protected folder)."
     rows = []

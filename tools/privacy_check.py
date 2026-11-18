@@ -32,6 +32,10 @@ user users documents desktop downloads files photos music movies library mobile 
 """.split())
 
 
+SYSTEM_USERS = {"root", "runner", "runneradmin", "admin", "administrator", "user", "ubuntu", "ec2-user", "vscode", "codespace",
+                "docker", "app", "build", "ci", "jenkins", "travis"}
+
+
 def _profiles():
     cands = [os.environ.get("UO_PRIVACY_PROFILE", "")]
     for base in (os.path.join(H, "Library", "Application Support"), os.environ.get("LOCALAPPDATA", ""),
@@ -58,7 +62,7 @@ def personal_words():
         if m.get("profile"):
             words.add(str(m["profile"]))
     user = getpass.getuser()
-    if user and len(user) >= 3:
+    if user and len(user) >= 3 and user.lower() not in SYSTEM_USERS:
         words.add(user)
     f = os.path.join(H, ".config", "universal-organiser", "privacy-words.txt")
     if os.path.exists(f):
@@ -82,7 +86,7 @@ def _shipped_vocabulary():
 
 
 def literal_values():
-    vals = {H: "your home folder path"}
+    vals = {} if os.path.basename(H).lower() in SYSTEM_USERS or len(H) < 6 else {H: "your home folder path"}
     try:
         em = subprocess.run(["git", "config", "user.email"], capture_output=True, text=True, timeout=5).stdout.strip()
         if em:

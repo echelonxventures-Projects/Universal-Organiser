@@ -313,7 +313,11 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
 
         def _page(self, name):
             with open(pages[name], encoding="utf-8") as f:
-                self._send(200, f.read(), "text/html")
+                html = f.read()
+            with open(os.path.join(ROOT, "engine", "a11y.js"), encoding="utf-8") as f:  # accessibility for every page
+                js = "<script>\n" + f.read() + "\n</script>\n"
+            i = html.rfind("</body>")
+            self._send(200, html[:i] + js + html[i:] if i >= 0 else html + js, "text/html")
 
         def _redirect(self, to):
             self.send_response(303); self.send_header("Location", to); self.send_header("Content-Length", "0"); self.end_headers()
@@ -388,6 +392,8 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                 return self._page("login.html")
             if method == "GET" and path == "/device-setup" and lanst["fingerprint"]:
                 return self._send(200, LAN.SETUP_PAGE.replace("__FP__", lanst["fingerprint"]), "text/html")
+            if method == "GET" and path == "/favicon.ico":  # no icon; say so without an error in the browser console
+                return self._send(204, b"", "image/x-icon")
             if method == "GET" and path == "/ca.crt" and lanst["fingerprint"]:
                 with open(os.path.join(cat.folder, "tls", "ca.crt"), "rb") as fh:
                     return self._send(200, fh.read(), "application/x-x509-ca-cert",

@@ -28,3 +28,38 @@ jobs:
         continue-on-error: true
       - name: Nothing personal in the repository
         run: python -I tools/privacy_check.py --all
+      - name: Accessibility of the pages
+        run: python -I tools/a11y_check.py
+
+  install:
+    # The real installers on a clean machine: install, check, install again (update), check nothing of yours was lost.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install (macOS / Linux)
+        if: runner.os != 'Windows'
+        run: sh install/install.sh --dir "$RUNNER_TEMP/Universal Organiser" --yes --no-start --no-link
+      - name: Install (Windows, through install.cmd)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: install\install.cmd -Yes -NoStart -Dir "%RUNNER_TEMP%\Universal Organiser"
+      - name: Fresh install works
+        env:
+          UO_EXPECT_HELPER: ${{ runner.os == 'macOS' && '1' || '' }}
+        run: python tools/install_smoke.py "${{ runner.temp }}/Universal Organiser" first
+      - name: Update (macOS / Linux)
+        if: runner.os != 'Windows'
+        run: sh install/install.sh --dir "$RUNNER_TEMP/Universal Organiser" --yes --no-start --no-link
+      - name: Update (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: install\install.cmd -Yes -NoStart -Dir "%RUNNER_TEMP%\Universal Organiser"
+      - name: Update kept your profile and catalogue
+        run: python tools/install_smoke.py "${{ runner.temp }}/Universal Organiser" after-update

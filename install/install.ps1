@@ -44,7 +44,7 @@ if ($bl -ne 1 -and $bl -ne 3) {
   Write-Host ""
   Write-Host "Disk encryption is OFF on $env:SystemDrive. Universal Organiser will not store a catalogue on an unencrypted disk."
   Write-Host "  Turn it on: Settings > Privacy & security > Device encryption (or BitLocker), then run this installer again."
-  if (Ask "Open that Settings page now?") { Start-Process "ms-settings:deviceencryption" }
+  if (-not $Yes) { if (Ask "Open that Settings page now?") { Start-Process "ms-settings:deviceencryption" } }  # -Yes: install only, never open pages
 }
 
 # ---- copy the program (never the data)

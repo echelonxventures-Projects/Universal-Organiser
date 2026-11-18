@@ -66,6 +66,8 @@ uo help            every command
 ```
 python3 -m unittest discover -s tests -v     # tests use throwaway data folders only
 python3 tools/privacy_check.py --all         # nothing personal in the repository
+python3 tools/a11y_check.py                  # the pages stay usable by keyboard and screen reader
+sh install/install.sh --dir /tmp/uo-try --yes --no-start --no-link && python3 tools/install_smoke.py /tmp/uo-try first
 git config core.hooksPath .githooks          # run the privacy check before every commit and push
 ```
 

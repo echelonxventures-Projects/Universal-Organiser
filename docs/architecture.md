@@ -43,6 +43,7 @@ static HTML pages. There is no database server, no web framework and no build st
 | `deepread.py`, `transcribe.py`, `similar.py` | all pages of scans, speech transcripts, near-identical photos (macOS) |
 | `projects.py`, `projindex.py`, `cleanup.py`, `projmove.py`, `projsteps.py`, `declutter.py` | projects: status, iCloud exclusion, index, version review, logged folder steps |
 | `settings.py`, `reclassify.py` | validated profile editing with versions; re-applying rules |
+| `a11y.js` | added to every page by the server: skip link, landmarks, dialog focus, names for controls, keyboard access, live messages |
 | `helpers/macos/fehelper.swift` | PDFKit text, Vision OCR and labels, image fingerprints, SpeechTranscriber, iCloud download; read-only |
 
 ## Data model (SQLite, inside the encrypted store)
@@ -90,4 +91,11 @@ every local action and out of the local scan's clean-up.
 
 `tests/test_engine.py`: profiles and country packs, presets, the privacy check, the wizard on a new install, a member
 account's limits, hub + agent pairing, sync, deletion and removal, packaging. Each test uses throwaway data folders and
-an unencrypted test catalogue. CI runs them on macOS, Windows and Linux with Python 3.9 and 3.12.
+an unencrypted test catalogue. CI runs them on macOS, Windows and Linux with Python 3.9 and 3.12, plus:
+
+- **Installers** (`tools/install_smoke.py`): on clean macOS, Windows and Linux machines, the real installer
+  (`install.sh`, or `install.cmd` on Windows) into a folder with a space in its name; then the installed `uo` runs help, doctor,
+  a scan, a search and the page; then the installer runs again (an update) and the profile and catalogue must still be there.
+- **Accessibility** (`tools/a11y_check.py`): language, title, zoomable viewport, one heading, main landmark, named fields and
+  buttons, no mouse-only elements in the markup, colour contrast of each page's light and dark colours.
+- **Privacy** (`tools/privacy_check.py`).

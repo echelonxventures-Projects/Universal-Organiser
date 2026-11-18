@@ -106,3 +106,14 @@ Where a feature changes files, it is always **preview → your approval → logg
 | Local AI (optional) ✓ | Ollama on the same computer; cloud AI is refused |
 | Encrypted catalogue ✓ | 🍎 AES-256 disk image + Keychain; Windows BitLocker/Device encryption required; Linux LUKS/encrypted home required |
 | Privacy guard (developers) ✓ | blocks personal data, keys and data files from commits |
+| Installers tested ✓ | every change installs from scratch on clean macOS, Windows and Linux machines, then updates in place and checks your profile and catalogue were kept |
+
+## Accessibility
+
+| Feature | Notes |
+|---|---|
+| Keyboard ✓ | everything works without a mouse: “Skip to content” on the first Tab, visible focus, rows, tiles, smart folders and filters open with Enter or Space |
+| Dialogs ✓ | focus moves into a dialog, Tab stays inside it, Escape cancels, focus returns where it was |
+| Screen readers ✓ | page language and landmarks (navigation, main), the current page marked in the navigation, every field and symbol button named, status and error messages read out |
+| Seeing ✓ | text and labels meet WCAG AA contrast (4.5:1) in light and dark themes; follows the system's dark mode and reduced-motion settings; pages zoom and fit phone screens |
+| Checked on every change ✓ | `tools/a11y_check.py` in CI |

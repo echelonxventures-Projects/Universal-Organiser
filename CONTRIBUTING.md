@@ -8,6 +8,12 @@
 - **Anything that changes files** must be a preview the person approves, logged, and undoable.
 - **Tests:** `python3 -m unittest discover -s tests -v`. Tests use throwaway data folders (`UO_DATA`) and an unencrypted
   catalogue, so they never touch a real install.
+- **Accessible pages.** Every field needs a label (or `aria-label`), every button readable text (or `aria-label`), and
+  anything clickable must be a link or button, or reachable with Tab (`engine/a11y.js` handles rows and tiles the pages
+  build in script). Keep colours as tokens on `:root` with a dark-mode set; `python3 tools/a11y_check.py` checks text
+  contrast (4.5:1) and the rest.
+- **Installers:** after changing `install/`, try one locally:
+  `sh install/install.sh --dir /tmp/uo-try --yes --no-start --no-link && python3 tools/install_smoke.py /tmp/uo-try first`.
 
 ## Adding a country pack
 

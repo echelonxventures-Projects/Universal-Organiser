@@ -138,6 +138,12 @@ Run the wizard again any time from *Settings → Set-up wizard*; your other sett
 **Accounts.** *Settings → Accounts* adds family members. A *member* sees only the owners you choose and never sensitive
 files, and cannot change anything.
 
+**Keyboard and screen readers.** Every page works without a mouse. The first Tab shows *Skip to content*; Tab moves
+through links, buttons, fields, rows and tiles, and Enter or Space opens the one in focus. In a dialog, Tab stays inside
+it and Escape cancels. Screen readers (VoiceOver, NVDA, Narrator, TalkBack) hear the page's navigation, the current page,
+every field's name and status messages such as “saved”. Pages follow your system's dark mode and reduced-motion
+settings, and zoom with the browser (Ctrl/⌘ +). Triage also has its own keys (`1`–`9`, `Enter`, `N`, `T`, `D`, `S`, `Z`, `O`).
+
 ## 5. Phones and tablets
 
 1. On the computer: *Computers → Who can open the page → Home Wi-Fi*. The page shows an address such as

@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.1
+
+- **Installers are tested on every change.** CI installs from scratch on clean macOS, Windows (through `install.cmd`) and
+  Linux machines, runs the installed program (doctor, scan, search, page), installs again as an update and checks the
+  profile and catalogue were kept. On macOS it also checks the reader (OCR, photos, transcripts) was built.
+- **Accessibility.** Every page now has a “Skip to content” link, a labelled navigation with the current page marked,
+  visible keyboard focus, keyboard access (Enter/Space) to rows, tiles, smart folders and filters, dialogs that take focus,
+  keep Tab inside and close with Escape, names for every field and symbol-only button, and status and error messages that
+  screen readers announce. Reduced motion is respected. Colour contrast meets WCAG AA in light and dark themes.
+  `tools/a11y_check.py` runs in CI.
+- Windows installer with `-Yes` no longer opens the Settings page for disk encryption (it still says how to turn it on).
+- No more “favicon not found” error in the browser console.
+
 ## 1.1.0 — 2026-11-18
 
 - **File renaming in the Sorter.** Tick “Rename files” to give moved documents clear names in the style chosen in

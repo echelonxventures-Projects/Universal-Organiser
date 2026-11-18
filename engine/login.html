@@ -15,7 +15,7 @@ input:focus{outline:2px solid var(--accent);outline-offset:1px}
 button{margin-top:18px;width:100%;font:15px var(--f);padding:10px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer}
 .err{color:var(--warn);font-size:13px;margin-top:12px;min-height:1em}.note{font-size:12px;color:var(--muted);margin-top:16px}
 </style></head><body>
-<form class="card" id="f" autocomplete="on">
+<main style="display:contents"><form class="card" id="f" autocomplete="on">
  <h1 id="h">Universal Organiser</h1><p id="sub">Sign in. This page runs on this computer only.</p>
  <div id="setup" hidden>
   <label for="display">Your name</label><input id="display" autocomplete="name">
@@ -25,7 +25,7 @@ button{margin-top:18px;width:100%;font:15px var(--f);padding:10px;border-radius:
  <div id="setup2" hidden><label for="password2">Password again</label><input id="password2" type="password" autocomplete="new-password" minlength="8"></div>
  <button id="go">Sign in</button><div class="err" id="err" role="alert"></div>
  <div class="note" id="note"></div>
-</form>
+</form></main>
 <script>
 const $=id=>document.getElementById(id);
 const t=new URLSearchParams(location.search).get("t")||"";

@@ -198,6 +198,14 @@ class EndToEnd(unittest.TestCase):
                 time.sleep(0.5)
             self.assertEqual(a.api("/api/scan/status")["job"]["phase"], "done")
             self.assertTrue(a.api("/api/search?q=premium")["results"])
+            # a family member's account can look, never change
+            a.api("/api/users/add", {"username": "sam", "display": "Sam", "role": "member", "scope": ["Sam Example"], "password": "member pass 1"})
+            a.api("/api/logout", {})
+            a.api("/api/login", {"username": "sam", "password": "member pass 1"})
+            for p in ("/api/projects/stop", "/api/projects/refresh", "/api/projects/resume", "/api/label", "/api/move", "/api/sort/run",
+                      "/api/settings/save", "/api/users/add", "/api/hub/code", "/api/access", "/api/welcome/save", "/api/scan/start"):
+                self.assertEqual(a.api(p, {}, ok=False).get("_status"), 403, p)
+            self.assertEqual(a.api("/api/welcome", ok=False).get("_status"), 403)
         finally:
             a.cleanup()
 

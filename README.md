@@ -41,8 +41,15 @@ uo search WORDS    search from the terminal
 uo help            every command
 ```
 
-Read the **[user manual](docs/manual.md)** for everything else: the pages, phones and tablets, several computers,
-away-from-home access, privacy, undo, updating and troubleshooting.
+## Documentation
+
+| | |
+|---|---|
+| [User manual](docs/manual.md) | install, set-up, every page, phones, several computers, privacy, undo, troubleshooting |
+| [Features](docs/features.md) | everything it does, and on which systems |
+| [Administrator guide](docs/admin-guide.md) | backups, moving computers, accounts, hub operations, updates |
+| [Command line](docs/cli.md) · [Configuration](docs/configuration.md) | every command and setting |
+| [HTTP API](docs/api.md) · [Architecture](docs/architecture.md) | for developers, including the agent protocol |
 
 ## What works where
 

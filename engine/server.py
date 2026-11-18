@@ -675,6 +675,8 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                     return self._err("Not a catalogued project.")
                 return self._json(PJ.set_status(cfg, cat, p, str(b.get("status", "")), user["username"]))
             if path in ("/api/projects/refresh", "/api/projects/stop", "/api/projects/resume"):
+                if not admin:
+                    return self._err("Only an admin can do that.", 403)
                 if self.REMOTE:
                     return self._err("Do this on the computer itself.", 403)
                 if path == "/api/projects/resume":

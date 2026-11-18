@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1 — 2026-11-18
+
+- **Security:** checking projects, stopping and resuming their iCloud sync now require an admin account (a member
+  account could start them before). Test added for every action a member must not do.
+- Sorter accepts Windows paths written with backslashes.
+- Documentation: features, administrator guide, command-line, configuration and HTTP API references (including the
+  agent protocol), architecture.
+
 ## 1.0.0 — 2026-11-18
 
 First public-ready version (formerly an in-house tool called FileEngine).

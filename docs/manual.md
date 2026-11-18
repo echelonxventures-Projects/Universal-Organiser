@@ -1,6 +1,6 @@
 # Universal Organiser — user manual
 
-Version 1.0 · works on macOS, Windows and Linux · phones and tablets use it through the browser
+Version 1.0.1 · works on macOS, Windows and Linux · phones and tablets use it through the browser
 
 1. [What it does](#1-what-it-does)
 2. [Install](#2-install)
@@ -15,6 +15,8 @@ Version 1.0 · works on macOS, Windows and Linux · phones and tablets use it th
 11. [Commands](#11-commands)
 12. [Troubleshooting](#12-troubleshooting)
 13. [Customising: presets, country packs, rules](#13-customising-presets-country-packs-rules)
+
+More: [features](features.md) · [administrator guide](admin-guide.md) · [commands](cli.md) · [configuration](configuration.md) · [API](api.md)
 
 ---
 

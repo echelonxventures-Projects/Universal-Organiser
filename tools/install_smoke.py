@@ -9,6 +9,8 @@ catalogue (CI machines have no disk encryption) and a throwaway folder of sample
 import json, os, re, socket, subprocess, sys, tempfile, time, urllib.request
 
 WIN = os.name == "nt"
+for _s in (sys.stdout, sys.stderr):  # Windows pipes default to a narrow code page; the output has ✓ and ✗
+    _s.reconfigure(encoding="utf-8", errors="replace")
 
 
 def fail(msg):

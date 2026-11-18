@@ -48,13 +48,15 @@ class Install:
         return p
 
     def uo(self, *args, check=True, input=None):
-        r = subprocess.run(CLI + list(args), env=self.env, capture_output=True, text=True, timeout=600, input=input)
+        r = subprocess.run(CLI + list(args), env=self.env, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           timeout=600, input=input)
         if check and r.returncode:
             raise AssertionError(f"uo {' '.join(args)} failed:\n{r.stdout}\n{r.stderr}")
         return r.stdout + r.stderr
 
     def serve(self):
-        self.proc = subprocess.Popen(CLI + ["serve", "--no-browser"], env=self.env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        self.proc = subprocess.Popen(CLI + ["serve", "--no-browser"], env=self.env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                     encoding="utf-8", errors="replace")
         url = None
         t0 = time.time()
         while time.time() - t0 < 60:
@@ -117,7 +119,8 @@ class Profiles(unittest.TestCase):
             setup.build_profile({"preset": "personal", "roots": []})
 
     def test_no_personal_data_shipped(self):
-        r = subprocess.run([sys.executable, "-I", os.path.join(ROOT, "tools", "privacy_check.py"), "--all"], capture_output=True, text=True)
+        r = subprocess.run([sys.executable, "-I", os.path.join(ROOT, "tools", "privacy_check.py"), "--all"], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONIOENCODING="utf-8"))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
 

@@ -12,6 +12,8 @@ import glob, html, json, os, re, sys
 from html.parser import HTMLParser
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+for _s in (sys.stdout, sys.stderr):  # Windows consoles default to a narrow code page; language names are not ASCII
+    _s.reconfigure(encoding="utf-8", errors="replace")
 I18N = os.path.join(ROOT, "engine", "i18n")
 ATTRS = ("placeholder", "title", "aria-label", "alt")
 CODEY = re.compile(r"^[\w.-]+$|[{};=<>]|=>|\b(function|const|let|return|var)\b|^[/#.]|\\\\|^\w+\(|^[a-z_]+:|^&\w+;$")

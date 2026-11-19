@@ -318,7 +318,7 @@ class Languages(unittest.TestCase):
         self.assertIn("hi", i18n.languages())
         r = subprocess.run([sys.executable, "-I", os.path.join(ROOT, "tools", "i18n_extract.py"), "--check"], capture_output=True,
                            text=True, encoding="utf-8", errors="replace")
-        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         i = Install("lang")
         try:
             i.serve()
@@ -377,7 +377,8 @@ class Updates(unittest.TestCase):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def version_of(self):
-        return re.search(r'VERSION = "([^"]+)"', open(os.path.join(self.inst, "engine", "setup.py"), encoding="utf-8").read())[1]
+        with open(os.path.join(self.inst, "engine", "setup.py"), encoding="utf-8") as f:
+            return re.search(r'VERSION = "([^"]+)"', f.read())[1]
 
     def test_check_and_install(self):
         info = self.U.check({}, force=True)
@@ -387,7 +388,8 @@ class Updates(unittest.TestCase):
         log = []
         self.assertEqual(self.U.install({}, log=log.append), "99.0.0", "\n".join(map(str, log)))
         self.assertEqual(self.version_of(), "99.0.0")
-        self.assertEqual(open(os.path.join(self.inst, "profiles", "machine.json")).read(), '{"profile": "keep-me"}')
+        with open(os.path.join(self.inst, "profiles", "machine.json")) as f:
+            self.assertEqual(f.read(), '{"profile": "keep-me"}')
 
     def test_bad_checksum_changes_nothing(self):
         self.files["zip"] = self.zip + b"tampered"

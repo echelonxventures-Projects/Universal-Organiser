@@ -44,13 +44,16 @@ def current(cfg):
             "roots": mach.get("roots", []), "exclude": mach.get("exclude", []), "protect": mach.get("protect", []),
             "plugins": {p["key"]: p["enabled"] for p in plugins},
             "ollama": {"enabled": bool(ai["ollama"].get("enabled")), "model": ai["ollama"].get("model", "")},
+            "updates": {"check": bool((d.get("updates") or {}).get("check", True))},
+            "language": (d.get("ui") or {}).get("language") or "auto",
         },
         "choices": {
             "lifecycles": list(d.get("lifecycles", {}).keys()),
             "doc_types": [r["name"] for r in d.get("doc_types", [])],
             "layouts": d["presets"]["layouts"], "naming": d["presets"]["naming"],
             "plugins": plugins, "cloud_ai": ai.get("cloud", "never"), "apple_ai": bool(ai.get("apple_builtin")),
-            "profile": d.get("profile"), "platform": cfg.platform,
+            "profile": d.get("profile"), "platform": cfg.platform, "version": __import__("engine.setup", fromlist=["VERSION"]).VERSION,
+            "languages": __import__("engine.i18n", fromlist=["languages"]).languages(),
             "tokens": {"{" + k + "}": v for k, v in __import__("engine.config", fromlist=["TOKENS"]).TOKENS.items()},
         },
     }
@@ -135,6 +138,8 @@ def validate(new, cfg):
             errs.append(f"Unknown plug-in “{k}”.")
         elif k in FIXED_PLUGINS and bool(v) != bool(cfg.plugin(k).get("enabled")):
             errs.append(f"Plug-in “{PLUGIN_LABELS.get(k, k)}” is {FIXED_PLUGINS[k]} and cannot be changed yet.")
+    if "language" in new and new["language"] != "auto" and new["language"] not in __import__("engine.i18n", fromlist=["languages"]).languages():
+        errs.append(f"Unknown language “{new['language']}”.")
     o = new.get("ollama") or {}
     if o.get("enabled") and not re.fullmatch(r"[\w.:/-]{1,80}", o.get("model") or ""):
         errs.append("Local AI (Ollama): give a model name, e.g. llama3.2:3b.")
@@ -173,6 +178,11 @@ def diff(new, cfg):
     for k, v in (new.get("plugins") or {}).items():
         if bool(old["plugins"].get(k)) != bool(v):
             out.append(f"Plug-in {PLUGIN_LABELS.get(k, k)}: {'on' if v else 'off'}")
+    if new.get("language", old["language"]) != old["language"]:
+        out.append(f"Language of the pages: {old['language']} ⟶ {new['language']}")
+    nu = bool((new.get("updates") or old["updates"]).get("check"))
+    if bool(old["updates"]["check"]) != nu:
+        out.append(f"Check for updates: {'on' if nu else 'off'}")
     if old["ollama"] != new.get("ollama", old["ollama"]):
         o = new["ollama"]
         out.append(f"Local AI (Ollama): {'on, model ' + o.get('model', '') if o.get('enabled') else 'off'}")
@@ -207,6 +217,10 @@ def save(new, by):
     if "ollama" in new:
         ol = m.setdefault("engine", {}).setdefault("ai", {}).setdefault("ollama", {})
         ol["enabled"], ol["model"] = bool(new["ollama"].get("enabled")), new["ollama"].get("model", "")
+    if "language" in new:
+        m.setdefault("ui", {})["language"] = new["language"]
+    if "updates" in new:
+        m.setdefault("updates", {})["check"] = bool((new["updates"] or {}).get("check", True))
     m["_saved"] = {"by": by, "at": time.strftime("%Y-%m-%d %H:%M:%S")}
     tmp = MACHINE + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:

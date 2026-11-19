@@ -281,6 +281,17 @@ Compares other versions of projects with the kept version in the projects folder
 | GET | `/api/doctor` | admin | – | requirement checks: `id`, `title`, `status: ok\|missing\|warn\|info`, `need: required\|recommended\|optional`, `detail`, `fix`, `cmd`, `fixable` |
 | POST | `/api/doctor/fix` | admin, local | `id` | builds the macOS reader. Fixes that need a password (package installs) are never run from the page: the error tells you the command. |
 
+### Updates (admin)
+
+| Method | Path | Who | Body | Returns |
+|---|---|---|---|---|
+| GET | `/api/update` | admin | – | `check` (on/off), `info` (`current`, `latest`, `newer`, `url`, `notes`, `checked`, `error`, `git`) from the last check — never waits for the network; a due check (once a day) starts in the background — and `job` (`phase: running\|current\|restarting\|restart\|failed`, `log[]`, `error`) |
+| POST | `/api/update/check` | admin | – | checks GitHub now: `info` |
+| POST | `/api/update/install` | admin, local | – | starts the update job (checksum-verified download, the release's own installer). On macOS/Linux the server then restarts itself with the new program; on Windows `phase` becomes `restart` (start it again from the Start menu). |
+
+Every page also receives `window.UO_I18N` (`lang`, `dict`, `languages`): the language comes from the `uo_lang` cookie,
+else `ui.language`, else the browser's `Accept-Language`, else English.
+
 ### Hub (admin)
 
 | Method | Path | Who | Body | Returns |

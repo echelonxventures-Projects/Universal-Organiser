@@ -3,10 +3,11 @@ Every request needs a signed-in session (cookie, SameSite=Strict, HttpOnly). Eve
 X-FE header and a local Host/Origin, so other web sites open in the browser cannot reach it.
 Members only ever see the owners in their scope and never sensitive files. Only admins change anything,
 and every change is logged with undo. Nothing here moves, renames or deletes a user file."""
-import os, re, json, time, secrets, socket, threading, subprocess, webbrowser, urllib.parse
+import os, re, sys, json, time, secrets, socket, threading, subprocess, webbrowser, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from http.cookies import SimpleCookie
 from .config import ROOT, Config
+from . import i18n as I18N
 from .auth import Auth, AuthError
 from . import hub as HB, setup as SU
 from . import settings as S, reclassify, insights as I, analytics as AN, sorter as SO, similar as SIM, transcribe as TR, lan as LAN, query as QP, smartfolders as SF, deepread as DR, home as HM, tags as TG, overview as OV, projects as PJ, cleanup as CU
@@ -311,13 +312,32 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                 raise ValueError("too large")
             return json.loads(self.rfile.read(n) or b"{}") if n else {}
 
+        def _lang(self):
+            """This device's choice (cookie), else the computer's default (Settings), else the browser's language."""
+            langs = I18N.languages()
+            c = SimpleCookie(self.headers.get("Cookie") or "")
+            if "uo_lang" in c and c["uo_lang"].value in langs:
+                return c["uo_lang"].value
+            pref = (state["cfg"].get("ui") or {}).get("language") or "auto"
+            if pref in langs:
+                return pref
+            for part in (self.headers.get("Accept-Language") or "").split(","):
+                code = part.split(";")[0].strip().lower().split("-")[0]
+                if code in langs:
+                    return code
+            return "en"
+
         def _page(self, name):
             with open(pages[name], encoding="utf-8") as f:
                 html = f.read()
             with open(os.path.join(ROOT, "engine", "a11y.js"), encoding="utf-8") as f:  # accessibility for every page
                 js = "<script>\n" + f.read() + "\n</script>\n"
             i = html.rfind("</body>")
-            self._send(200, html[:i] + js + html[i:] if i >= 0 else html + js, "text/html")
+            html = html[:i] + js + html[i:] if i >= 0 else html + js
+            head = I18N.head(self._lang())  # language: before the page's own text appears
+            j = html.find("<head>")
+            html = html[:j + 6] + head + html[j + 6:] if j >= 0 else head + html
+            self._send(200, html, "text/html")
 
         def _redirect(self, to):
             self.send_response(303); self.send_header("Location", to); self.send_header("Content-Length", "0"); self.end_headers()
@@ -561,6 +581,19 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                                        "entity_types": cfg.get("entity_types"), "checks": self._checks(), "version": SU.VERSION})
                 if path == "/api/doctor":
                     return self._json(self._checks())
+                if path == "/api/update":
+                    from . import updates
+                    info, due = updates.cached(cfg)
+                    if due and not state.get("update_checking"):
+                        state["update_checking"] = True
+                        def bg():
+                            try:
+                                updates.check(state["cfg"])
+                            finally:
+                                state["update_checking"] = False
+                        threading.Thread(target=bg, daemon=True).start()
+                    on = bool((cfg.get("updates") or {}).get("check", True))
+                    return self._json({"check": on, "info": info, "job": state.get("update_job")})
                 if path == "/api/hub":
                     st = state["lan"][0]
                     return self._json({"enabled": bool((cfg.get("hub") or {}).get("enabled")), "machines": hub.list(), "access": access_mode(),
@@ -739,7 +772,8 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                 return self._json({"ok": bool(d)})
             if not admin:
                 return self._err("Only an admin can do that.", 403)
-            if path in ("/api/welcome/save", "/api/access", "/api/hub/enable", "/api/scan/start", "/api/doctor/fix") and self.REMOTE:
+            if path in ("/api/welcome/save", "/api/access", "/api/hub/enable", "/api/scan/start", "/api/doctor/fix",
+                        "/api/update/install") and self.REMOTE:
                 return self._err("Do this on the computer itself.", 403)
             if path == "/api/welcome/save":
                 try:
@@ -794,6 +828,34 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                     finally:
                         c2.db.close()
                 threading.Thread(target=scanwork, daemon=True).start()
+                return self._json({"ok": True})
+            if path == "/api/update/check":
+                from . import updates
+                return self._json({"info": updates.check(cfg, force=True)})
+            if path == "/api/update/install":
+                from . import updates
+                job = state.get("update_job")
+                if job and job["phase"] == "running":
+                    return self._err("An update is already running.")
+                job = state["update_job"] = {"phase": "running", "log": [], "by": user["username"]}
+
+                def run_update():
+                    try:
+                        ver = updates.install(cfg, log=lambda m: job["log"].append(str(m)))
+                        if not ver:
+                            job["phase"] = "current"
+                        elif os.name == "nt":
+                            job["phase"] = "restart"  # Windows: close this window and start Universal Organiser again
+                        else:
+                            job["phase"] = "restarting"
+                            time.sleep(1.5)  # let the page read this before the server restarts with the new program
+                            argv = [a for a in sys.argv if a != "--no-browser"] + ["--no-browser"]
+                            os.execv(sys.executable, [sys.executable, "-I"] + argv)
+                    except SystemExit as e:
+                        job["phase"], job["error"] = "failed", str(e)
+                    except Exception as e:
+                        job["phase"], job["error"] = "failed", f"{type(e).__name__}: {e}"
+                threading.Thread(target=run_update, daemon=True).start()
                 return self._json({"ok": True})
             if path == "/api/doctor/fix":
                 c = next((x for x in SU.checks(cfg) if x["id"] == b.get("id")), None)

@@ -15,6 +15,18 @@
 - **Installers:** after changing `install/`, try one locally:
   `sh install/install.sh --dir /tmp/uo-try --yes --no-start --no-link && python3 tools/install_smoke.py /tmp/uo-try first`.
 
+## Adding a language
+
+1. `python3 tools/i18n_extract.py` writes `engine/i18n/en.json`: every English text of the pages and of the server's
+   messages (`{0}`, `{1}`… stand for numbers and names).
+2. Copy `engine/i18n/hi.json` to `engine/i18n/<code>.json` (`<code>` = the two-letter language code, e.g. `ta`, `bn`, `es`),
+   set `"_name"` to the language's own name, and replace each translation. Keep every `{0}`; you may leave out one that
+   only adds an English plural ending.
+3. `python3 tools/i18n_extract.py --check` shows how many texts are translated and catches broken placeholders. Missing
+   texts simply stay in English. The new language appears in the Language menu by itself.
+
+New page text needs no extra step for English; run the extractor afterwards to see what the translations miss.
+
 ## Adding a country pack
 
 Copy `profiles/regions/india.json` to `profiles/regions/<country>.json` and change:

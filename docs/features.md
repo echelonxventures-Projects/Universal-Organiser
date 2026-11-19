@@ -106,6 +106,8 @@ Where a feature changes files, it is always **preview → your approval → logg
 | Local AI (optional) ✓ | Ollama on the same computer; cloud AI is refused |
 | Encrypted catalogue ✓ | 🍎 AES-256 disk image + Keychain; Windows BitLocker/Device encryption required; Linux LUKS/encrypted home required |
 | Privacy guard (developers) ✓ | blocks personal data, keys and data files from commits |
+| Updates ✓ | daily check (one request to GitHub, program name and version only; can be turned off); *Update now* on Home or `uo update`: checksum-verified, program files only, page restarts itself |
+| Releases ✓ | tagged releases with program zip and SHA256SUMS; Windows installer signed when a certificate is configured |
 | Installers tested ✓ | every change installs from scratch on clean macOS, Windows and Linux machines, then updates in place and checks your profile and catalogue were kept |
 
 ## Accessibility
@@ -116,4 +118,13 @@ Where a feature changes files, it is always **preview → your approval → logg
 | Dialogs ✓ | focus moves into a dialog, Tab stays inside it, Escape cancels, focus returns where it was |
 | Screen readers ✓ | page language and landmarks (navigation, main), the current page marked in the navigation, every field and symbol button named, status and error messages read out |
 | Seeing ✓ | text and labels meet WCAG AA contrast (4.5:1) in light and dark themes; follows the system's dark mode and reduced-motion settings; pages zoom and fit phone screens |
+| Charts ✓ | maps and heat maps: one Tab stop each, arrow keys between tiles and cells, Home/End, Enter opens, tooltip on focus, every tile and cell named with its numbers |
 | Checked on every change ✓ | `tools/a11y_check.py` in CI |
+
+## Languages
+
+| Feature | Notes |
+|---|---|
+| English and Hindi ✓ | every page, button, message and alert; the server's messages too. Names of files, people, folders and topics stay as they are. |
+| Per device ✓ | Language menu at the top of each page; default per computer in Settings, else the browser's language |
+| More languages ✓ | one JSON file per language (`engine/i18n/<code>.json`); `tools/i18n_extract.py` lists every text and shows what is still missing |

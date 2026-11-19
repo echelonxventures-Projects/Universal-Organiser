@@ -59,6 +59,9 @@ if ((Resolve-Path $Src).Path -ne (Resolve-Path $Dir).Path) {
   Get-ChildItem -Recurse -Directory -Filter __pycache__ "$Dir\engine" | Remove-Item -Recurse -Force
 }
 
+# ---- files from a downloaded zip carry Windows' "from the internet" mark, which makes every start ask first: clear it
+Get-ChildItem -Recurse -File $Dir | Unblock-File -ErrorAction SilentlyContinue
+
 # ---- Start menu shortcut + 'uo' on the user PATH
 $sm = Join-Path ([Environment]::GetFolderPath("Programs")) "Universal Organiser.lnk"
 $ws = New-Object -ComObject WScript.Shell

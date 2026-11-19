@@ -12,6 +12,8 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f)}
 header{position:sticky;top:0;z-index:6;background:var(--surface);border-bottom:1px solid var(--line);padding:8px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 h1{font-size:16px;margin:0}nav.top{display:flex;gap:14px;flex-wrap:wrap}nav.top a{color:var(--accent);text-decoration:none;font-size:13px}nav.top a.on{color:var(--ink);font-weight:600}.sp{flex:1}
+.upd{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:9px 16px;background:var(--soft);color:var(--ink);border-bottom:1px solid var(--line);font-size:13px}
+.upd b{color:var(--accent)}.upd a{color:var(--accent)}.upd .sp{flex:1}.upd pre{flex-basis:100%;margin:4px 0 0;font:11.5px var(--m);white-space:pre-wrap;max-height:160px;overflow:auto;color:var(--muted)}
 .strip{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
 .m{border:1px solid var(--line);border-radius:9px;padding:6px 10px;min-width:118px;text-decoration:none;color:inherit;background:var(--bg)}
 .m b{display:block;font-size:17px;font-variant-numeric:tabular-nums}.m span{font-size:11.5px;color:var(--muted)}
@@ -61,10 +63,11 @@ a:focus-visible,button:focus-visible,.tn:focus-visible,.tile:focus-visible{outli
 @media (max-width:700px){.grid{grid-template-columns:1fr}aside.tree{max-height:35vh}}
 </style></head><body>
 <header><h1>Universal Organiser</h1><nav class="top" id="nav"></nav><span class="sp"></span><span id="who" style="font-size:13px"></span></header>
+<div class="upd" id="upd" role="status" hidden></div>
 <div class="strip" id="strip"></div>
 <div class="lens"><span style="color:var(--muted)">View by</span><div class="seg" id="lenses" role="group" aria-label="View by"></div><span class="sp"></span>
  <div class="legend"><span><i style="background:var(--okbg);border:1px solid var(--ok)"></i>in order</span><span><i style="background:var(--needbg);border:1px solid var(--need)"></i>15%+ of papers need an owner</span><span><i style="background:var(--probbg);border:1px solid var(--prob)"></i>problem (sensitive in iCloud, damaged)</span><span><span class="nb">+n</span> new since your last visit</span></div></div>
-<div class="grid" role="main" id="main"><aside class="tree" id="tree" aria-label="Tree"></aside><section class="center"><div class="crumbs" id="crumbs"></div><div id="map" role="list"></div><div id="files"></div></section><aside class="panel" id="panel"></aside></div>
+<div class="grid" role="main" id="main"><aside class="tree" id="tree" aria-label="Tree"></aside><section class="center"><div class="crumbs" id="crumbs"></div><div id="map" role="list" aria-label="Map" data-arrows=".tile"></div><div id="files"></div></section><aside class="panel" id="panel"></aside></div>
 <div id="tip" hidden></div><div class="shade" id="shade" hidden></div><div id="toast" hidden></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -126,7 +129,7 @@ function drawMap(N){const m=$("map");m.innerHTML="";const items=[...N.children.m
   el.innerHTML+=`<div class="hb"><i style="width:${it.ok/T*100}%;background:var(--ok)"></i><i style="width:${it.needs/T*100}%;background:var(--need)"></i><i style="width:${it.problem/T*100}%;background:var(--prob)"></i></div>`;
   el.onmouseenter=e=>showTip(e,`<b>${esc(it.label)}</b><br>${num(it.n)} files · ${size(it.size)}<br>${num(it.ok)} in order · ${num(it.needs)} need an owner · ${num(it.problem)} problem${it.new?`<br>${num(it.new)} new since your last visit`:""}<br><i>${it.file?"click: open details":"click: zoom in"}</i>`);
   el.onmousemove=mvTip;el.onmouseleave=()=>tip.hidden=true;
-  const open=()=>{tip.hidden=true;it.file?location.href="/?open="+it.file.id:go(it.key)};el.onclick=open;el.onkeydown=e=>{if(e.key==="Enter")open()};
+  const open=()=>{tip.hidden=true;it.file?location.href="/?open="+it.file.id:go(it.key)};el.onclick=open;el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}};
   if(lens==="folder"&&ME.role==="admin"&&(it.file?it.file.unit==="file":true)){el.draggable=true;el.addEventListener("dragstart",e=>{tip.hidden=true;e.dataTransfer.setData("text/plain",JSON.stringify(it.file?{id:it.file.id}:{folder:it.key[it.key.length-1]}))})}
   m.appendChild(el)}}
 function drawFiles(N){if(!N.files.length){$("files").innerHTML="";return}
@@ -172,5 +175,23 @@ addEventListener("resize",()=>{clearTimeout(window._rz);window._rz=setTimeout(()
  $("who").innerHTML=`${esc(ME.display)} · <a href="#" id="out" style="color:var(--accent)">Sign out</a>`;$("out").onclick=async e=>{e.preventDefault();await api("/api/logout",{});location.href="/login"};
  await api("/api/ov/visit",{}).catch(()=>{});
  const h=(location.hash||"").slice(1);if(LENSES.some(l=>l[0]===h))lens=h;
- drawLenses();await drawStrip();await go([]);poll()})();
+ drawLenses();await drawStrip();await go([]);poll();if(a)updates()})();
+/* ---------- a newer version (admins; Settings → Plug-ins & AI turns the check off) ---------- */
+async function updates(){let U;try{U=await api("/api/update")}catch{return}
+ const box=$("upd"),j=U.job,i=U.info;
+ if(j&&j.phase==="running"){box.hidden=false;box.innerHTML=`<span>Updating Universal Organiser… <span style="font:12px var(--m);color:var(--muted)">${esc(j.log.slice(-1)[0]||"")}</span></span>`;return setTimeout(updates,2000)}
+ if(j&&j.phase==="restarting"){box.hidden=false;box.innerHTML=`<span>Updated. Restarting…</span>`;return waitBack()}
+ if(j&&j.phase==="restart"){box.hidden=false;box.innerHTML=`<span><b>Updated.</b> Close Universal Organiser's window and start it again from the Start menu to use the new version.</span>`;return}
+ if(j&&j.phase==="failed"){box.hidden=false;box.innerHTML=`<span><b>The update did not finish.</b> ${esc(j.error||"")} Your data was not touched.</span><pre>${esc(j.log.join("\n"))}</pre>`;return}
+ if(!U.check||!i||!i.newer){box.hidden=true;return}
+ let later="";try{later=localStorage.getItem("uo-update-later")||""}catch{}
+ if(later===i.latest){box.hidden=true;return}
+ box.hidden=false;
+ box.innerHTML=`<span><b>Version ${esc(i.latest)} is ready</b> (you have ${esc(i.current)}).</span>${i.url?`<a href="${esc(i.url)}" target="_blank" rel="noopener noreferrer">What's new</a>`:""}<span class="sp"></span>
+  ${i.git?`<span>Update with <code>git pull</code> in the program folder.</span>`:`<button class="btn pri" id="upgo">Update now</button>`}<button class="btn" id="uplater">Later</button>`;
+ $("uplater").onclick=()=>{try{localStorage.setItem("uo-update-later",i.latest)}catch{}box.hidden=true};
+ if($("upgo"))$("upgo").onclick=async()=>{if(!confirm(`Update to ${i.latest}? The program files are replaced; your profile, catalogue and logs stay. The page restarts by itself.`))return;
+  try{await api("/api/update/install",{});setTimeout(updates,800)}catch(e){box.innerHTML=`<span>${esc(e.message)}</span>`}}}
+async function waitBack(){for(let k=0;k<90;k++){await new Promise(r=>setTimeout(r,2000));try{const r=await fetch("/api/me",{headers:{"X-FE":"1"}});if(r.ok||r.status===401){location.reload();return}}catch{}}
+ $("upd").innerHTML=`<span>The page did not come back by itself. Start it again with <code>uo serve</code>.</span>`}
 </script></body></html>

@@ -75,6 +75,8 @@ if [ "$(cd "$SRC" && pwd)" != "$(mkdir -p "$DIR" && cd "$DIR" && pwd)" ]; then
   rm -rf "$DIR/engine.old"
 fi
 chmod +x "$DIR/uo" "$DIR/fe"
+# files from a downloaded zip carry macOS's quarantine mark; the program files are plain scripts we just checked in
+[ "$SYS" = macos ] && xattr -dr com.apple.quarantine "$DIR/engine" "$DIR/uo" "$DIR/fe" "$DIR/install" 2>/dev/null || true
 chmod 700 "$DIR"
 
 # ---- macOS reader (OCR, photos, transcripts) built from source on this Mac

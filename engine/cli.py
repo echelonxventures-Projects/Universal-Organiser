@@ -6,7 +6,8 @@ Set up
                               write your profile without the browser wizard (uo serve shows the wizard instead)
   uo serve [--lan] [--no-browser]   open the page (first run: create the admin account, then the set-up wizard)
   uo autostart on|off         start the page (hub) or the agent automatically when you log in
-  uo update                   get the newest program files (your profile, catalogue and logs are not touched)
+  uo update [--check]         get the newest release (checksum-verified; your profile, catalogue and logs are not touched);
+                              --check only says whether there is one
   uo package                  zip of the program only, to copy to a computer without internet
   uo version
 
@@ -79,21 +80,26 @@ def package():
     print(f"Program package: {out}\n  Contains no profile, catalogue, logs or keys. On the other computer unzip it and run the installer in install/.")
 
 
-def update():
-    import subprocess
-    if os.path.isdir(os.path.join(ROOT, ".git")):
-        r = subprocess.run(["git", "-C", ROOT, "pull", "--ff-only"], timeout=300)
-        if r.returncode:
-            raise SystemExit("Update failed (see above). Nothing of yours was changed.")
-    else:
-        raise SystemExit("This copy was not installed with git. Download the newest release and run its installer: it keeps your data.")
-    from engine import setup as SU
-    if platforms.SYSTEM == "macos" and os.path.exists(SU.HELPER_SRC) and not SU._helper_current():
+def update(a=()):
+    from engine import updates, setup as SU
+    try:
+        cfg = Config()
+    except Exception:
+        cfg = None  # no profile yet: defaults
+    if "--check" in a:
+        u = updates.check(cfg, force=True)
+        if u.get("error"):
+            print(f"Universal Organiser {u['current']}: could not check ({u['error']}).")
+        elif u["newer"]:
+            print(f"Version {u['latest']} is available (you have {u['current']}): {u['url']}\n  Update with:  uo update")
+        else:
+            print(f"Universal Organiser {u['current']} is the newest version.")
+        return
+    if updates.install(cfg) and platforms.SYSTEM == "macos" and os.path.exists(SU.HELPER_SRC) and not SU._helper_current():
         try:
             SU.build_helper()
         except Exception as e:
             print("macOS reader not rebuilt:", e)
-    print("Updated. Restart  uo serve  if it is running.")
 
 
 def doctor(cfg, a):
@@ -167,7 +173,7 @@ def main():
     if cmd == "package":
         return package()
     if cmd == "update":
-        return update()
+        return update(a)
     if cmd == "autostart":
         return autostart(a)
     cfg = Config()

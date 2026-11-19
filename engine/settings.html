@@ -109,7 +109,12 @@ async function draw(){const m=$("main"),C=S.choices;let h="";
    <label class="plug"><input type="checkbox" checked disabled><span>Apple built-in (Vision, on this Mac)<div class="d">Used for text in images and photo labels. Nothing leaves the Mac.</div></span></label>
    <label class="plug"><input type="checkbox" data-p="ollama.enabled" ${V.ollama.enabled?"checked":""}><span>Local AI with Ollama<div class="d">Runs on this Mac at 127.0.0.1 only. Never reads sensitive files.</div></span></label>
    <div style="padding-left:28px"><input type="text" data-p="ollama.model" value="${esc(V.ollama.model)}" placeholder="model, e.g. llama3.2:3b"></div>
-   <div class="lock">Cloud AI: <b>${esc(C.cloud_ai)}</b>. Fixed by your design decision; cannot be turned on here.<br>Sensitive files: never read, never sent to AI, never moved into iCloud.</div></div></div></section>`}
+   <div class="lock">Cloud AI: <b>${esc(C.cloud_ai)}</b>. Fixed by your design decision; cannot be turned on here.<br>Sensitive files: never read, never sent to AI, never moved into iCloud.</div></div>
+  <div class="card"><h3>Language</h3>
+   <p class="help">Language of the pages on every phone, tablet and computer that has not chosen its own (each can pick one with the Language menu at the top of the page). Names of files, people and folders are never translated.</p>
+   <select data-p="language" aria-label="Language of the pages"><option value="auto" ${V.language==="auto"?"selected":""}>Same as the browser</option>${Object.entries(C.languages).map(([c,n])=>`<option value="${esc(c)}" ${V.language===c?"selected":""}>${esc(n)}</option>`).join("")}</select></div>
+  <div class="card"><h3>Updates</h3>
+   <label class="plug"><input type="checkbox" data-p="updates.check" ${V.updates.check?"checked":""}><span>Check for updates once a day<div class="d">Asks GitHub for the newest release (only the program's name and version are sent, nothing about you or your files). Admins see “Version … is ready” on Home; nothing is installed until you press Update now. You have version ${esc(C.version)}.</div></span></label></div></div></section>`}
  if(tab==="accounts"){const U=await api("/api/users");const ents=V.entities.map(e=>e.name);
   h=`<section><h2>Accounts on this computer</h2><p class="help">Family members sign in on this page with their own account. A <b>member</b> sees only the owners you tick, never sensitive files, and cannot change anything. An <b>admin</b> sees and changes everything.</p>
   <div class="tw"><table><thead><tr><th>User</th><th>Name</th><th>Role</th><th>Can see files of</th><th>New password</th><th></th></tr></thead><tbody>

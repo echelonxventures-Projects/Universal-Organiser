@@ -71,8 +71,30 @@ set `access.remote.bind` to the hub's WireGuard address and `access.remote.netwo
 
 ## Updates
 
-Run the newest installer (or `uo update` in a git copy), then restart `uo serve` (or log out and in when it autostarts).
-The installer replaces only program files. Read `CHANGELOG.md` for what changed.
+Once a day the page asks GitHub for the newest release (only the program name and version are sent). When there is one,
+admins see **Version … is ready** on Home with *What's new*, **Update now** and **Later**. Update now downloads the release's
+program zip, checks its SHA-256 against the release's `SHA256SUMS`, and runs that release's own installer over this copy:
+program files are replaced, your profile, catalogue, logs and keys stay. On macOS and Linux the page restarts by itself;
+on Windows close its window and start it again from the Start menu.
+
+The same from a terminal: `uo update --check`, `uo update`. A git checkout updates with `git pull` instead. Turn the
+daily check off in *Settings → Plug-ins & AI → Updates* (profile `updates.check = false`). Other computers (agents) are
+updated the same way on each computer. Read `CHANGELOG.md` for what changed.
+
+## Releases and signing
+
+Push a tag `vX.Y.Z` that matches `VERSION` in `engine/setup.py`. The `release` workflow runs the tests, the privacy and
+accessibility checks, builds `universal-organiser-X.Y.Z.zip` and `SHA256SUMS`, and publishes a GitHub release with the
+CHANGELOG notes. `uo update` and *Update now* use exactly these files, so updates only work once the repository has a
+published release that installed copies can reach (a private repository cannot be read without a sign-in).
+
+**Signing.** What triggers warnings, and what removes them:
+
+| System | Warning | What to do |
+|---|---|---|
+| Windows | “Windows protected your PC” (SmartScreen) or “Open File – Security Warning” when running `install.cmd` from a downloaded zip | Before unzipping: right-click the zip → *Properties* → tick **Unblock** → OK. Then nothing in it warns. The installer also clears the mark from everything it installs, so `uo.cmd` and the Start-menu entry never warn later. To sign: add an Authenticode code-signing certificate to the repository secrets `WINDOWS_CERT_PFX_BASE64` (the .pfx, base64) and `WINDOWS_CERT_PASSWORD`; the release workflow then signs and time-stamps `install.ps1` (a `.cmd` file cannot be signed). |
+| macOS | none for the normal install: `sh install/install.sh` runs a script with the system's own shell, Python is Apple's or python.org's (both signed), and the macOS reader is compiled on your Mac, so Gatekeeper has nothing to check | The installer also removes the download quarantine from the program files. A signed and notarised app bundle would only be needed for a double-click app, which Universal Organiser does not have. |
+| Linux | none | – |
 
 ## Logs and problems
 

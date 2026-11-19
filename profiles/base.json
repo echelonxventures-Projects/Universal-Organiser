@@ -638,6 +638,7 @@
     ],
     "_naming_about": "Sorter renaming (only when ticked): 'original' = never rename. Types in naming_by_type get their own style; other documents (naming_kinds, or any file with a detected document type) get the chosen style; plain photos, videos and audio keep their names."
   },
+  "updates": {"_about": "Once a day, ask GitHub for the newest release (only the program name and version are sent). Nothing is installed without an admin pressing Update now.", "check": true, "repo": "echelonxventures-Projects/Universal-Organiser"},
   "ui": {
     "port": 8765,
     "idle_hours": 4,

@@ -51,7 +51,8 @@ It installs into `~/Library/Application Support/Universal Organiser` and adds th
 
 ### Windows (10 or 11)
 
-1. Unzip Universal Organiser, open the folder, double-click **`install\install.cmd`**.
+1. Before unzipping, right-click the zip → *Properties* → tick **Unblock** (otherwise Windows asks “Do you want to
+   run this file?” for each script). Unzip, open the folder, double-click **`install\install.cmd`**.
 2. If Python is missing, it offers to install it with winget (or get it from python.org — tick *Add to PATH*).
 3. **Disk encryption must be on** (the catalogue holds your documents' text): *Settings → Privacy & security →
    Device encryption* (or *BitLocker*). The installer offers to open that page.
@@ -138,9 +139,15 @@ Run the wizard again any time from *Settings → Set-up wizard*; your other sett
 **Accounts.** *Settings → Accounts* adds family members. A *member* sees only the owners you choose and never sensitive
 files, and cannot change anything.
 
+**Language.** The pages come in English and Hindi (हिन्दी). Each phone, tablet or computer picks its own with the
+**Language** menu at the top right of the page; *Settings → Plug-ins & AI → Language* sets the default for devices that
+have not chosen (normally the browser's own language). Names of your files, people, folders and topics are never
+translated. The terminal (`uo …`) stays in English.
+
 **Keyboard and screen readers.** Every page works without a mouse. The first Tab shows *Skip to content*; Tab moves
 through links, buttons, fields, rows and tiles, and Enter or Space opens the one in focus. In a dialog, Tab stays inside
-it and Escape cancels. Screen readers (VoiceOver, NVDA, Narrator, TalkBack) hear the page's navigation, the current page,
+it and Escape cancels. In the maps and heat maps (Overview, Analytics) a chart is one Tab stop: arrow keys move to the
+neighbouring tile or cell, Home and End to the first and last, Enter opens it, and the tooltip shows for the one in focus. Screen readers (VoiceOver, NVDA, Narrator, TalkBack) hear the page's navigation, the current page,
 every field's name and status messages such as “saved”. Pages follow your system's dark mode and reduced-motion
 settings, and zoom with the browser (Ctrl/⌘ +). Triage also has its own keys (`1`–`9`, `Enter`, `N`, `T`, `D`, `S`, `Z`, `O`).
 
@@ -221,8 +228,9 @@ If no VPN address is found, `uo doctor` and the Computers page say so.
 
 ## 10. Update, start automatically, uninstall
 
-- **Update:** run the newest installer (it replaces only program files), or `uo update` in a git copy. Restart
-  `uo serve` afterwards.
+- **Update:** when a new version is out, admins see **Version … is ready** on Home: press **Update now** (it checks the
+  download, replaces only program files and restarts the page), or run `uo update`. *Settings → Plug-ins & AI → Updates*
+  turns the daily check off.
 - **Start automatically:** `uo autostart on` (macOS LaunchAgent, Linux systemd user service, Windows Task Scheduler);
   `uo autostart off` to stop. A hub or standalone computer starts the page; an agent starts `uo agent run`.
 - **Uninstall:** `uo autostart off`, `uo close`, then delete the install folder (`uo version` shows it). On macOS also

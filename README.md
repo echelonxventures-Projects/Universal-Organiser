@@ -12,6 +12,7 @@ you approve first, and always with undo.
 - **One search for the whole home.** Make one computer the **hub**; the others send their catalogues to it. Phones and
   tablets use the page over home Wi-Fi (HTTPS, each device approved with a 6-digit code). Away from home only through
   your own VPN.
+- **Your language.** Pages in English and Hindi, chosen per phone or computer; more languages are one file each.
 - **Generic.** Ready-made presets (Just me, Family, Small office, Student, Custom), country packs for local documents,
   and every rule editable in Settings. No names are built in.
 - **Safe by design.** Read-only until you approve a plan. Every move is logged and can be undone. Sensitive files (keys,

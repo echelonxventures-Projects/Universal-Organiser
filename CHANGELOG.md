@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.2.0
+
+- **Hindi (हिन्दी).** Every page, button, message and alert, including the server's own messages, is available in Hindi.
+  Each phone, tablet or computer picks its language with the new **Language** menu at the top of the page; the default
+  for a computer is set in *Settings → Plug-ins & AI → Language* (normally the browser's language). Names of files,
+  people, folders and topics are never translated. More languages are one JSON file each (see CONTRIBUTING.md);
+  `tools/i18n_extract.py` lists every text and checks the translations in CI.
+- **Update check.** Once a day the page asks GitHub for the newest release (program name and version only; can be
+  turned off in Settings). Admins see *Version … is ready* on Home with **Update now**: the download is checked against
+  the release's SHA-256, the release's own installer replaces only the program files, and the page restarts by itself.
+  `uo update` does the same from a terminal; `uo update --check` only looks. Python from python.org on macOS works
+  without its separate certificate step.
+- **Releases.** A tag `vX.Y.Z` publishes a GitHub release with the program zip, `SHA256SUMS` and the changelog notes.
+  The Windows installer is signed when a code-signing certificate is added to the repository secrets.
+- **Fewer warnings when installing from a download.** The installers clear Windows' “from the internet” mark and macOS's
+  quarantine from the files they install. The manual explains unblocking the zip on Windows before unzipping.
+- **Charts by keyboard.** The maps (Overview, Analytics) and heat maps (files per month, owners × topics) are one Tab stop
+  each; arrow keys move to the neighbouring tile or cell, Home/End to the first/last, Enter opens, and the tooltip shows
+  for the focused one. Heat-map cells are named with their numbers for screen readers.
+- Form fields inside tables are now named after their column (“Type – Alex”) for screen readers.
+
 ## 1.1.1
 
 - **Installers are tested on every change.** CI installs from scratch on clean macOS, Windows (through `install.cmd`) and

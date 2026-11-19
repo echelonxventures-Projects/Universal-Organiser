@@ -4,6 +4,7 @@
    - dialogs: focus moves in, Tab stays inside, Escape cancels, focus returns where it was
    - names for form controls and symbol-only buttons the pages build in script
    - keyboard access (Tab + Enter/Space) for rows and tiles that only reacted to a mouse
+   - charts: one Tab stop each, arrow keys between tiles/cells, tooltips on keyboard focus
    - status and error messages read out by screen readers */
 (() => {
   "use strict";
@@ -58,7 +59,17 @@ transition-duration:.01ms!important;scroll-behavior:auto!important}}`;
       while (p && !text(p.textContent)) p = p.previousSibling;
       t = p ? p.textContent : "";
     }
-    if (!text(t)) { const row = el.closest("tr, li, .row, .gh, [role=row], div"); if (row) t = row.textContent; }
+    const cell = el.closest("td");
+    if (!text(t) && cell) {  // in a table: its column heading and the row's first cell ("Type – Alex")
+      const th = cell.closest("table")?.querySelectorAll("thead th")[cell.cellIndex];
+      const first = cell.parentElement.cells[0];
+      const who = first && first !== cell ? (first.querySelector("input,select")?.value || first.textContent) : "";
+      t = [th ? th.textContent : "", who].map(text).filter(Boolean).join(" – ");
+    }
+    if (!text(t)) {
+      const row = el.closest("tr, li, .row, .gh, [role=row], div");
+      if (row) { const c = row.cloneNode(true); c.querySelectorAll("select,option,script,style").forEach(x => x.remove()); t = c.textContent; }
+    }
     if (!text(t) && el.name) t = el.name.replace(/[_-]+/g, " ");
     t = text(t).slice(0, 90);
     if (t) el.setAttribute("aria-label", t);
@@ -88,6 +99,72 @@ transition-duration:.01ms!important;scroll-behavior:auto!important}}`;
     if ((e.key === "Enter" || e.key === " ") && t.hasAttribute && t.hasAttribute("data-uo-click") && !e.defaultPrevented) {
       e.preventDefault(); t.click();
     }
+  });
+
+  // ---- charts: one Tab stop per chart, arrow keys move to the nearest tile/cell in that direction, Home/End,
+  // Enter/Space open, and the tooltip a mouse would show appears for the focused one too
+  const HINT_ID = "uo-arrows-hint";
+  function charts(root) {
+    const up = root.closest && root.closest("[data-arrows]");  // a tile added on its own: its chart
+    const boxes = [...new Set((up ? [up] : []).concat([...root.querySelectorAll("[data-arrows]")]))];
+    for (const box of boxes) {
+      const items = [...box.querySelectorAll(box.dataset.arrows)];
+      if (!items.length) continue;
+      if (!d.getElementById(HINT_ID)) {
+        const h = d.createElement("span"); h.id = HINT_ID; h.hidden = true;
+        h.textContent = "Arrow keys move between items, Home and End go to the first and last, Enter opens.";
+        d.body.appendChild(h);
+      }
+      box.setAttribute("aria-describedby", HINT_ID);
+      let cur = items.find(i => i.getAttribute("tabindex") === "0" && i.dataset.uoRove) || items[0];
+      items.forEach(i => { i.setAttribute("tabindex", i === cur ? "0" : "-1"); i.dataset.uoRove = "1"; });
+    }
+  }
+  const centre = el => { const r = el.getBoundingClientRect(); return {x: r.left + r.width / 2, y: r.top + r.height / 2, r}; };
+  function nearest(from, items, key) {
+    const a = centre(from);
+    let best = null, bestScore = Infinity;
+    for (const it of items) {
+      if (it === from || !it.getClientRects().length) continue;
+      const b = centre(it), dx = b.x - a.x, dy = b.y - a.y;
+      const ok = {ArrowRight: dx > 1, ArrowLeft: dx < -1, ArrowDown: dy > 1, ArrowUp: dy < -1}[key];
+      if (!ok) continue;
+      const along = key === "ArrowRight" || key === "ArrowLeft" ? Math.abs(dx) : Math.abs(dy);
+      const across = key === "ArrowRight" || key === "ArrowLeft" ? Math.abs(dy) : Math.abs(dx);
+      const score = along + across * 2;
+      if (score < bestScore) { bestScore = score; best = it; }
+    }
+    return best;
+  }
+  function moveTo(box, from, to) {
+    if (!to) return;
+    from.setAttribute("tabindex", "-1"); to.setAttribute("tabindex", "0"); to.focus();
+    to.scrollIntoView && to.scrollIntoView({block: "nearest", inline: "nearest"});
+  }
+  d.addEventListener("keydown", e => {
+    const t = e.target, box = t.closest && t.closest("[data-arrows]");
+    if (!box || !t.matches(box.dataset.arrows)) return;
+    const items = [...box.querySelectorAll(box.dataset.arrows)];
+    if (/^Arrow/.test(e.key)) { e.preventDefault(); moveTo(box, t, nearest(t, items, e.key)); }
+    else if (e.key === "Home") { e.preventDefault(); moveTo(box, t, items[0]); }
+    else if (e.key === "End") { e.preventDefault(); moveTo(box, t, items[items.length - 1]); }
+    else if ((e.key === "Enter" || e.key === " ") && !e.defaultPrevented) { e.preventDefault(); t.click(); }
+  });
+  const fakeMouse = (el, type) => {
+    const c = centre(el);
+    el.dispatchEvent(new MouseEvent(type, {bubbles: type !== "mouseenter" && type !== "mouseleave", clientX: c.r.left + Math.min(24, c.r.width / 2), clientY: c.r.bottom - 4}));
+  };
+  d.addEventListener("focusin", e => {
+    const t = e.target, box = t.closest && t.closest("[data-arrows]");
+    if (box && t.matches(box.dataset.arrows)) {
+      box.querySelectorAll(box.dataset.arrows).forEach(i => i !== t && i.setAttribute("tabindex", "-1"));
+      t.setAttribute("tabindex", "0");
+      if (t.matches(":focus-visible")) fakeMouse(t, "mouseenter");
+    }
+  });
+  d.addEventListener("focusout", e => {
+    const t = e.target, box = t.closest && t.closest("[data-arrows]");
+    if (box && t.matches(box.dataset.arrows)) fakeMouse(t, "mouseleave");
   });
 
   // ---- status messages
@@ -150,7 +227,8 @@ transition-duration:.01ms!important;scroll-behavior:auto!important}}`;
     all("input,select,textarea").forEach(nameControl);
     all("button").forEach(nameButton);
     all("[id]").forEach(live);
-    all("div,span,li,td,tr,th,section,article,p,b,i,strong,small,h3,h4").forEach(keyboardable);
+    all("div,span,li,td,tr,th,section,article,p,b,i,strong,small,h3,h4").forEach(el => el.closest("[data-arrows]") ? null : keyboardable(el));
+    charts(root);
   }
   let pending = new Set(), timer = 0;
   function flush() {

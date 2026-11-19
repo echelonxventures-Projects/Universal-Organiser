@@ -309,5 +309,94 @@ class EndToEnd(unittest.TestCase):
             a.cleanup()
 
 
+class Languages(unittest.TestCase):
+    """Hindi is chosen by the device's cookie, else the browser's language; English is the default; settings can set a
+    computer-wide default; the dictionary never breaks the page (valid JSON, placeholders that exist in the English)."""
+
+    def test_language_choice_and_dictionary(self):
+        from engine import i18n
+        self.assertIn("hi", i18n.languages())
+        r = subprocess.run([sys.executable, "-I", os.path.join(ROOT, "tools", "i18n_extract.py"), "--check"], capture_output=True,
+                           text=True, encoding="utf-8", errors="replace")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        i = Install("lang")
+        try:
+            i.serve()
+
+            def page(headers):
+                req = urllib.request.Request(i.base + "/login", headers=headers)
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    html = resp.read().decode("utf-8")
+                return json.loads(re.search(r"window.UO_I18N=(\{.*?\});</script>", html, re.S)[1])["lang"]
+            self.assertEqual(page({}), "en")
+            self.assertEqual(page({"Accept-Language": "hi-IN,hi;q=0.9,en;q=0.5"}), "hi")
+            self.assertEqual(page({"Cookie": "uo_lang=hi"}), "hi")
+            self.assertEqual(page({"Cookie": "uo_lang=en", "Accept-Language": "hi"}), "en", "the device's own choice wins")
+            self.assertEqual(page({"Cookie": "uo_lang=../../etc"}), "en", "unknown codes are ignored")
+        finally:
+            i.cleanup()
+
+
+class Updates(unittest.TestCase):
+    """A fake release served from local files: the newer program is checksum-checked and installed over a copy by the
+    release's own installer, the profile is kept; a download that does not match its checksum changes nothing."""
+
+    def setUp(self):
+        import hashlib, io, zipfile
+        from engine import updates
+        self.U = updates
+        self.tmp = tempfile.mkdtemp(prefix="uo-upd-")
+        self.inst = os.path.join(self.tmp, "Universal Organiser")
+        shutil.copytree(ROOT, self.inst, ignore=shutil.ignore_patterns(".git", "tests", "__pycache__", "logs", "catalogue", "machine.json"))
+        os.makedirs(os.path.join(self.inst, "profiles"), exist_ok=True)
+        with open(os.path.join(self.inst, "profiles", "machine.json"), "w") as f:
+            f.write('{"profile": "keep-me"}')
+        new = os.path.join(self.tmp, "new", "universal-organiser")
+        shutil.copytree(ROOT, new, ignore=shutil.ignore_patterns(".git", "tests", "__pycache__", "logs", "catalogue", "machine.json"))
+        sp = os.path.join(new, "engine", "setup.py")
+        src = open(sp, encoding="utf-8").read()
+        open(sp, "w", encoding="utf-8").write(re.sub(r'VERSION = "[^"]+"', 'VERSION = "99.0.0"', src))
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as z:
+            for dp, dn, fn in os.walk(new):
+                for n in fn:
+                    full = os.path.join(dp, n)
+                    z.write(full, os.path.relpath(full, os.path.dirname(new)))
+        self.zip = buf.getvalue()
+        self.sums = f"{hashlib.sha256(self.zip).hexdigest()}  universal-organiser-99.0.0.zip\n".encode()
+        rel = {"tag_name": "v99.0.0", "html_url": "https://example.invalid/r", "body": "notes",
+               "assets": [{"name": "universal-organiser-99.0.0.zip", "browser_download_url": "zip"},
+                          {"name": "SHA256SUMS", "browser_download_url": "sums"}]}
+        self.files = {"zip": self.zip, "sums": self.sums}
+        self.orig = (updates._get, updates.ROOT, updates.CACHE)
+        updates._get = lambda url, timeout=15: io.BytesIO(json.dumps(rel).encode() if "api.github.com" in url else self.files[url])
+        updates.ROOT, updates.CACHE = self.inst, os.path.join(self.tmp, "update-check.json")
+
+    def tearDown(self):
+        self.U._get, self.U.ROOT, self.U.CACHE = self.orig
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def version_of(self):
+        return re.search(r'VERSION = "([^"]+)"', open(os.path.join(self.inst, "engine", "setup.py"), encoding="utf-8").read())[1]
+
+    def test_check_and_install(self):
+        info = self.U.check({}, force=True)
+        self.assertTrue(info["newer"]); self.assertEqual(info["latest"], "99.0.0")
+        self.assertEqual(self.U.cached({})[0]["latest"], "99.0.0")
+        self.assertIsNone(self.U.check({"updates": {"check": False}}), "turned off: no check")
+        log = []
+        self.assertEqual(self.U.install({}, log=log.append), "99.0.0", "\n".join(map(str, log)))
+        self.assertEqual(self.version_of(), "99.0.0")
+        self.assertEqual(open(os.path.join(self.inst, "profiles", "machine.json")).read(), '{"profile": "keep-me"}')
+
+    def test_bad_checksum_changes_nothing(self):
+        self.files["zip"] = self.zip + b"tampered"
+        before = self.version_of()
+        with self.assertRaises(SystemExit) as e:
+            self.U.install({}, log=lambda m: None)
+        self.assertIn("checksum", str(e.exception))
+        self.assertEqual(self.version_of(), before)
+
+
 if __name__ == "__main__":
     unittest.main()

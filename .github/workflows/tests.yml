@@ -30,6 +30,8 @@ jobs:
         run: python -I tools/privacy_check.py --all
       - name: Accessibility of the pages
         run: python -I tools/a11y_check.py
+      - name: Translations
+        run: python -I tools/i18n_extract.py --check
 
   install:
     # The real installers on a clean machine: install, check, install again (update), check nothing of yours was lost.

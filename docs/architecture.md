@@ -43,6 +43,8 @@ static HTML pages. There is no database server, no web framework and no build st
 | `deepread.py`, `transcribe.py`, `similar.py` | all pages of scans, speech transcripts, near-identical photos (macOS) |
 | `projects.py`, `projindex.py`, `cleanup.py`, `projmove.py`, `projsteps.py`, `declutter.py` | projects: status, iCloud exclusion, index, version review, logged folder steps |
 | `settings.py`, `reclassify.py` | validated profile editing with versions; re-applying rules |
+| `i18n.py`, `i18n.js`, `i18n/<code>.json` | page languages: the server picks the language and puts its dictionary in the page; the browser translates every text as it appears |
+| `updates.py` | daily release check, checksum-verified update through the release's installer |
 | `a11y.js` | added to every page by the server: skip link, landmarks, dialog focus, names for controls, keyboard access, live messages |
 | `helpers/macos/fehelper.swift` | PDFKit text, Vision OCR and labels, image fingerprints, SpeechTranscriber, iCloud download; read-only |
 
@@ -99,3 +101,7 @@ an unencrypted test catalogue. CI runs them on macOS, Windows and Linux with Pyt
 - **Accessibility** (`tools/a11y_check.py`): language, title, zoomable viewport, one heading, main landmark, named fields and
   buttons, no mouse-only elements in the markup, colour contrast of each page's light and dark colours.
 - **Privacy** (`tools/privacy_check.py`).
+- **Languages** (`tools/i18n_extract.py --check`): every translation file is valid and uses only placeholders that the
+  English has; the tests also check how a page's language is chosen.
+- **Updates**: a fake release served from local files is checksum-checked and installed over a copy by its own
+  installer (profile kept); a tampered download changes nothing.

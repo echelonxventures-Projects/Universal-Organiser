@@ -199,7 +199,7 @@ async function drawMap(v){TREE=await api("/api/analytics/tree?path="+encodeURICo
  const crumbs=[`<a data-go="">All folders</a>`,...T.crumbs.map(c=>`<span>›</span><a data-go="${esc(c.path)}">${esc(c.name)}</a>`)].join("");
  v.innerHTML=`<div class="tools"><div class="crumbs">${crumbs}${T.expanded&&T.expanded.length?`<span style="margin-left:8px">· opened ${T.expanded.map(esc).join(", ")} (it held most of the space)</span>`:""}</div><span class="sp"></span><span style="color:var(--muted)">Colour by</span>
   <div class="seg" role="group" aria-label="Colour by">${[["type","Type"],["dups","Duplicates"],["cloud","iCloud-only"],["owner","No owner"]].map(([k,l])=>`<button class="${mode===k?"on":""}" data-mode="${k}">${l}</button>`).join("")}</div></div>
-  <div id="map" role="list" aria-label="Space map"></div><div class="legend" id="leg"></div>
+  <div id="map" role="list" aria-label="Space map" data-arrows=".tile"></div><div class="legend" id="leg"></div>
   <h3 style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 4px">Table view</h3><div class="tw"><table><thead><tr><th>Name</th><th class="r">Files</th><th class="r">Size</th><th class="r">Duplicated</th><th class="r">iCloud-only</th><th class="r">With owner</th></tr></thead><tbody id="tbl"></tbody></table></div>`;
  v.querySelectorAll("[data-go]").forEach(a=>a.onclick=()=>{cur=a.dataset.go;select(null);draw()});
  v.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;draw()});
@@ -214,7 +214,7 @@ async function drawMap(v){TREE=await api("/api/analytics/tree?path="+encodeURICo
   el.setAttribute("aria-label",`${it.name}, ${size(it.size)}${it.type==="dir"?", folder":""}`);
   el.addEventListener("mouseenter",e=>showTip(e,tipHtml(it)));el.addEventListener("mousemove",moveTip);el.addEventListener("mouseleave",hideTip);
   const pick=()=>{if(it.type==="rest")return;if(it.type==="dir"){cur=it.path;select({...it});draw()}else select({...it,el})};
-  el.addEventListener("click",pick);el.addEventListener("keydown",e=>{if(e.key==="Enter")pick()});
+  el.addEventListener("click",pick);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick()}});
   if(it.type!=="rest")dragify(el,it);m.appendChild(el)}
  const leg=$("leg");
  if(mode==="type")leg.innerHTML=Object.keys(KCOL).map(k=>`<span><i style="background:${kindColor(k)}"></i>${esc(k)}</span>`).join("")+`<span><i style="background:var(--other)"></i>Other types</span><span>· tile size = space used · folders have ↘</span>`;
@@ -279,16 +279,16 @@ function heatTip(e,t,n,s){showTip(e,`<b>${esc(t)}</b><span>${num(n)} files · ${
 function drawTime(v){const T=OV.timeline.filter(r=>r[0]>="1990"),years=[...new Set(T.map(r=>r[0]))].sort().reverse(),M="Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
  const cell={};let mx=1;for(const[y,m,n,s]of T){cell[y+"-"+m]=[n,s];mx=Math.max(mx,n)}
  v.innerHTML=`<p class="help">Files per month, by the date of the document (from its name, camera or file dates). Stronger colour = more files. Click a cell to open that year's files.</p>
- <div class="tw"><table class="heat"><thead><tr><th></th>${M.map(m=>`<th>${m}</th>`).join("")}<th class="r">Year</th></tr></thead><tbody>${years.map(y=>{let tn=0,ts=0;
-  const cells=M.map((m,i)=>{const[n,s]=cell[y+"-"+(i+1)]||[0,0];tn+=n;ts+=s;return`<td><div class="c" style="background:${seqCount(n,mx)}" data-y="${y}" data-t="${m} ${y}" data-n="${n}" data-s="${s}">${n||""}</div></td>`}).join("");
+ <div class="tw"><table class="heat" data-arrows=".c" aria-label="Files per month"><thead><tr><th></th>${M.map(m=>`<th>${m}</th>`).join("")}<th class="r">Year</th></tr></thead><tbody>${years.map(y=>{let tn=0,ts=0;
+  const cells=M.map((m,i)=>{const[n,s]=cell[y+"-"+(i+1)]||[0,0];tn+=n;ts+=s;return`<td><div class="c" style="background:${seqCount(n,mx)}" data-y="${y}" data-t="${m} ${y}" data-n="${n}" data-s="${s}" role="button" aria-label="${m} ${y}: ${num(n)} files, ${size(s)}">${n||""}</div></td>`}).join("");
   return`<tr><th class="rh">${y}</th>${cells}<td class="r" style="font:11.5px var(--m);color:var(--muted);padding:0 6px">${num(tn)} · ${size(ts)}</td></tr>`}).join("")}</tbody></table></div>
  <div class="legend"><span>Fewer</span>${["--q0",...QS].map(q=>`<i style="background:var(${q})"></i>`).join("")}<span>More (log scale, max ${num(mx)}/month)</span></div>`;
  v.querySelectorAll(".c").forEach(c=>{c.onmouseenter=e=>heatTip(e,c.dataset.t,+c.dataset.n,+c.dataset.s);c.onmousemove=moveTip;c.onmouseleave=hideTip;c.onclick=()=>location.href="/?year="+c.dataset.y})}
 function drawMatrix(v){const owners=[...OV.owners,"(no owner)"],topics=[...OV.topics,"(no topic)"];const cell={};let mx=1;
  for(const[e,t,n,s]of OV.matrix){cell[e+"\u0000"+t]=[n,s];if(e!=="(no owner)"||t!=="(no topic)")mx=Math.max(mx,n)}
  v.innerHTML=`<p class="help">How files spread across owners and topics. Stronger colour = more files. Empty rows or columns show gaps (for example an owner with no ID documents). Click a cell to open those files.</p>
- <div class="tw"><table class="heat"><thead><tr><th></th>${topics.map(t=>`<th style="writing-mode:vertical-rl;transform:rotate(180deg);height:160px;text-align:left">${esc(t)}</th>`).join("")}</tr></thead><tbody>
- ${owners.map(o=>`<tr><th class="rh">${esc(o)}</th>${topics.map(t=>{const[n,s]=cell[o+"\u0000"+t]||[0,0];return`<td><div class="c" style="background:${seqCount(n,mx)}" data-o="${esc(o)}" data-tp="${esc(t)}" data-n="${n}" data-s="${s}">${n||""}</div></td>`}).join("")}</tr>`).join("")}</tbody></table></div>
+ <div class="tw"><table class="heat" data-arrows=".c" aria-label="Owners and topics"><thead><tr><th></th>${topics.map(t=>`<th style="writing-mode:vertical-rl;transform:rotate(180deg);height:160px;text-align:left">${esc(t)}</th>`).join("")}</tr></thead><tbody>
+ ${owners.map(o=>`<tr><th class="rh">${esc(o)}</th>${topics.map(t=>{const[n,s]=cell[o+"\u0000"+t]||[0,0];return`<td><div class="c" style="background:${seqCount(n,mx)}" data-o="${esc(o)}" data-tp="${esc(t)}" data-n="${n}" data-s="${s}" role="button" aria-label="${esc(o)}, ${esc(t)}: ${num(n)} files, ${size(s)}">${n||""}</div></td>`}).join("")}</tr>`).join("")}</tbody></table></div>
  <div class="legend"><span>Fewer</span>${["--q0",...QS].map(q=>`<i style="background:var(${q})"></i>`).join("")}<span>More (log scale)</span></div>`;
  v.querySelectorAll(".c").forEach(c=>{c.onmouseenter=e=>heatTip(e,`${c.dataset.o} · ${c.dataset.tp}`,+c.dataset.n,+c.dataset.s);c.onmousemove=moveTip;c.onmouseleave=hideTip;
   c.onclick=()=>{const p=new URLSearchParams();p.set("entity",c.dataset.o==="(no owner)"?"(none)":c.dataset.o);p.set("topic",c.dataset.tp==="(no topic)"?"(none)":c.dataset.tp);location.href="/?"+p}})}

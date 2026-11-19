@@ -15,7 +15,8 @@ another one.
 | `uo init [options]` | writes your profile without the browser. Options: `--preset personal\|family\|small-office\|student\|custom`, `--region none\|india`, `--folder PATH` (repeat; default: the suggested folders), `--library PATH`, `--name "Your Name"`, `--role standalone\|hub\|agent`, `--access local\|lan\|remote`, `--profile NAME`, `--force` (answer again; the old profile is kept) |
 | `uo serve [--lan] [--no-browser]` | runs the page. First run prints a one-time link to create the admin account. `--lan` also starts home Wi-Fi access for this run. `--no-browser` for servers/autostart. Ctrl+C stops. |
 | `uo autostart on\|off` | start at login (macOS LaunchAgent `org.universal-organiser`, Linux systemd user service `universal-organiser`, Windows task “Universal Organiser”). Without `on`/`off`: shows the state. |
-| `uo update` | `git pull --ff-only` in a git copy, rebuilds the macOS reader if needed. Copies installed from a zip: run the newer installer instead. |
+| `uo update` | brings this copy to the newest release: downloads its program zip, checks the SHA-256 against the release's `SHA256SUMS`, runs that release's installer over this copy (program files only; profile, catalogue, logs and keys stay), rebuilds the macOS reader if needed. A git copy runs `git pull --ff-only` instead. |
+| `uo update --check` | only says whether a newer release exists (works even when the daily check is off) |
 | `uo package` | `exports/universal-organiser-<version>.zip` in the data folder: program files only (never profile, catalogue, logs, keys) |
 | `uo close` | macOS: locks (detaches) the encrypted catalogue. Elsewhere the disk's own encryption protects it. |
 

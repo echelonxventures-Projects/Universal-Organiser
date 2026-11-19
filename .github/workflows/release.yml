@@ -1,0 +1,73 @@
+name: release
+# Push a tag like v1.2.0 (it must match VERSION in engine/setup.py). This builds the program zip, its SHA256SUMS
+# (checked by `uo update` before anything is installed) and a GitHub release with the CHANGELOG notes.
+#
+# Signing (optional, used when the secrets exist; see docs/admin-guide.md → Releases and signing):
+#   WINDOWS_CERT_PFX_BASE64, WINDOWS_CERT_PASSWORD   an Authenticode code-signing certificate (.pfx, base64):
+#                                                    install\install.ps1 is signed and time-stamped
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  sign-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sign the Windows installer (when a certificate is configured)
+        shell: pwsh
+        env:
+          PFX: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+          PW: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: |
+          if (-not $env:PFX) { Write-Host "No certificate configured: the installer is published unsigned."; exit 0 }
+          $p = Join-Path $env:RUNNER_TEMP "sign.pfx"
+          [IO.File]::WriteAllBytes($p, [Convert]::FromBase64String($env:PFX))
+          $cert = Get-PfxCertificate -FilePath $p -Password (ConvertTo-SecureString $env:PW -AsPlainText -Force)
+          $r = Set-AuthenticodeSignature -FilePath install/install.ps1 -Certificate $cert -HashAlgorithm SHA256 -TimestampServer "http://timestamp.digicert.com"
+          Remove-Item $p
+          if ($r.Status -ne "Valid") { throw "Signing failed: $($r.StatusMessage)" }
+          Write-Host "install.ps1 signed by $($cert.Subject)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: install-ps1
+          path: install/install.ps1
+
+  release:
+    needs: sign-windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: install-ps1
+          path: install
+      - name: Tag matches the program version
+        run: |
+          V=$(python -c "import re;print(re.search(r'VERSION = \"([^\"]+)\"', open('engine/setup.py').read())[1])")
+          [ "v$V" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME does not match VERSION $V in engine/setup.py"; exit 1; }
+          echo "V=$V" >> "$GITHUB_ENV"
+      - name: Tests, privacy and accessibility checks
+        run: |
+          python -m unittest discover -s tests
+          python -I tools/privacy_check.py --all
+          python -I tools/a11y_check.py
+      - name: Program zip and checksums
+        run: |
+          python -I engine/cli.py package
+          mkdir dist && mv exports/universal-organiser-$V.zip dist/
+          cd dist && sha256sum universal-organiser-$V.zip > SHA256SUMS && cat SHA256SUMS
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v v="## $V" '$0==v{on=1;next} /^## /{if(on)exit} on' CHANGELOG.md > notes.md
+          printf '\n---\nInstall: unzip, then `sh install/install.sh` (macOS, Linux) or double-click `install\\install.cmd` (Windows).\nAlready installed: `uo update`, or *Update now* on Home.\n' >> notes.md
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "Universal Organiser $V" --notes-file notes.md

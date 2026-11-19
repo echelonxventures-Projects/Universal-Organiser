@@ -42,6 +42,8 @@ Most people never edit JSON: the wizard and Settings cover the usual keys and va
 | `access` | `{"mode": "local"}` | `local`, `lan` (home Wi-Fi), `remote` (+ your VPN) — see below |
 | `hub` | `{"enabled": true}` | accept catalogues from paired computers |
 | `agent` | `{"every_minutes": 60}` | how often `uo autostart` runs scan + sync on an agent |
+| `ui.language` | `auto` (default), `en`, `hi` | language of the pages for devices that have not picked one (`auto` = the browser's language). Each device can choose its own with the **Language** menu at the top of the page (kept in a cookie). |
+| `updates` | `{"check": true, "repo": "owner/name"}` | `check`: once a day ask GitHub for the newest release (only the program name and version are sent); admins then see *Version … is ready* on Home. `repo`: where releases come from (a fork or your own mirror). Set `check: false` to never contact GitHub. |
 
 ### Owners (`entities`)
 

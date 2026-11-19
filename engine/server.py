@@ -8,6 +8,7 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from http.cookies import SimpleCookie
 from .config import ROOT, Config
 from . import i18n as I18N
+from . import activity as ACT
 from .auth import Auth, AuthError
 from . import hub as HB, setup as SU
 from . import settings as S, reclassify, insights as I, analytics as AN, sorter as SO, similar as SIM, transcribe as TR, lan as LAN, query as QP, smartfolders as SF, deepread as DR, home as HM, tags as TG, overview as OV, projects as PJ, cleanup as CU
@@ -312,6 +313,13 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                 raise ValueError("too large")
             return json.loads(self.rfile.read(n) or b"{}") if n else {}
 
+        def _device(self):
+            """For “Who used it”: this computer, or the approved phone/tablet (its label), or the browser's kind."""
+            if not self.REMOTE:
+                return "this computer"
+            d = devices.get(self._sid("fe_d"))
+            return (d or {}).get("label") or LAN.label_from_agent(self.headers.get("User-Agent"))
+
         def _lang(self):
             """This device's choice (cookie), else the computer's default (Settings), else the browser's language."""
             langs = I18N.languages()
@@ -433,7 +441,12 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                 return self._json({"ok": True}, headers=[("Set-Cookie", self._cookie(sid))])
             if path == "/api/login" and method == "POST":
                 b = self._body()
-                sid = auth.login(b.get("username"), b.get("password"))
+                try:
+                    sid = auth.login(b.get("username"), b.get("password"))
+                except AuthError as e:
+                    ACT.record(cat, "signin-failed", str(b.get("username") or "")[:64], str(e), self.client_address[0], self._device())
+                    raise
+                ACT.record(cat, "signin", b.get("username"), "", self.client_address[0], self._device())
                 if self.REMOTE:  # a phone/tablet: the device itself must be approved on the computer
                     u = auth.session(sid)
                     d = devices.request(self._sid("fe_d"), u["username"], LAN.label_from_agent(self.headers.get("User-Agent")), self.client_address[0])
@@ -451,6 +464,8 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
             admin = user["role"] == "admin"
             scope = scope_of(user)
             cfg = state["cfg"]
+            if method == "GET" and not is_api and (path in ("/", "/home") or path[1:] + ".html" in pages):
+                ACT.page(cat, user["username"], path, self.client_address[0], self._device())
             if method == "GET":
                 if path == "/":
                     return self._page("search.html")
@@ -581,6 +596,8 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                                        "entity_types": cfg.get("entity_types"), "checks": self._checks(), "version": SU.VERSION})
                 if path == "/api/doctor":
                     return self._json(self._checks())
+                if path == "/api/activity":
+                    return self._json(ACT.summary(cat, auth.list()))
                 if path == "/api/update":
                     from . import updates
                     info, due = updates.cached(cfg)
@@ -675,6 +692,7 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
             # POST
             b = self._body()
             if path == "/api/logout":
+                ACT.record(cat, "signout", user["username"], "", self.client_address[0], self._device())
                 auth.logout(self._sid())
                 return self._json({"ok": True}, headers=[("Set-Cookie", "fe_s=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict")])
             if path == "/api/password":

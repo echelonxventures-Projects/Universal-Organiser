@@ -139,6 +139,11 @@ Run the wizard again any time from *Settings → Set-up wizard*; your other sett
 **Accounts.** *Settings → Accounts* adds family members. A *member* sees only the owners you choose and never sensitive
 files, and cannot change anything.
 
+**Who used it.** *Settings → Who used it* (admins only) shows each account's last sign-in and device, every sign-in,
+failed attempt, sign-out and page opened in the last 90 days, and beside it every change and sorter run with who made
+it. Many failed attempts for one name, or from an address you don't know, is a reason to change that password
+(*Settings → Accounts*). It is kept inside the encrypted catalogue and never leaves this computer.
+
 **Language.** The pages come in English and Hindi (हिन्दी). Each phone, tablet or computer picks its own with the
 **Language** menu at the top right of the page; *Settings → Plug-ins & AI → Language* sets the default for devices that
 have not chosen (normally the browser's own language). Names of your files, people, folders and topics are never

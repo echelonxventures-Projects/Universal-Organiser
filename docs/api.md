@@ -281,6 +281,15 @@ Compares other versions of projects with the kept version in the projects folder
 | GET | `/api/doctor` | admin | – | requirement checks: `id`, `title`, `status: ok\|missing\|warn\|info`, `need: required\|recommended\|optional`, `detail`, `fix`, `cmd`, `fixable` |
 | POST | `/api/doctor/fix` | admin, local | `id` | builds the macOS reader. Fixes that need a password (package installs) are never run from the page: the error tells you the command. |
 
+### Who used it (admin)
+
+| Method | Path | Who | Body | Returns |
+|---|---|---|---|---|
+| GET | `/api/activity` | admin | – | `accounts[]` (`username`, `display`, `role`, `last_login`, `signins_30d`, `failed_30d`, `pages_30d`, `last_device`, `last_ip`), `events[]` (latest 300: `t`, `username`, `event: signin\|signin-failed\|signout\|page`, `detail`, `ip`, `device`), `changes[]`, `runs[]`, `keep_days` (90), `unknown_failed_30d` |
+
+Pages opened are recorded at most once per person, page and device every 10 minutes. Entries older than 90 days are
+removed. The device is “this computer”, an approved phone's or tablet's label, or the browser's kind.
+
 ### Updates (admin)
 
 | Method | Path | Who | Body | Returns |

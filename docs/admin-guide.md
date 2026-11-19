@@ -47,6 +47,12 @@ Run `uo close` before copying the image by hand, so it is not in use.
 - Forgotten password: `uo user passwd NAME` on the computer itself.
 - Sessions end after `ui.idle_hours` of inactivity (default 4).
 
+## Who used it
+
+*Settings → Who used it*: last sign-in and device per account, sign-ins, failed attempts (also for user names that do
+not exist), sign-outs and pages opened, kept 90 days (`access_log` table in the catalogue), next to label changes
+and sorter runs with the account that made them. Failed sign-ins are also slowed down after several attempts.
+
 ## Phones and tablets
 
 *Settings → Accounts → Phones & tablets* lists every device with its owner and last use. **Remove** signs it out at once;

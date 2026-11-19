@@ -44,6 +44,7 @@ static HTML pages. There is no database server, no web framework and no build st
 | `projects.py`, `projindex.py`, `cleanup.py`, `projmove.py`, `projsteps.py`, `declutter.py` | projects: status, iCloud exclusion, index, version review, logged folder steps |
 | `settings.py`, `reclassify.py` | validated profile editing with versions; re-applying rules |
 | `i18n.py`, `i18n.js`, `i18n/<code>.json` | page languages: the server picks the language and puts its dictionary in the page; the browser translates every text as it appears |
+| `activity.py` | who used it: sign-ins, failures, sign-outs, pages opened (90 days) |
 | `updates.py` | daily release check, checksum-verified update through the release's installer |
 | `a11y.js` | added to every page by the server: skip link, landmarks, dialog focus, names for controls, keyboard access, live messages |
 | `helpers/macos/fehelper.swift` | PDFKit text, Vision OCR and labels, image fingerprints, SpeechTranscriber, iCloud download; read-only |
@@ -61,6 +62,7 @@ static HTML pages. There is no database server, no web framework and no build st
 | `sort_runs` | every sorter run with its log file and undo state |
 | `dismissed` | dismissed alerts, recommendations, triage skips (with expiry) |
 | `users`, `devices` | accounts; approved phones/tablets |
+| `access_log` | sign-ins, failed attempts, sign-outs, pages opened (90 days) |
 | `machines`, `pair_codes` | hub: paired computers (token hash) and pairing codes |
 | `smart_folders`, `finder_tags`, `transcripts`, `photo_features` | saved views, tags written, transcripts, photo fingerprints |
 | `project_status`, `project_sync`, `cleanup_held` | projects: working status, iCloud exclusion, held versions |

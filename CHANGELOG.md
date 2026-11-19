@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+- **Who used it.** *Settings → Who used it* (admins only): each account's last sign-in and device, and every sign-in,
+  failed attempt (also for unknown user names), sign-out and page opened in the last 90 days, beside the label changes
+  and sorter runs each person made. Stored in the encrypted catalogue; never leaves the computer. In English and Hindi.
+
 ## 1.2.0
 
 - **Hindi (हिन्दी).** Every page, button, message and alert, including the server's own messages, is available in Hindi.

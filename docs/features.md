@@ -86,6 +86,7 @@ Where a feature changes files, it is always **preview → your approval → logg
 | Feature | Notes |
 |---|---|
 | Accounts ✓ | admin and member; member sees only chosen owners, never sensitive files, cannot change anything |
+| Who used it ✓ | Settings → Who used it (admins only): each account's last sign-in and device, sign-ins, failed attempts, sign-outs and pages opened (kept 90 days, inside the encrypted catalogue), next to the changes and sorter runs each person made |
 | Phones and tablets ✓ | HTTPS on home Wi-Fi, private certificate, fingerprint check, each device approved with a 6-digit code, removable at once |
 | Away from home ✓ | through your own VPN (Tailscale/WireGuard); never a router port |
 | Hub and agents ✓ | pairing code, pinned certificate, token; agents send catalogues only; remove a computer = delete its records |

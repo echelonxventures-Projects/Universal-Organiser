@@ -43,6 +43,7 @@ button:disabled{opacity:.5;cursor:default}
 #toast{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:9;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 14px;display:flex;gap:14px;align-items:center;max-width:calc(100% - 32px);font-size:13px}
 #toast button{background:transparent;color:var(--bg);border-color:var(--bg)}
 .scope{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px}.scope label{display:flex;gap:4px;align-items:center}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 </style></head><body>
 <header><h1>Settings</h1><span class="n" id="prof"></span><span class="sp"></span><a href="/home">Home</a><a href="/">Files</a><a href="/browse">Browse</a><a href="/analytics">Analytics</a><a href="/computers">Computers</a><a href="/welcome">Set-up wizard</a></header>
 <nav id="tabs"></nav>
@@ -58,7 +59,7 @@ async function api(p,body){const r=await fetch(p,body===undefined?{headers:H}:{m
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const list=s=>s.split(",").map(x=>x.trim()).filter(Boolean), join=a=>(a||[]).join(", ");
 let S=null,V=null,SAVED="",COUNTS={},tab="owners";
-const TABS=[["owners","Owners"],["topics","Topics"],["doctypes","Document types"],["layout","Folders & layout"],["plugins","Plug-ins & AI"],["accounts","Accounts"],["history","History"]];
+const TABS=[["owners","Owners"],["topics","Topics"],["doctypes","Document types"],["layout","Folders & layout"],["plugins","Plug-ins & AI"],["accounts","Accounts"],["activity","Who used it"],["history","History"]];
 function toast(msg,cid){const t=$("toast");t.innerHTML=`<span>${esc(msg)}</span>${cid?'<button id="undo">Undo</button>':""}`;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,12000);
  if(cid)$("undo").onclick=async()=>{const r=await api("/api/undo",{id:cid});t.hidden=true;toast(`Undone (${r.n} files).`);if(tab==="history")draw()}}
 function shade(html){const s=$("shade");s.innerHTML=`<div class="modal" role="dialog" aria-modal="true">${html}</div>`;s.hidden=false;return s}
@@ -139,7 +140,24 @@ async function draw(){const m=$("main"),C=S.choices;let h="";
   <div><h2>Saved settings versions</h2><p class="help">The settings as they were before each save. Restoring keeps today's version too.</p>
   <div class="tw"><table><thead><tr><th>Saved before</th><th>By</th><th></th></tr></thead><tbody>${Vs.map(v=>`<tr><td class="n">${esc(v.at.replace(/(\d{4})(\d\d)(\d\d)-(\d\d)(\d\d)(\d\d)/,"$1-$2-$3 $4:$5:$6"))}</td><td>${esc(v.by||"")}</td><td><button data-restore="${esc(v.name)}">Restore</button></td></tr>`).join("")||'<tr><td colspan="3" class="n">None yet.</td></tr>'}</tbody></table></div>
   <div class="row"><button id="rerun">Re-apply rules to catalogue…</button></div></div></div></section>`}
+ if(tab==="activity"){const A=await api("/api/activity");const when=t=>t?new Date(t*1000).toLocaleString():"—";
+  const EV={"signin":"Signed in","signin-failed":"Sign-in failed","signout":"Signed out","page":"Opened"};
+  const [kind,setKind]=[window.UOK||"all",k=>{window.UOK=k;draw()}];
+  const evs=A.events.filter(e=>kind==="all"||(kind==="signins"?e.event!=="page":e.event==="signin-failed"));
+  h=`<section><h2>Who used it</h2><p class="help">Sign-ins, failed attempts, sign-outs and pages opened on this computer, with the device and its address, kept ${A.keep_days} days inside the encrypted catalogue. Only admins see this page. Nothing here leaves this computer.</p>
+  <div class="tw"><table><thead><tr><th>Account</th><th>Role</th><th>Last sign-in</th><th>Last device</th><th class="r">Sign-ins (30 days)</th><th class="r">Failed (30 days)</th><th class="r">Pages opened (30 days)</th></tr></thead><tbody>
+  ${A.accounts.map(a=>`<tr><td><b>${esc(a.display||a.username)}</b> <span class="n">${esc(a.username)}</span></td><td>${esc(a.role)}</td><td class="n">${when(a.last_login)}</td><td>${esc(a.last_device||"—")}${a.last_ip?` <span class="n">${esc(a.last_ip)}</span>`:""}</td>
+   <td class="r">${a.signins_30d}</td><td class="r">${a.failed_30d?`<b>${a.failed_30d}</b>`:0}</td><td class="r">${a.pages_30d}</td></tr>`).join("")}</tbody></table></div>
+  ${A.unknown_failed_30d?`<p class="help"><b>${A.unknown_failed_30d}</b> failed sign-in(s) in 30 days used a user name that does not exist.</p>`:""}
+  <h2 style="margin-top:16px">Recent activity</h2><div class="row" role="group" aria-label="Show">${[["all","Everything"],["signins","Sign-ins only"],["failed","Failed only"]].map(([k,l])=>`<button class="${k===kind?"on":""}" data-kind="${k}">${l}</button>`).join("")}</div>
+  <div class="tw"><table><thead><tr><th>When</th><th>Who</th><th>What</th><th>Device</th><th>Address</th></tr></thead><tbody>
+  ${evs.map(e=>`<tr><td class="n">${when(e.t)}</td><td>${esc(e.username||"—")}</td><td>${e.event==="signin-failed"?"<b>":""}${esc(EV[e.event]||e.event)}${e.event==="signin-failed"?"</b>":""}${e.detail&&e.event==="page"?` <span class="n">${esc(e.detail)}</span>`:""}</td><td>${esc(e.device||"")}</td><td class="n">${esc(e.ip||"")}</td></tr>`).join("")||'<tr><td colspan="5" class="n">None yet.</td></tr>'}</tbody></table></div>
+  <div class="grid2" style="margin-top:16px"><div><h2>Changes made</h2><div class="tw"><table><thead><tr><th>When</th><th>Who</th><th>What</th></tr></thead><tbody>
+  ${A.changes.map(c=>`<tr><td class="n">${when(c.t)}</td><td>${esc(c.by)}</td><td>${esc(c.summary)}${c.undone?' <span class="n">(undone)</span>':""}</td></tr>`).join("")||'<tr><td colspan="3" class="n">No changes yet.</td></tr>'}</tbody></table></div></div>
+  <div><h2>Sorter runs</h2><div class="tw"><table><thead><tr><th>When</th><th>Who</th><th>What</th></tr></thead><tbody>
+  ${A.runs.map(r=>`<tr><td class="n">${when(r.t)}</td><td>${esc(r.by)}</td><td>${esc(r.summary)}${r.undone?' <span class="n">(undone)</span>':""}</td></tr>`).join("")||'<tr><td colspan="3" class="n">No runs yet.</td></tr>'}</tbody></table></div></div></div></section>`}
  m.innerHTML=h;bind(m);
+ m.querySelectorAll("[data-kind]").forEach(b=>b.onclick=()=>{window.UOK=b.dataset.kind;draw()});
  m.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const[k,i]=b.dataset.del.split(".");V[k].splice(+i,1);draw();dirty()});
  m.querySelectorAll("[data-dt]").forEach(s=>s.onchange=()=>{const d=s.dataset.dt;s.value?V.doc_type_topics[d]=s.value:delete V.doc_type_topics[d];dirty()});
  m.querySelectorAll("input[name=lay]").forEach(r=>r.onchange=()=>{V.layout_preset=r.value;dirty()});

@@ -337,6 +337,31 @@ class Languages(unittest.TestCase):
             i.cleanup()
 
 
+class WhoUsedIt(unittest.TestCase):
+    def test_signins_pages_and_admin_only(self):
+        i = Install("who")
+        try:
+            i.admin(i.serve())
+            bad = i.api("/api/login", {"username": "admin", "password": "wrong password"}, ok=False)
+            self.assertIn(bad["_status"], (400, 401, 403))
+            i.api("/api/login", {"username": "admin", "password": "correct horse 1"})
+            with i.op.open(urllib.request.Request(i.base + "/settings"), timeout=30) as r:
+                r.read()
+            A = i.api("/api/activity")
+            me = next(a for a in A["accounts"] if a["username"] == "admin")
+            self.assertGreaterEqual(me["signins_30d"], 1)
+            self.assertEqual(me["failed_30d"], 1)
+            self.assertGreaterEqual(me["pages_30d"], 1)
+            self.assertEqual(me["last_device"], "this computer")
+            self.assertEqual([e["event"] for e in A["events"]][-2:], ["signin", "signin-failed"])
+            i.api("/api/users/add", {"username": "sam", "display": "Sam", "role": "member", "scope": [], "password": "member pass 1"})
+            i.api("/api/logout", {})
+            i.api("/api/login", {"username": "sam", "password": "member pass 1"})
+            self.assertEqual(i.api("/api/activity", ok=False)["_status"], 403, "only admins see who used it")
+        finally:
+            i.cleanup()
+
+
 class Updates(unittest.TestCase):
     """A fake release served from local files: the newer program is checksum-checked and installed over a copy by the
     release's own installer, the profile is kept; a download that does not match its checksum changes nothing."""

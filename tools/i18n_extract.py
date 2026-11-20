@@ -24,7 +24,7 @@ def norm(t):
 
 
 IGNORE = {"b own", "btn pri", "dot label", "x u-del", "tag ask", "st {0}", "dot {0}", "noopener noreferrer", ".fold input",
-          "uo scan", "uo scan --full", "uo serve", "uo agent pair {0} {1}", "uo.cmd agent pair {0} {1}",
+          "uo scan", "uo scan --full", "uo serve", "uo package --feed", "uo agent pair {0} {1}", "uo.cmd agent pair {0} {1}",
           "Content-Type", "Universal Organiser",
           # HTTP and program words, and names that are folders, topics or apps on disk: never translated
           "Authorization", "Bearer", "Bypass", "Cookie", "Host", "Origin", "Enter", "Escape", "Port", "Release", "Set", "Over",

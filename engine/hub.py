@@ -92,7 +92,10 @@ class Hub:
             self.cat.db.execute("DELETE FROM archive_items WHERE file_id=?", (i,))
             self.cat.db.execute("DELETE FROM files WHERE id=?", (i,))
 
-    def begin(self, m):
+    def begin(self, m, version=None):
+        if version and str(version)[:20] != m.get("version"):  # it updated itself: keep the list current
+            self.cat.db.execute("UPDATE machines SET version=? WHERE id=?", (str(version)[:20], m["id"]))
+            self.cat.db.commit()
         return {"sync": time.time()}
 
     def push(self, m, sync, records):

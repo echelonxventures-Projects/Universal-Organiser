@@ -4,17 +4,18 @@
   uo agent sync [--full]        send what changed since the last sync (the first sync sends everything)
   uo agent run [--every 60]     scan + sync now and then every N minutes (leave running, or start it at login)
   uo agent status | forget
+  uo agent updates on|off       take new versions from the hub at each sync (on unless you turn it off)
 
 Files never leave this computer: only the catalogue records (names, sizes, dates, labels and the text the scan read).
 Sensitive files (keys, passwords, IDs flagged as sensitive) are sent without any text.
 The hub's certificate is pinned at pairing: the fingerprint is shown so you can compare it with the hub's Computers page.
 """
-import gzip, hashlib, json, os, platform, socket, ssl, sys, time, urllib.parse, urllib.request
+import gzip, hashlib, json, os, platform, socket, ssl, sys, time, urllib.error, urllib.parse, urllib.request
 
 from .config import DATA
 from .catalogue import LOCAL_SQL
 
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 DIR = os.path.join(DATA, "agent")
 STATE = os.path.join(DIR, "agent.json")
 CA = os.path.join(DIR, "hub-ca.crt")
@@ -158,7 +159,8 @@ def sync(cfg, cat, full=False, log=print):
     ctx = _ctx(url)
     started = time.time()
     since = None if full or not st.get("last_sync") else st["last_sync"] - 5
-    s = _call(url, "/api/agent/begin", {}, tok, ctx)["sync"]
+    b = _call(url, "/api/agent/begin", {"version": VERSION}, tok, ctx)
+    s = b["sync"]
     sent, batch, size = 0, [], 0
     for d in _rows(cat, since):
         n = len(json.dumps(d, ensure_ascii=False, default=str))
@@ -174,7 +176,59 @@ def sync(cfg, cat, full=False, log=print):
     _save(st)
     gone = f", removed {e['removed']:,} that are gone" if e.get("removed") else ""
     log(f"sync done: {sent:,} new/changed records sent; the hub now holds {e['files']:,} of this computer's files{gone}")
-    return {"sent": sent, **e}
+    updated = None
+    hv = b.get("hub_version")
+    if hv and _newer(hv, VERSION):
+        if st.get("auto_update", True):
+            updated = update_from_hub(url, tok, ctx, log)
+        else:
+            log(f"the hub has version {hv} (this computer {VERSION}); updates from the hub are off: uo agent updates on")
+    return {"sent": sent, **e, "updated": updated}
+
+
+def _newer(a, b):
+    from .updates import parse
+    return parse(a) > parse(b)
+
+
+def update_from_hub(url, tok, ctx, log=print):
+    """Install the hub's own (newer) program on this computer: over the pinned connection, checked by SHA-256, with the
+    program's installer (profile, catalogue and pairing are kept). Returns the new version, or None."""
+    from . import updates
+    if os.path.isdir(os.path.join(updates.ROOT, ".git")):
+        log("the hub has a newer version; this copy is a git checkout: update it with  git pull")
+        return None
+    req = urllib.request.Request(url.rstrip("/") + "/api/agent/update", data=b"{}", method="POST",
+                                 headers={"X-FE": "1", "User-Agent": f"UniversalOrganiser-agent/{VERSION}",
+                                          "Content-Type": "application/json", "Authorization": "Bearer " + tok})
+    import tempfile, shutil
+    tmp = tempfile.mkdtemp(prefix="uo-agent-update-")
+    try:
+        zpath = os.path.join(tmp, "program.zip")
+        try:
+            with urllib.request.urlopen(req, context=ctx, timeout=600) as r, open(zpath, "wb") as f:
+                digest, ver = r.headers.get("X-SHA256"), r.headers.get("X-Version")
+                shutil.copyfileobj(r, f)
+        except (urllib.error.URLError, OSError) as e:
+            log(f"update from the hub skipped: {getattr(e, 'reason', e)}")
+            return None
+        log(f"updating this computer to {ver} (from the hub)…")
+        try:
+            updates.install_zip(zpath, digest, log)
+        except SystemExit as e:
+            log(f"update from the hub failed: {e}")
+            return None
+        log(f"updated to {ver}")
+        return ver
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def set_auto_update(on):
+    st = _load()
+    st["auto_update"] = bool(on)
+    _save(st)
+    return f"Updates from the hub: {'on' if on else 'off'}."
 
 
 def status():
@@ -182,7 +236,8 @@ def status():
     if not st.get("token"):
         return "Not paired with a hub."
     ls = time.strftime("%Y-%m-%d %H:%M", time.localtime(st["last_sync"])) if st.get("last_sync") else "never"
-    return f"Paired as “{st['name']}” with {st['hub']}; last sync {ls}."
+    return (f"Paired as “{st['name']}” with {st['hub']}; last sync {ls}; version {VERSION}; "
+            f"updates from the hub {'on' if st.get('auto_update', True) else 'off'}.")
 
 
 def forget():

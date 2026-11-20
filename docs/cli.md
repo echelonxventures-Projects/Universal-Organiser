@@ -16,8 +16,11 @@ another one.
 | `uo serve [--lan] [--no-browser]` | runs the page. First run prints a one-time link to create the admin account. `--lan` also starts home Wi-Fi access for this run. `--no-browser` for servers/autostart. Ctrl+C stops. |
 | `uo autostart on\|off` | start at login (macOS LaunchAgent `org.universal-organiser`, Linux systemd user service `universal-organiser`, Windows task “Universal Organiser”). Without `on`/`off`: shows the state. |
 | `uo update` | brings this copy to the newest release: downloads its program zip, checks the SHA-256 against the release's `SHA256SUMS`, runs that release's installer over this copy (program files only; profile, catalogue, logs and keys stay), rebuilds the macOS reader if needed. A git copy runs `git pull --ff-only` instead. |
-| `uo update --check` | only says whether a newer release exists (works even when the daily check is off) |
+| `uo update --check` | only says whether a newer release exists, and from which source (works even when the daily check is off) |
+| `uo update --token [TOKEN]` | saves a GitHub token for a private repository after checking it can read it (asks with hidden input when TOKEN is left out); `--forget-token` removes it |
 | `uo package` | `exports/universal-organiser-<version>.zip` in the data folder: program files only (never profile, catalogue, logs, keys) |
+| `uo package --feed FOLDER [--notes FILE]` | an update source in FOLDER: `latest.json`, the program zip and `SHA256SUMS` (older zips there are removed). Point `updates.feed` of other copies at it. |
+| `uo agent updates on\|off` | on a paired computer: take new versions from the hub at each sync (on by default) |
 | `uo close` | macOS: locks (detaches) the encrypted catalogue. Elsewhere the disk's own encryption protects it. |
 
 ## Catalogue

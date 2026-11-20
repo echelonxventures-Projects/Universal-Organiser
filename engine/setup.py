@@ -9,7 +9,7 @@ import json, os, re, shutil, socket, subprocess, sys, time
 from .config import ROOT, DATA, HOME, TOKENS, _merge, regions
 from . import platforms
 
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 PROFILE = os.path.join(DATA, "profiles", "machine.json")
 VERSIONS = os.path.join(DATA, "profiles", "versions")
 PRESETS = os.path.join(ROOT, "profiles", "presets")

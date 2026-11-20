@@ -41,7 +41,7 @@ code{padding:1px 5px}pre{padding:10px 12px;white-space:pre-wrap;margin:6px 0}
 <section><h2>Hub</h2><p class="help">Make this computer the hub: other computers at home send their catalogues here, so one search covers everything. They need the hub to be reachable on home Wi-Fi (or your VPN).</p>
  <label class="sw"><input type="checkbox" id="hubon"><span><b>This computer is the hub</b></span></label><div id="hubinfo"></div></section>
 <section id="msec"><div class="row"><h2 style="flex:1">Paired computers</h2><button class="pri" id="add">Add a computer</button></div>
- <div class="tw"><table><thead><tr><th>Computer</th><th>System</th><th class="num">Files</th><th>Last sync</th><th>Paired</th><th></th></tr></thead><tbody id="ml"></tbody></table></div>
+ <div class="tw"><table><thead><tr><th>Computer</th><th>System</th><th>Version</th><th class="num">Files</th><th>Last sync</th><th>Paired</th><th></th></tr></thead><tbody id="ml"></tbody></table></div>
  <p class="help" id="none" style="margin-top:10px">No computers paired yet.</p></section>
 <section><h2>Network folders instead</h2><p class="help">A computer or NAS that cannot run Universal Organiser (a NAS, an old PC) can still be included: share its folder on the network, connect it on this computer (Finder → Go → Connect to Server, File Explorer → Map network drive, or your Linux file manager), then add it in Settings → Folders & layout. Its files are then scanned from here.</p></section>
 </main>
@@ -64,7 +64,8 @@ function draw(){
  $("hubon").checked=D.enabled;
  $("hubinfo").innerHTML=D.enabled&&!D.running?'<div class="note">The hub is on, but nothing is listening on the network yet: choose “Home Wi-Fi” above.</div>':"";
  $("msec").hidden=!D.enabled;
- $("ml").innerHTML=D.machines.map(m=>`<tr><td><b>${esc(m.name)}</b><div class="n">${esc(m.ip||"")}</div></td><td>${esc(m.os||"")}</td><td class="num">${(m.files||0).toLocaleString()}</td><td>${when(m.last_sync)}</td><td>${when(m.created)}</td>
+ const older=(a,b)=>{const p=v=>String(v).split(".").map(n=>parseInt(n)||0),x=p(a),y=p(b);for(let i=0;i<3;i++)if((x[i]||0)!==(y[i]||0))return (x[i]||0)<(y[i]||0);return false};
+ $("ml").innerHTML=D.machines.map(m=>`<tr><td><b>${esc(m.name)}</b><div class="n">${esc(m.ip||"")}</div></td><td>${esc(m.os||"")}</td><td>${esc(m.version||"")}${m.version&&D.version&&older(m.version,D.version)?' <span class="n">(updates at its next sync)</span>':""}</td><td class="num">${(m.files||0).toLocaleString()}</td><td>${when(m.last_sync)}</td><td>${when(m.created)}</td>
   <td><button class="x" data-rm="${esc(m.id)}" data-n="${esc(m.name)}">Remove</button></td></tr>`).join("");
  $("none").hidden=D.machines.length>0;
  document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>confirmRemove(b.dataset.rm,b.dataset.n))}

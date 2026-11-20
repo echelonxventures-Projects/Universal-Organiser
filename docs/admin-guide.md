@@ -77,22 +77,38 @@ set `access.remote.bind` to the hub's WireGuard address and `access.remote.netwo
 
 ## Updates
 
-Once a day the page asks GitHub for the newest release (only the program name and version are sent). When there is one,
-admins see **Version … is ready** on Home with *What's new*, **Update now** and **Later**. Update now downloads the release's
-program zip, checks its SHA-256 against the release's `SHA256SUMS`, and runs that release's own installer over this copy:
-program files are replaced, your profile, catalogue, logs and keys stay. On macOS and Linux the page restarts by itself;
-on Windows close its window and start it again from the Start menu.
+Once a day the page asks its update source for the newest version (only the program name and version are sent). When
+there is one, admins see **Version … is ready** on Home with *What's new*, **Update now** and **Later**. Update now
+downloads the program zip, checks its SHA-256 against `SHA256SUMS`, and runs that version's own installer over this copy:
+program files are replaced; your profile, catalogue, logs and keys stay. Then the page restarts by itself on the new
+version (macOS, Linux and Windows). Every update is listed in *Settings → Who used it*.
 
-The same from a terminal: `uo update --check`, `uo update`. A git checkout updates with `git pull` instead. Turn the
-daily check off in *Settings → Plug-ins & AI → Updates* (profile `updates.check = false`). Other computers (agents) are
-updated the same way on each computer. Read `CHANGELOG.md` for what changed.
+**Install by themselves.** *Settings → Plug-ins & AI → Updates → Install updates by themselves* (profile
+`updates.auto = true`): a new version is installed once nobody has used the page for 30 minutes and no scan, sort or
+re-run is going, and the page restarts. The check also runs every hour in the background, so this works even when nobody
+opens Home. A failed automatic update is not retried until someone presses Update now.
+
+**Where updates come from** (one of these):
+
+| Source | Set up | Who it suits |
+|---|---|---|
+| GitHub, public repository | nothing (the default) | everyone with internet |
+| GitHub, private repository | a GitHub token that can read the repository: *Settings → Updates → Save token*, or `uo update --token`. Make it at github.com → Settings → Developer settings → Fine-grained tokens, only that repository, **Contents: read-only**. It is kept in the data folder file `update-token` (readable only by you, never in the profile or exports), only sent to api.github.com and never along a redirect to GitHub's file storage. `UO_UPDATE_TOKEN` in the environment works too. | the main computer |
+| A folder or web address | on any up-to-date copy: `uo package --feed "/path/to/shared folder"` (writes `latest.json`, the program zip and `SHA256SUMS`); on the others: *Settings → Updates → Where updates come from* = that folder, or an `https://` address that serves those three files (profile `updates.feed`). A public GitHub release also works as one: `https://github.com/OWNER/REPO/releases/latest/download`. | computers without GitHub access, or no internet (USB stick) |
+| The hub | nothing: computers paired with this one (`uo agent pair …`) compare versions at every sync and, when the hub is newer, download the hub's own program over their pinned connection, check it and install it; `uo agent run` then carries on with the new version. `uo agent updates off` on that computer stops it. The Computers page shows each one's version. | family computers, once the repository is private |
+
+So with a private repository only the main computer needs a token; everything paired with it follows it.
+
+The same from a terminal: `uo update --check` (also shows the source), `uo update`, `uo update --token`,
+`uo update --forget-token`. A git checkout updates with `git pull` instead. Turn the daily check off in *Settings →
+Plug-ins & AI → Updates* (profile `updates.check = false`). Read `CHANGELOG.md` for what changed.
 
 ## Releases and signing
 
 Push a tag `vX.Y.Z` that matches `VERSION` in `engine/setup.py`. The `release` workflow runs the tests, the privacy and
 accessibility checks, builds `universal-organiser-X.Y.Z.zip` and `SHA256SUMS`, and publishes a GitHub release with the
-CHANGELOG notes. `uo update` and *Update now* use exactly these files, so updates only work once the repository has a
-published release that installed copies can reach (a private repository cannot be read without a sign-in).
+CHANGELOG notes, plus `latest.json` so the release also works as a folder-style source. `uo update` and *Update now* use
+exactly these files. A private repository is read with the token described above.
 
 **Signing.** What triggers warnings, and what removes them:
 

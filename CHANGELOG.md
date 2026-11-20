@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0
+
+- **Updates, complete.** Three sources: GitHub (public, or private with a GitHub token saved in *Settings → Updates* or
+  with `uo update --token`; the token stays in its own file readable only by you and is only ever sent to GitHub's API),
+  a folder or `https://` address made with `uo package --feed`, and — for computers paired with a hub — the hub itself:
+  they compare versions at each sync and install the hub's program over their pinned connection, so they need no
+  internet access and no token. The Computers page shows each one's version.
+- **Install updates by themselves** (optional, off by default): once nobody has used the page for 30 minutes and nothing
+  is running. The update check also runs hourly in the background, not only when Home is opened.
+- **Restart after an update on Windows too** (it used to ask you to start it again). Updates are listed in *Who used it*.
+- Releases also carry `latest.json`; *Settings → Updates* shows the source, the last check and its result, with
+  **Check now**.
+
 ## 1.3.0
 
 - **Who used it.** *Settings → Who used it* (admins only): each account's last sign-in and device, and every sign-in,

@@ -22,3 +22,6 @@ __pycache__/
 *.pyc
 .DS_Store
 .venv/
+
+# a GitHub token for updates from a private repository
+update-token

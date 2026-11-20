@@ -294,9 +294,10 @@ removed. The device is “this computer”, an approved phone's or tablet's labe
 
 | Method | Path | Who | Body | Returns |
 |---|---|---|---|---|
-| GET | `/api/update` | admin | – | `check` (on/off), `info` (`current`, `latest`, `newer`, `url`, `notes`, `checked`, `error`, `git`) from the last check — never waits for the network; a due check (once a day) starts in the background — and `job` (`phase: running\|current\|restarting\|restart\|failed`, `log[]`, `error`) |
-| POST | `/api/update/check` | admin | – | checks GitHub now: `info` |
-| POST | `/api/update/install` | admin, local | – | starts the update job (checksum-verified download, the release's own installer). On macOS/Linux the server then restarts itself with the new program; on Windows `phase` becomes `restart` (start it again from the Start menu). |
+| GET | `/api/update` | admin | – | `check`, `auto` (on/off), `source` (label), `kind` (`github\|feed`), `token` (a GitHub token is saved: true/false — never the token), `info` (`current`, `latest`, `newer`, `url`, `notes`, `checked`, `error`, `git`, `source`) from the last check — never waits for the network; a due check (once a day) starts in the background — and `job` (`phase: running\|current\|restarting\|failed`, `log[]`, `error`, `by`) |
+| POST | `/api/update/check` | admin | – | checks the update source now: `info` |
+| POST | `/api/update/install` | admin, local | – | starts the update job (checksum-verified download, the release's own installer); the server then restarts itself with the new program (on Windows a new process waits for the port, then the old one exits) |
+| POST | `/api/update/token` | admin, local | `token` (empty: remove) | checks the token can read `updates.repo`, saves it (mode 600), checks again: `message`, `info` |
 
 Every page also receives `window.UO_I18N` (`lang`, `dict`, `languages`): the language comes from the `uo_lang` cookie,
 else `ui.language`, else the browser's `Accept-Language`, else English.
@@ -325,13 +326,15 @@ have `hub.enabled` (else **403**).
    → `{"machine": "<id>", "name": "Study PC", "token": "<secret>"}`. The code works once; names are 1–40 letters,
    digits, space, dot, dash, underscore, unique per hub. The hub stores only the token's SHA-256.
 3. **Sync** — each with `Authorization: Bearer <token>` (missing/revoked → **401**):
-   - `POST /api/agent/begin` `{}` → `{"sync": <hub time>}`
    - `POST /api/agent/push` `{"sync": t, "records": [ … ≤ 2000 … ]}` → `{"stored": n}`. A record is a catalogue row:
      `path` (as on the agent), `name`, `ext`, `kind`, `unit`, `size`, `mtime`, `birth`, `cloud_only`, `sensitive`,
      `hash`, `date`, `date_source`, `year`, owner fields (`entity`, `entity_type`, `entity_conf`, `entity_why`,
      `suggestions`), `doc_type`, `doc_conf`, `topic`, `lifecycle`, `title`, `pages`, `snippet`, `tags`, `extra`,
      `inner_count`, `errors`, `scanned_at`, and `text` (≤ 200,000 characters; always empty for sensitive files).
      Unknown fields are ignored. The first sync sends everything; later ones only rows scanned since the last sync.
+   - `POST /api/agent/begin` `{"version": "x.y.z"}` → `{"sync": t, "hub_version": "x.y.z"}` (the hub records the agent's version)
+   - `POST /api/agent/update` → the hub's own program zip (`application/zip`) with headers `X-SHA256` and `X-Version`;
+     the agent checks the SHA-256 and runs the zip's installer when the hub is newer
    - `POST /api/agent/end` `{"sync": t, "paths": [every current path]}` → `{"files": n, "removed": n}`. Records of
      that computer not in the list are deleted on the hub.
 4. **On the hub** the records are stored as `uo://<computer name>/<path>`, marked protected. They are searchable,

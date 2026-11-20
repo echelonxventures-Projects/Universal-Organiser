@@ -44,7 +44,9 @@ def current(cfg):
             "roots": mach.get("roots", []), "exclude": mach.get("exclude", []), "protect": mach.get("protect", []),
             "plugins": {p["key"]: p["enabled"] for p in plugins},
             "ollama": {"enabled": bool(ai["ollama"].get("enabled")), "model": ai["ollama"].get("model", "")},
-            "updates": {"check": bool((d.get("updates") or {}).get("check", True))},
+            "updates": {"check": bool((d.get("updates") or {}).get("check", True)),
+                        "auto": bool((d.get("updates") or {}).get("auto", False)),
+                        "feed": str((d.get("updates") or {}).get("feed") or "")},
             "language": (d.get("ui") or {}).get("language") or "auto",
         },
         "choices": {
@@ -140,6 +142,11 @@ def validate(new, cfg):
             errs.append(f"Plug-in “{PLUGIN_LABELS.get(k, k)}” is {FIXED_PLUGINS[k]} and cannot be changed yet.")
     if "language" in new and new["language"] != "auto" and new["language"] not in __import__("engine.i18n", fromlist=["languages"]).languages():
         errs.append(f"Unknown language “{new['language']}”.")
+    feed = str(((new.get("updates") or {}).get("feed")) or "").strip()
+    if feed:
+        e = __import__("engine.updates", fromlist=["check_feed"]).check_feed(feed)
+        if e:
+            errs.append(e)
     o = new.get("ollama") or {}
     if o.get("enabled") and not re.fullmatch(r"[\w.:/-]{1,80}", o.get("model") or ""):
         errs.append("Local AI (Ollama): give a model name, e.g. llama3.2:3b.")
@@ -180,9 +187,14 @@ def diff(new, cfg):
             out.append(f"Plug-in {PLUGIN_LABELS.get(k, k)}: {'on' if v else 'off'}")
     if new.get("language", old["language"]) != old["language"]:
         out.append(f"Language of the pages: {old['language']} ⟶ {new['language']}")
-    nu = bool((new.get("updates") or old["updates"]).get("check"))
-    if bool(old["updates"]["check"]) != nu:
-        out.append(f"Check for updates: {'on' if nu else 'off'}")
+    nu = new.get("updates") or old["updates"]
+    if bool(old["updates"]["check"]) != bool(nu.get("check")):
+        out.append(f"Check for updates: {'on' if nu.get('check') else 'off'}")
+    if bool(old["updates"].get("auto")) != bool(nu.get("auto", old["updates"].get("auto"))):
+        out.append(f"Install updates by themselves: {'on' if nu.get('auto') else 'off'}")
+    nf = str(nu.get("feed", old["updates"].get("feed")) or "").strip()
+    if (old["updates"].get("feed") or "") != nf:
+        out.append(f"Updates come from: {nf or 'GitHub'}")
     if old["ollama"] != new.get("ollama", old["ollama"]):
         o = new["ollama"]
         out.append(f"Local AI (Ollama): {'on, model ' + o.get('model', '') if o.get('enabled') else 'off'}")
@@ -220,7 +232,16 @@ def save(new, by):
     if "language" in new:
         m.setdefault("ui", {})["language"] = new["language"]
     if "updates" in new:
-        m.setdefault("updates", {})["check"] = bool((new["updates"] or {}).get("check", True))
+        nu, mu = new["updates"] or {}, m.setdefault("updates", {})
+        mu["check"] = bool(nu.get("check", True))
+        if "auto" in nu:
+            mu["auto"] = bool(nu["auto"])
+        if "feed" in nu:
+            feed = str(nu["feed"] or "").strip()
+            if feed:
+                mu["feed"] = feed
+            else:
+                mu.pop("feed", None)
     m["_saved"] = {"by": by, "at": time.strftime("%Y-%m-%d %H:%M:%S")}
     tmp = MACHINE + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:

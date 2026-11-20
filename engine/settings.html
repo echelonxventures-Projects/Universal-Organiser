@@ -115,7 +115,12 @@ async function draw(){const m=$("main"),C=S.choices;let h="";
    <p class="help">Language of the pages on every phone, tablet and computer that has not chosen its own (each can pick one with the Language menu at the top of the page). Names of files, people and folders are never translated.</p>
    <select data-p="language" aria-label="Language of the pages"><option value="auto" ${V.language==="auto"?"selected":""}>Same as the browser</option>${Object.entries(C.languages).map(([c,n])=>`<option value="${esc(c)}" ${V.language===c?"selected":""}>${esc(n)}</option>`).join("")}</select></div>
   <div class="card"><h3>Updates</h3>
-   <label class="plug"><input type="checkbox" data-p="updates.check" ${V.updates.check?"checked":""}><span>Check for updates once a day<div class="d">Asks GitHub for the newest release (only the program's name and version are sent, nothing about you or your files). Admins see “Version … is ready” on Home; nothing is installed until you press Update now. You have version ${esc(C.version)}.</div></span></label></div></div></section>`}
+   <label class="plug"><input type="checkbox" data-p="updates.check" ${V.updates.check?"checked":""}><span>Check for updates once a day<div class="d">Asks the update source for the newest version (only the program's name and version are sent, nothing about you or your files). Admins see “Version … is ready” on Home. You have version ${esc(C.version)}.</div></span></label>
+   <label class="plug"><input type="checkbox" data-p="updates.auto" ${V.updates.auto?"checked":""}><span>Install updates by themselves<div class="d">When a new version is found, it is installed once nobody has used the page for 30 minutes and nothing is running, then the page restarts. Off: nothing is installed until you press Update now.</div></span></label>
+   <label for="upd-feed" style="display:block;margin-top:10px;font-size:13px">Where updates come from</label>
+   <input type="text" id="upd-feed" data-p="updates.feed" value="${esc(V.updates.feed)}" placeholder="leave empty for GitHub; or a folder or https:// address" style="width:100%">
+   <div class="help">Empty: GitHub releases. A folder (shared folder, USB stick) or an https:// address holding what <code>uo package --feed</code> writes there. Computers paired with this one always update from this computer.</div>
+   <div id="updbox" style="margin-top:10px"></div></div></div></section>`}
  if(tab==="accounts"){const U=await api("/api/users");const ents=V.entities.map(e=>e.name);
   h=`<section><h2>Accounts on this computer</h2><p class="help">Family members sign in on this page with their own account. A <b>member</b> sees only the owners you tick, never sensitive files, and cannot change anything. An <b>admin</b> sees and changes everything.</p>
   <div class="tw"><table><thead><tr><th>User</th><th>Name</th><th>Role</th><th>Can see files of</th><th>New password</th><th></th></tr></thead><tbody>
@@ -169,6 +174,17 @@ async function draw(){const m=$("main"),C=S.choices;let h="";
  m.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>{const s=shade(`<h3>Restore settings?</h3><p class="help">Settings go back to how they were before ${esc(b.dataset.restore)}. Today's settings are kept as a version, so this can be reversed.</p><div class="act"><button id="c0">Cancel</button><button class="pri" id="c1">Restore</button></div>`);
   $("c0").onclick=close;$("c1").onclick=async()=>{await api("/api/settings/restore",{name:b.dataset.restore});close();await load();toast("Settings restored.");askRules()}});
  if($("rerun"))$("rerun").onclick=askRules;
+ if($("updbox")){const drawUpd=async(info)=>{const U=await api("/api/update");const I=info||U.info||{};
+   const st=I.error?`<span style="color:var(--warn)">${esc(I.error)}</span>`:I.latest?(I.newer?`<b>Version ${esc(I.latest)} is ready.</b> Install it from Home (Update now).`:`Up to date (newest is ${esc(I.latest)}).`):"Not checked yet.";
+   $("updbox").innerHTML=`<div class="help">Source: ${esc(U.source)}${I.checked?" · last checked "+new Date(I.checked*1000).toLocaleString():""}</div><div style="margin:6px 0" role="status">${st}</div>
+    ${U.kind==="github"?`<div class="help">${U.token?"A GitHub token is saved (needed while the repository is private).":"A private repository needs a GitHub token with read access to it (Contents: read). It stays on this computer and is only sent to GitHub."}</div>
+    <div class="row"><input type="password" id="upd-tok" aria-label="GitHub token" placeholder="${U.token?"replace the saved token":"paste a GitHub token"}" autocomplete="off" style="flex:1;min-width:180px"><button id="upd-tok-save">Save token</button>${U.token?'<button id="upd-tok-del">Remove token</button>':""}</div>`:""}
+    <div class="row"><button id="upd-now">Check now</button></div>`;
+   $("upd-now").onclick=async()=>{$("upd-now").disabled=true;try{const r=await api("/api/update/check",{});drawUpd(r.info||{error:"checking is off"})}catch(e){toast(e.message);drawUpd()}};
+   if($("upd-tok-save"))$("upd-tok-save").onclick=async()=>{const v=$("upd-tok").value.trim();if(!v)return toast("Paste the token first.");
+    try{const r=await api("/api/update/token",{token:v});toast(r.message);drawUpd(r.info)}catch(e){toast(e.message)}};
+   if($("upd-tok-del"))$("upd-tok-del").onclick=async()=>{try{const r=await api("/api/update/token",{token:""});toast(r.message);drawUpd(r.info)}catch(e){toast(e.message)}};};
+  drawUpd()}
  if(tab==="accounts"){
   m.querySelectorAll("tr[data-u]").forEach(tr=>{const u=tr.dataset.u;
    tr.querySelector(".u-save").onclick=async()=>{const sc=[...tr.querySelectorAll(".u-s:checked")].map(x=>x.value);

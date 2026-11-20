@@ -250,6 +250,71 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
     hub = HB.Hub(cat)
     pages = {n: os.path.join(ROOT, "engine", n) for n in ("search.html", "settings.html", "login.html", "insights.html", "analytics.html", "sorter.html", "triage.html", "home.html", "person.html", "browse.html", "overview.html", "projects.html", "cleanup.html", "computers.html", "welcome.html")}
 
+    state["last_used"] = time.time()
+
+    def busy():
+        """Something is running that an update must not interrupt."""
+        return any((state.get(k) or {}).get("phase") == "running" for k in ("job", "sortjob", "update_job", "scanjob"))
+
+    def check_in_background():
+        from . import updates
+        if state.get("update_checking"):
+            return
+        state["update_checking"] = True
+
+        def bg():
+            try:
+                updates.check(state["cfg"])
+            finally:
+                state["update_checking"] = False
+        threading.Thread(target=bg, daemon=True).start()
+
+    def start_update(by):
+        """Install the newest version in the background, then restart on it. Returns an error text, or None."""
+        from . import updates
+        job = state.get("update_job")
+        if job and job["phase"] in ("running", "restarting"):
+            return "An update is already running."
+        job = state["update_job"] = {"phase": "running", "log": [], "by": by, "started": time.time()}
+
+        def run_update():
+            try:
+                ver = updates.install(state["cfg"], log=lambda m: job["log"].append(str(m)))
+                if not ver:
+                    job["phase"] = "current"
+                    return
+                ACT.record(cat, "update", by, f"{SU.VERSION} → {ver}")
+                job["phase"] = "restarting"
+                time.sleep(1.5)  # let the page read this before the server restarts with the new program
+                updates.restart()
+            except SystemExit as e:
+                job["phase"], job["error"] = "failed", str(e)
+            except Exception as e:
+                job["phase"], job["error"] = "failed", f"{type(e).__name__}: {e}"
+        threading.Thread(target=run_update, daemon=True).start()
+        return None
+
+    def update_timer():
+        """Once an hour: check when a check is due (even when nobody opens Home), and with automatic updates on, install
+        a newer version once nobody has used the page for 30 minutes and nothing is running."""
+        from . import updates
+        time.sleep(120)
+        while True:
+            try:
+                c = state["cfg"]
+                s = updates.settings(c)
+                if s["check"]:
+                    info, due = updates.cached(c)
+                    if due:
+                        info = updates.check(c)
+                    job = state.get("update_job") or {}
+                    if (s["auto"] and info and info.get("newer") and not info.get("git") and not busy()
+                            and time.time() - state["last_used"] > 1800 and job.get("phase") != "failed"):
+                        start_update("automatic")
+            except Exception as e:
+                print("update check skipped:", e)
+            time.sleep(3600)
+
     class H(BaseHTTPRequestHandler):
         REMOTE = False  # True for the home Wi-Fi (HTTPS) server
         server_version = "UniversalOrganiser"
@@ -363,6 +428,8 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
             u = urllib.parse.urlparse(self.path)
             qs = {k: v[0] for k, v in urllib.parse.parse_qs(u.query).items()}
             path = u.path
+            if not path.startswith("/api/agent/"):
+                state["last_used"] = time.time()
             if method == "GET" and path == "/api/thumb":
                 return self._thumb(qs)
             with LOCK:
@@ -601,19 +668,15 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                 if path == "/api/update":
                     from . import updates
                     info, due = updates.cached(cfg)
-                    if due and not state.get("update_checking"):
-                        state["update_checking"] = True
-                        def bg():
-                            try:
-                                updates.check(state["cfg"])
-                            finally:
-                                state["update_checking"] = False
-                        threading.Thread(target=bg, daemon=True).start()
-                    on = bool((cfg.get("updates") or {}).get("check", True))
-                    return self._json({"check": on, "info": info, "job": state.get("update_job")})
+                    if due:
+                        check_in_background()
+                    s = updates.settings(cfg)
+                    return self._json({"check": s["check"], "auto": s["auto"], "source": updates.source_label(cfg),
+                                       "kind": updates.source(cfg)[0], "token": bool(updates.token()),
+                                       "info": info, "job": state.get("update_job")})
                 if path == "/api/hub":
                     st = state["lan"][0]
-                    return self._json({"enabled": bool((cfg.get("hub") or {}).get("enabled")), "machines": hub.list(), "access": access_mode(),
+                    return self._json({"enabled": bool((cfg.get("hub") or {}).get("enabled")), "machines": hub.list(), "access": access_mode(), "version": SU.VERSION,
                                        "url": st["url"] and st["url"].replace("/device-setup", ""), "vpn_url": st["vpn_url"] and st["vpn_url"].replace("/device-setup", ""),
                                        "fingerprint": st["fingerprint"], "error": st["error"], "hostname": socket.gethostname().split(".")[0],
                                        "port": ui.get("lan", {}).get("port", 8766), "running": bool(st["servers"])})
@@ -791,7 +854,7 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
             if not admin:
                 return self._err("Only an admin can do that.", 403)
             if path in ("/api/welcome/save", "/api/access", "/api/hub/enable", "/api/scan/start", "/api/doctor/fix",
-                        "/api/update/install") and self.REMOTE:
+                        "/api/update/install", "/api/update/token") and self.REMOTE:
                 return self._err("Do this on the computer itself.", 403)
             if path == "/api/welcome/save":
                 try:
@@ -851,30 +914,16 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                 from . import updates
                 return self._json({"info": updates.check(cfg, force=True)})
             if path == "/api/update/install":
+                err = start_update(user["username"])
+                return self._err(err) if err else self._json({"ok": True})
+            if path == "/api/update/token":
                 from . import updates
-                job = state.get("update_job")
-                if job and job["phase"] == "running":
-                    return self._err("An update is already running.")
-                job = state["update_job"] = {"phase": "running", "log": [], "by": user["username"]}
-
-                def run_update():
-                    try:
-                        ver = updates.install(cfg, log=lambda m: job["log"].append(str(m)))
-                        if not ver:
-                            job["phase"] = "current"
-                        elif os.name == "nt":
-                            job["phase"] = "restart"  # Windows: close this window and start Universal Organiser again
-                        else:
-                            job["phase"] = "restarting"
-                            time.sleep(1.5)  # let the page read this before the server restarts with the new program
-                            argv = [a for a in sys.argv if a != "--no-browser"] + ["--no-browser"]
-                            os.execv(sys.executable, [sys.executable, "-I"] + argv)
-                    except SystemExit as e:
-                        job["phase"], job["error"] = "failed", str(e)
-                    except Exception as e:
-                        job["phase"], job["error"] = "failed", f"{type(e).__name__}: {e}"
-                threading.Thread(target=run_update, daemon=True).start()
-                return self._json({"ok": True})
+                try:
+                    msg = updates.set_token(cfg, b.get("token") or "")
+                except ValueError as e:
+                    return self._err(str(e))
+                ACT.record(cat, "update-token", user["username"], "removed" if not b.get("token") else "saved")
+                return self._json({"ok": True, "message": msg, "info": updates.check(cfg, force=True)})
             if path == "/api/doctor/fix":
                 c = next((x for x in SU.checks(cfg) if x["id"] == b.get("id")), None)
                 if not c or c["status"] == "ok":
@@ -1183,7 +1232,14 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
             if not m:
                 return self._err("This computer is not paired (or was removed on the hub).", 401)
             if path == "/api/agent/begin":
-                return self._json(hub.begin(m))
+                return self._json(hub.begin(m, b.get("version")) | {"hub_version": SU.VERSION})
+            if path == "/api/agent/update":  # this computer's own program, for a paired computer on an older version
+                from . import updates
+                zpath, digest = updates.own_package()
+                with open(zpath, "rb") as f:
+                    data = f.read()
+                return self._send(200, data, "application/zip",
+                                  headers=(("X-SHA256", digest), ("X-Version", SU.VERSION)))
             if path == "/api/agent/push":
                 return self._json(hub.push(m, float(b.get("sync") or time.time()), b.get("records") or []))
             if path == "/api/agent/end":
@@ -1263,11 +1319,17 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
     state["lan"] = (lanst, start_lan, stop_lan, save_lan, devices)
 
     port = port or ui.get("port", 8765)
-    try:
-        srv = ThreadingHTTPServer(("127.0.0.1", port), H)
-    except OSError:
-        print(f"Port {port} is in use: the page is probably already open at http://127.0.0.1:{port}/")
-        return
+    wait_until = time.time() + float(os.environ.pop("UO_WAIT_PORT", "0") or 0)  # set after an update on Windows
+    while True:
+        try:
+            srv = ThreadingHTTPServer(("127.0.0.1", port), H)
+            break
+        except OSError:
+            if time.time() < wait_until:
+                time.sleep(0.5); continue
+            print(f"Port {port} is in use: the page is probably already open at http://127.0.0.1:{port}/")
+            return
+    threading.Thread(target=update_timer, daemon=True).start()
     try:
         I.auto(cfg, cat)
     except Exception as e:

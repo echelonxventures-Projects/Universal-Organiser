@@ -208,8 +208,17 @@ class EndToEnd(unittest.TestCase):
             fid = hub.api("/api/search?q=zebra")["results"][0]["id"]
             r = hub.api("/api/move", {"ids": [fid], "dest": os.path.join(hub.files, "Organized")}, ok=False)
             self.assertIn("another computer", json.dumps(r))
-            ms = hub.api("/api/hub")["machines"]
+            H = hub.api("/api/hub")
+            ms = H["machines"]
             self.assertEqual([m["name"] for m in ms], ["Study PC"])
+            self.assertEqual(ms[0]["version"], H["version"], "the agent's version is recorded at each sync")
+            # updates: the state says where updates come from, never shows a token, and refuses a bad one
+            U = hub.api("/api/update")
+            self.assertEqual((U["kind"], U["token"]), ("github", False))
+            self.assertIn("GitHub", U["source"])
+            r = hub.api("/api/update/token", {"token": "not a token!"}, ok=False)
+            self.assertEqual(r["_status"], 400)
+            self.assertIn("GitHub token", json.dumps(r, ensure_ascii=False))
             removed = hub.api("/api/hub/remove", {"id": ms[0]["id"]})["removed"]
             self.assertGreaterEqual(removed, 1)
             self.assertFalse(hub.api("/api/search?q=zebra")["results"])
@@ -379,8 +388,10 @@ class Updates(unittest.TestCase):
         new = os.path.join(self.tmp, "new", "universal-organiser")
         shutil.copytree(ROOT, new, ignore=shutil.ignore_patterns(".git", "tests", "__pycache__", "logs", "catalogue", "machine.json"))
         sp = os.path.join(new, "engine", "setup.py")
-        src = open(sp, encoding="utf-8").read()
-        open(sp, "w", encoding="utf-8").write(re.sub(r'VERSION = "[^"]+"', 'VERSION = "99.0.0"', src))
+        with open(sp, encoding="utf-8") as f:
+            src = f.read()
+        with open(sp, "w", encoding="utf-8") as f:
+            f.write(re.sub(r'VERSION = "[^"]+"', 'VERSION = "99.0.0"', src))
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w") as z:
             for dp, dn, fn in os.walk(new):
@@ -393,12 +404,27 @@ class Updates(unittest.TestCase):
                "assets": [{"name": "universal-organiser-99.0.0.zip", "browser_download_url": "zip"},
                           {"name": "SHA256SUMS", "browser_download_url": "sums"}]}
         self.files = {"zip": self.zip, "sums": self.sums}
-        self.orig = (updates._get, updates.ROOT, updates.CACHE)
-        updates._get = lambda url, timeout=15: io.BytesIO(json.dumps(rel).encode() if "api.github.com" in url else self.files[url])
+        self.rel = rel
+        self.calls = []
+        self.orig = (updates._get, updates.ROOT, updates.CACHE, updates.TOKEN_FILE, os.environ.pop("UO_UPDATE_TOKEN", None))
+
+        def fake_get(url, timeout=15, tok=None, accept=None):
+            self.calls.append((url, tok, accept))
+            if url.startswith("https://api.github.com/repos/") and url.endswith("/releases/latest"):
+                return io.BytesIO(json.dumps(self.rel).encode())
+            if url.startswith("https://api.github.com/repos/") and "/assets/" in url:
+                return io.BytesIO(self.files[url.rsplit("/", 1)[1]])
+            if url.startswith("https://api.github.com/repos/"):
+                return io.BytesIO(b"{}")
+            return io.BytesIO(self.files[url])
+        updates._get = fake_get
         updates.ROOT, updates.CACHE = self.inst, os.path.join(self.tmp, "update-check.json")
+        updates.TOKEN_FILE = os.path.join(self.tmp, "update-token")
 
     def tearDown(self):
-        self.U._get, self.U.ROOT, self.U.CACHE = self.orig
+        self.U._get, self.U.ROOT, self.U.CACHE, self.U.TOKEN_FILE, env = self.orig
+        if env is not None:
+            os.environ["UO_UPDATE_TOKEN"] = env
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def version_of(self):
@@ -423,6 +449,97 @@ class Updates(unittest.TestCase):
             self.U.install({}, log=lambda m: None)
         self.assertIn("checksum", str(e.exception))
         self.assertEqual(self.version_of(), before)
+
+    def test_private_repository_with_token(self):
+        """A saved token is sent to the GitHub API only, assets come through the API, and it is kept readable only by you."""
+        self.rel["assets"] = [{"name": "universal-organiser-99.0.0.zip", "browser_download_url": "nope",
+                               "url": "https://api.github.com/repos/o/r/releases/assets/zip"},
+                              {"name": "SHA256SUMS", "browser_download_url": "nope",
+                               "url": "https://api.github.com/repos/o/r/releases/assets/sums"}]
+        with self.assertRaises(ValueError):
+            self.U.set_token({}, "not a token!")
+        self.assertIn("saved", self.U.set_token({}, "github_pat_" + "a" * 40))
+        if os.name != "nt":
+            self.assertEqual(os.stat(self.U.TOKEN_FILE).st_mode & 0o777, 0o600)
+        self.assertEqual(self.U.install({}, log=lambda m: None), "99.0.0")
+        tok = "github_pat_" + "a" * 40
+        self.assertTrue(all(t == tok for u, t, a in self.calls if u.startswith("https://api.github.com/")))
+        self.assertIn(("https://api.github.com/repos/o/r/releases/assets/zip", tok, "application/octet-stream"), self.calls)
+        self.assertNotIn("nope", [u for u, t, a in self.calls])
+        self.assertIn("removed", self.U.set_token({}, ""))
+        self.assertFalse(os.path.exists(self.U.TOKEN_FILE))
+
+    def test_token_never_follows_a_redirect_elsewhere(self):
+        import urllib.request
+        h = self.U._KeepTokenHome()
+        req = urllib.request.Request("https://api.github.com/repos/o/r/releases/assets/1", headers={"Authorization": "Bearer x"})
+        same = h.redirect_request(req, None, 302, "Found", {}, "https://api.github.com/other")
+        away = h.redirect_request(req, None, 302, "Found", {}, "https://objects.githubusercontent.com/file")
+        self.assertEqual(same.get_header("Authorization"), "Bearer x")
+        self.assertIsNone(away.get_header("Authorization"))
+
+    def test_update_from_a_folder(self):
+        """updates.feed = a folder with latest.json, the zip and SHA256SUMS: no GitHub involved."""
+        feed = os.path.join(self.tmp, "feed")
+        os.makedirs(feed)
+        with open(os.path.join(feed, "universal-organiser-99.0.0.zip"), "wb") as f:
+            f.write(self.zip)
+        with open(os.path.join(feed, "SHA256SUMS"), "wb") as f:
+            f.write(self.sums)
+        with open(os.path.join(feed, "latest.json"), "w") as f:
+            json.dump({"version": "99.0.0", "zip": "universal-organiser-99.0.0.zip", "notes": "from the folder"}, f)
+        cfg = {"updates": {"feed": feed}}
+        info = self.U.check(cfg, force=True)
+        self.assertTrue(info["newer"], info)
+        self.assertEqual(info["source"], feed)
+        self.assertEqual(self.U.install(cfg, log=lambda m: None), "99.0.0")
+        self.assertEqual(self.version_of(), "99.0.0")
+        self.assertEqual(self.calls, [], "nothing asked of GitHub")
+        self.assertIsNotNone(self.U.check_feed("http://example.com/x"))
+        self.assertIsNotNone(self.U.check_feed(os.path.join(self.tmp, "missing")))
+        self.assertIsNone(self.U.check_feed(feed))
+
+    def test_write_feed(self):
+        feed = os.path.join(self.tmp, "out")
+        zpath, digest = self.U.write_feed(feed, "notes")
+        with open(os.path.join(feed, "latest.json")) as f:
+            meta = json.load(f)
+        self.assertEqual(meta["zip"], os.path.basename(zpath))
+        self.assertEqual(self.U.read_sums(os.path.join(feed, "SHA256SUMS"))[meta["zip"]], digest)
+        import zipfile
+        with zipfile.ZipFile(zpath) as z:
+            names = z.namelist()
+        self.assertIn("universal-organiser/install/install.sh", names)
+        self.assertFalse([n for n in names if "machine.json" in n or n.endswith(".pyc") or "/logs/" in n])
+
+    def test_paired_computer_updates_from_the_hub(self):
+        """The hub serves its own program at /api/agent/update; the agent checks it and installs it."""
+        import hashlib, threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        from engine import agent
+        body, digest = self.zip, hashlib.sha256(self.zip).hexdigest()
+
+        class Hub(BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def do_POST(self):
+                ok = self.path == "/api/agent/update" and self.headers.get("Authorization") == "Bearer T"
+                self.send_response(200 if ok else 401)
+                self.send_header("X-SHA256", digest); self.send_header("X-Version", "99.0.0")
+                self.send_header("Content-Length", str(len(body) if ok else 0)); self.end_headers()
+                if ok:
+                    self.wfile.write(body)
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), Hub)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            url = f"http://127.0.0.1:{srv.server_address[1]}"
+            self.assertEqual(agent.update_from_hub(url, "T", None, log=lambda m: None), "99.0.0")
+            self.assertEqual(self.version_of(), "99.0.0")
+            digest = "0" * 64  # a wrong checksum: nothing installed
+            self.assertIsNone(agent.update_from_hub(url, "T", None, log=lambda m: None))
+        finally:
+            srv.shutdown(); srv.server_close()
 
 
 if __name__ == "__main__":

@@ -235,7 +235,8 @@ If no VPN address is found, `uo doctor` and the Computers page say so.
 
 - **Update:** when a new version is out, admins see **Version … is ready** on Home: press **Update now** (it checks the
   download, replaces only program files and restarts the page), or run `uo update`. *Settings → Plug-ins & AI → Updates*
-  turns the daily check off.
+  turns the daily check off, can install updates by themselves, and sets where they come from. Computers paired with a
+  hub update from the hub at their next sync.
 - **Start automatically:** `uo autostart on` (macOS LaunchAgent, Linux systemd user service, Windows Task Scheduler);
   `uo autostart off` to stop. A hub or standalone computer starts the page; an agent starts `uo agent run`.
 - **Uninstall:** `uo autostart off`, `uo close`, then delete the install folder (`uo version` shows it). On macOS also

@@ -58,15 +58,17 @@ jobs:
           python -m unittest discover -s tests
           python -I tools/privacy_check.py --all
           python -I tools/a11y_check.py
-      - name: Program zip and checksums
-        run: |
-          python -I engine/cli.py package
-          mkdir dist && mv exports/universal-organiser-$V.zip dist/
-          cd dist && sha256sum universal-organiser-$V.zip > SHA256SUMS && cat SHA256SUMS
       - name: Release notes from CHANGELOG.md
         run: |
           awk -v v="## $V" '$0==v{on=1;next} /^## /{if(on)exit} on' CHANGELOG.md > notes.md
+          [ -s notes.md ] || { echo "CHANGELOG.md has no section '## $V'"; exit 1; }
+          cp notes.md feed-notes.md
           printf '\n---\nInstall: unzip, then `sh install/install.sh` (macOS, Linux) or double-click `install\\install.cmd` (Windows).\nAlready installed: `uo update`, or *Update now* on Home.\n' >> notes.md
+      - name: Program zip, checksums and latest.json
+        run: |
+          python -I engine/cli.py package --feed dist --notes feed-notes.md
+          ls -l dist && cat dist/SHA256SUMS
+          (cd dist && sha256sum -c SHA256SUMS)
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}

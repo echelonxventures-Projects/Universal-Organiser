@@ -8,7 +8,10 @@ Set up
   uo autostart on|off         start the page (hub) or the agent automatically when you log in
   uo update [--check]         get the newest release (checksum-verified; your profile, catalogue and logs are not touched);
                               --check only says whether there is one
-  uo package                  zip of the program only, to copy to a computer without internet
+  uo update --token [TOKEN]   save a GitHub token for a private repository (asked for when left out); --forget-token
+  uo package [--feed FOLDER [--notes FILE]]
+                              zip of the program only, to copy to a computer without internet; --feed: an update
+                              source in FOLDER (shared folder, USB stick, web space) for other copies to update from
   uo version
 
 Catalogue
@@ -21,7 +24,7 @@ Catalogue
 Several computers (one search for all of them)
   uo hub code | hub list | hub remove NAME      on the hub: make a pairing code, list or remove paired computers
   uo agent pair HUB-ADDRESS CODE [--name N] [--fingerprint FP] [--yes]
-  uo agent sync [--full] | agent run [--every MINUTES] | agent status | agent forget
+  uo agent sync [--full] | agent run [--every MINUTES] | agent status | agent forget | agent updates on|off
 """
 import os, sys, json, time
 
@@ -59,24 +62,24 @@ def _arg(a, flag, default=None, many=False):
     return vals if many else (vals[-1] if vals else default)
 
 
-def package():
-    """Zip of the program files only (no profile, catalogue, logs or keys), for a computer without internet."""
-    import zipfile
+def package(a=()):
+    """Zip of the program files only (no profile, catalogue, logs or keys), for a computer without internet; with
+    --feed FOLDER, an update source in that folder (latest.json + zip + SHA256SUMS) for  updates.feed."""
+    from engine import updates
     from engine.setup import VERSION
+    feed = _arg(list(a), "--feed")
+    if feed:
+        notes = ""
+        nf = _arg(list(a), "--notes")
+        if nf:
+            with open(nf, encoding="utf-8") as f:
+                notes = f.read()
+        z, digest = updates.write_feed(feed, notes)
+        print(f"Update source written to {os.path.dirname(z)}: latest.json, {os.path.basename(z)}, SHA256SUMS ({digest[:12]}…)\n"
+              f"  Point other copies at it: Settings → Updates → Where updates come from, or profile  updates.feed")
+        return
     out_dir = os.path.join(DATA, "exports"); os.makedirs(out_dir, exist_ok=True)
-    out = os.path.join(out_dir, f"universal-organiser-{VERSION}.zip")
-    keep = ("engine", "helpers", "profiles/base.json", "profiles/presets", "profiles/regions", "install", "docs",
-            "uo", "uo.cmd", "fe", "fe.cmd", "README.md", "LICENSE", "CHANGELOG.md", "SECURITY.md")
-    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
-        for k in keep:
-            p = os.path.join(ROOT, k)
-            files = [p] if os.path.isfile(p) else [os.path.join(dp, f) for dp, dn, fn in os.walk(p) for f in fn
-                                                    if "__pycache__" not in dp]
-            for f in files:
-                rel = os.path.relpath(f, ROOT)
-                if f.endswith((".pyc", ".new")) or rel in ("helpers/macos/fehelper", "helpers/macos/fetrash"):
-                    continue
-                z.write(f, os.path.join("universal-organiser", rel))
+    out = updates.build_zip(os.path.join(out_dir, f"universal-organiser-{VERSION}.zip"))
     print(f"Program package: {out}\n  Contains no profile, catalogue, logs or keys. On the other computer unzip it and run the installer in install/.")
 
 
@@ -86,6 +89,16 @@ def update(a=()):
         cfg = Config()
     except Exception:
         cfg = None  # no profile yet: defaults
+    if "--token" in a or "--forget-token" in a:
+        if "--forget-token" in a:
+            print(updates.set_token(cfg, "")); return
+        import getpass
+        tok = _arg(list(a), "--token") or os.environ.get("UO_NEW_TOKEN") or getpass.getpass("GitHub token (input hidden): ")
+        try:
+            print(updates.set_token(cfg, tok))
+        except ValueError as e:
+            raise SystemExit(str(e))
+        return
     if "--check" in a:
         u = updates.check(cfg, force=True)
         if u.get("error"):
@@ -94,6 +107,7 @@ def update(a=()):
             print(f"Version {u['latest']} is available (you have {u['current']}): {u['url']}\n  Update with:  uo update")
         else:
             print(f"Universal Organiser {u['current']} is the newest version.")
+        print(f"  source: {u['source']}" + ("; GitHub token saved" if updates.token() else ""))
         return
     if updates.install(cfg) and platforms.SYSTEM == "macos" and os.path.exists(SU.HELPER_SRC) and not SU._helper_current():
         try:
@@ -157,6 +171,10 @@ def agent_cmd(cfg, a):
         print(AG.status()); return True
     if sub == "forget":
         print(AG.forget()); return True
+    if sub == "updates":
+        if len(a) < 3 or a[2] not in ("on", "off"):
+            raise SystemExit("usage: uo agent updates on|off")
+        print(AG.set_auto_update(a[2] == "on")); return True
     return False
 
 
@@ -171,7 +189,7 @@ def main():
     if cmd == "init":
         return init(a)
     if cmd == "package":
-        return package()
+        return package(a)
     if cmd == "update":
         return update(a)
     if cmd == "autostart":
@@ -366,7 +384,10 @@ def main():
                 log = log_to(os.path.join(DATA, "logs", time.strftime("agent-%Y%m%d.log")))
                 try:
                     scan(cfg, cat, log=log)
-                    AG.sync(cfg, cat, log=log)
+                    if AG.sync(cfg, cat, log=log).get("updated"):
+                        from engine import updates
+                        cat.db.close()
+                        updates.restart()  # carry on with the new program
                 except SystemExit as e:
                     log(f"sync failed: {e}")
                 except Exception as e:

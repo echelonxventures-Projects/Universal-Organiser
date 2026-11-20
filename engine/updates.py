@@ -10,7 +10,8 @@ Where new versions come from (Settings → Plug-ins & AI → Updates; profile `u
   * Other computers paired with this one (`uo agent pair …`) get the new version from this computer at their next sync,
     over their already-pinned connection: they need neither internet access nor a token.
 
-Update: the program zip is checked against SHA256SUMS, then the release's own installer runs over this copy: program
+Update: SHA256SUMS must carry the publisher's signature (SHA256SUMS.sig, checked against the keys built into the program,
+see signing.py), the program zip must match it, then the release's own installer runs over this copy: program
 files are replaced; your profile, catalogue, logs and keys are kept. A git checkout updates with git pull instead.
 Admins see “Version X is ready” on Home and press Update now; with `updates.auto` on, it installs by itself once
 nobody has used the page for 30 minutes, and restarts.
@@ -32,7 +33,8 @@ PACKAGE_KEEP = ("engine", "helpers", "profiles/base.json", "profiles/presets", "
 def settings(cfg):
     u = (cfg.get("updates") if cfg else None) or {}
     return {"check": bool(u.get("check", True)), "auto": bool(u.get("auto", False)),
-            "repo": (u.get("repo") or DEFAULT_REPO).strip().strip("/"), "feed": str(u.get("feed") or "").strip()}
+            "repo": (u.get("repo") or DEFAULT_REPO).strip().strip("/"), "feed": str(u.get("feed") or "").strip(),
+            "allow_unsigned": bool(u.get("allow_unsigned", False))}
 
 
 def source(cfg):
@@ -192,7 +194,8 @@ def check(cfg, force=False):
                 raise ValueError("latest.json names no program zip")
             c.update(latest=str(rel.get("version", "")).lstrip("v"), url=rel.get("url") or where,
                      notes=str(rel.get("notes") or "")[:4000], published=rel.get("published"),
-                     assets={zname: {"name": zname}, "SHA256SUMS": {"name": "SHA256SUMS"}})
+                     assets={zname: {"name": zname}, "SHA256SUMS": {"name": "SHA256SUMS"},
+                             "SHA256SUMS.sig": {"name": "SHA256SUMS.sig"}})
         else:
             with _get(f"https://{GITHUB_API}/repos/{where}/releases/latest", tok=token()) as r:
                 rel = json.loads(r.read())
@@ -262,6 +265,27 @@ def read_sums(path):
         return {ln.split()[1].lstrip("*"): ln.split()[0].lower() for ln in f if len(ln.split()) == 2}
 
 
+def _signed(c, spath, tmp, allow_unsigned, log):
+    """SHA256SUMS, once its signature checks out (or when unsigned updates were explicitly allowed)."""
+    from . import signing
+    gpath = os.path.join(tmp, "SHA256SUMS.sig")
+    try:
+        _download(c, "SHA256SUMS.sig", gpath)
+    except (KeyError, urllib.error.URLError, OSError, ValueError):
+        gpath = None
+    if gpath:
+        with open(spath, "rb") as f, open(gpath, "rb") as g:
+            if signing.verify(f.read(), g.read()):
+                log("signature ok (signed by the publisher)")
+                return spath
+        raise SystemExit("The release's signature is not valid: it was not signed by the publisher. Nothing was changed.")
+    if allow_unsigned:
+        log("note: this update is not signed (unsigned updates are allowed in the profile)")
+        return spath
+    raise SystemExit("The release is not signed by the publisher, so it was not installed. Nothing was changed. "
+                     "(Your own unsigned update folder: set updates.allow_unsigned = true, or sign it with uo package --sign.)")
+
+
 def _installer_cmd(src, dest):
     if os.name == "nt":
         return ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", os.path.join(src, "install", "install.ps1"),
@@ -323,7 +347,8 @@ def install(cfg, log=print):
             _download(c, "SHA256SUMS", spath)
         except (urllib.error.URLError, OSError, ValueError) as e:
             raise SystemExit(f"The download failed ({getattr(e, 'reason', e)}). Nothing was changed.")
-        install_zip(zpath, read_sums(spath).get(zname), log)
+        sums_ok = _signed(c, spath, tmp, settings(cfg)["allow_unsigned"], log)
+        install_zip(zpath, read_sums(sums_ok).get(zname), log)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     c["installed"] = ver
@@ -362,7 +387,7 @@ def own_package():
     return out, sha256_of(out)
 
 
-def write_feed(folder, notes=""):
+def write_feed(folder, notes="", sign_key=None):
     """latest.json + the program zip + SHA256SUMS in `folder`: an update source for `updates.feed`."""
     folder = os.path.expanduser(folder)
     os.makedirs(folder, exist_ok=True)
@@ -371,6 +396,12 @@ def write_feed(folder, notes=""):
     digest = sha256_of(zpath)
     with open(os.path.join(folder, "SHA256SUMS"), "w", encoding="utf-8", newline="\n") as f:
         f.write(f"{digest}  {zname}\n")
+    sig = os.path.join(folder, "SHA256SUMS.sig")
+    if sign_key:
+        from . import signing
+        signing.sign_file(os.path.join(folder, "SHA256SUMS"), sign_key)
+    elif os.path.exists(sig):
+        os.remove(sig)  # an old signature would not match the new checksums
     with open(os.path.join(folder, "latest.json"), "w", encoding="utf-8") as f:
         json.dump({"version": VERSION, "zip": zname, "sha256": digest, "notes": notes,
                    "published": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}, f, indent=1, ensure_ascii=False)

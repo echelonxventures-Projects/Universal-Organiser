@@ -58,6 +58,25 @@ class Catalogue:
         self.db.row_factory = sqlite3.Row
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.executescript(SCHEMA)
+        self.names_only = bool(self.get_meta("names_only", False))
+
+    def set_names_only(self, on):
+        """Names-only catalogue (a disk without encryption): names, folders and labels, never the documents' text.
+        Turning it on removes the text already stored and compacts the file so it is gone from the disk too."""
+        on = bool(on)
+        if on and not self.names_only:
+            self.db.execute("UPDATE fts SET body='', title='' WHERE body != '' OR title != ''")
+            self.db.execute("UPDATE files SET snippet=NULL, title=NULL WHERE snippet IS NOT NULL OR title IS NOT NULL")
+            try:
+                self.db.execute("DELETE FROM transcripts")
+            except sqlite3.OperationalError:
+                pass
+            self.db.execute("INSERT INTO fts(fts) VALUES('optimize')")
+            self.db.commit()
+            self.db.execute("VACUUM")
+        if on != self.names_only or self.get_meta("names_only") is None:
+            self.set_meta("names_only", on)
+        self.names_only = on
 
     def known(self):
         return {r["path"]: (r["size"], r["mtime"]) for r in self.db.execute(f"SELECT path,size,mtime FROM files WHERE scanned_at IS NOT NULL AND {LOCAL_SQL}")}
@@ -68,6 +87,8 @@ class Catalogue:
     def save(self, recs):
         cur = self.db.cursor()
         for r in recs:
+            if self.names_only:  # the rules already read the text during the scan; it is not kept
+                r = dict(r, text="", snippet=None, title=None)  # a title is often the document's first line
             d = self.decision_for(r["path"], r.get("hash"))
             if d:  # a person's decision always wins over the rules
                 r.update(d)

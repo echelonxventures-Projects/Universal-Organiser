@@ -99,6 +99,19 @@ opens Home. A failed automatic update is not retried until someone presses Updat
 
 So with a private repository only the main computer needs a token; everything paired with it follows it.
 
+**Signed updates.** Every release's `SHA256SUMS` carries the publisher's signature (`SHA256SUMS.sig`, RSA-3072,
+SHA-256). The public key is built into the program (`engine/signing.py`), so an update is installed only when it was
+signed with the matching private key: a forged or altered release, even one served from the right address or a broken
+into account, is refused and nothing changes. A folder you make yourself is signed with
+`uo package --feed FOLDER --sign KEY.pem`; an unsigned one is accepted only with `updates.allow_unsigned = true` in that
+computer's profile. Computers paired with a hub trust that hub's own program over their pinned connection.
+
+*The publisher's key.* The private key is `update-signing-key.pem` in the publisher's own safe place (never in the
+repository) and in the repository secret `UPDATE_SIGNING_KEY`, which the release workflow needs: without it no release is
+published. Keep an offline backup: losing it means installed copies can only be updated by installing again by hand. To
+change keys, add the new public key to `PUBLIC_KEYS` in one release, sign the next release with the new key, then remove
+the old one.
+
 The same from a terminal: `uo update --check` (also shows the source), `uo update`, `uo update --token`,
 `uo update --forget-token`. A git checkout updates with `git pull` instead. Turn the daily check off in *Settings →
 Plug-ins & AI → Updates* (profile `updates.check = false`). Read `CHANGELOG.md` for what changed.

@@ -2,7 +2,10 @@ name: release
 # Push a tag like v1.2.0 (it must match VERSION in engine/setup.py). This builds the program zip, its SHA256SUMS
 # (checked by `uo update` before anything is installed) and a GitHub release with the CHANGELOG notes.
 #
-# Signing (optional, used when the secrets exist; see docs/admin-guide.md → Releases and signing):
+# Update signing (required): UPDATE_SIGNING_KEY = the publisher's RSA private key (PEM). SHA256SUMS is signed with it;
+# installed copies refuse an update whose signature does not match the public key built into engine/signing.py.
+#
+# Windows installer signing (optional, used when the secrets exist; see docs/admin-guide.md → Releases and signing):
 #   WINDOWS_CERT_PFX_BASE64, WINDOWS_CERT_PASSWORD   an Authenticode code-signing certificate (.pfx, base64):
 #                                                    install\install.ps1 is signed and time-stamped
 on:
@@ -64,9 +67,14 @@ jobs:
           [ -s notes.md ] || { echo "CHANGELOG.md has no section '## $V'"; exit 1; }
           cp notes.md feed-notes.md
           printf '\n---\nInstall: unzip, then `sh install/install.sh` (macOS, Linux) or double-click `install\\install.cmd` (Windows).\nAlready installed: `uo update`, or *Update now* on Home.\n' >> notes.md
-      - name: Program zip, checksums and latest.json
+      - name: Program zip, signed checksums and latest.json
+        env:
+          KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
         run: |
-          python -I engine/cli.py package --feed dist --notes feed-notes.md
+          [ -n "$KEY" ] || { echo "No UPDATE_SIGNING_KEY secret: installed copies refuse unsigned updates, so nothing is published."; exit 1; }
+          umask 077; printf '%s\n' "$KEY" > "$RUNNER_TEMP/sign.pem"
+          python -I engine/cli.py package --feed dist --notes feed-notes.md --sign "$RUNNER_TEMP/sign.pem"
+          rm -f "$RUNNER_TEMP/sign.pem"
           ls -l dist && cat dist/SHA256SUMS
           (cd dist && sha256sum -c SHA256SUMS)
       - name: Publish the release

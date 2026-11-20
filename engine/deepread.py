@@ -47,7 +47,8 @@ def read_all_pages(cfg, cat, rows, log=print, lock=None):
                     continue
                 body = (cat.db.execute("SELECT body FROM fts WHERE rowid=?", (r["id"],)).fetchone() or [""])[0] or ""
                 tail = ("\n[transcript]\n" + body.split("\n[transcript]\n", 1)[1]) if "\n[transcript]\n" in body else ""
-                cat.db.execute("UPDATE fts SET body=? WHERE rowid=?", (text + tail, r["id"]))
+                if not cat.names_only:
+                    cat.db.execute("UPDATE fts SET body=? WHERE rowid=?", (text + tail, r["id"]))
                 tags = json.loads(cat.db.execute("SELECT coalesce(tags,'[]') FROM files WHERE id=?", (r["id"],)).fetchone()[0] or "[]")
                 if "all-pages-read" not in tags:
                     tags.append("all-pages-read")

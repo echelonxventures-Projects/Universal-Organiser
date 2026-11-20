@@ -100,6 +100,66 @@ class Install:
         shutil.rmtree(self.dir, ignore_errors=True)
 
 
+class NamesOnly(unittest.TestCase):
+    """A disk without encryption (or catalogue.text = names): file names and labels are searchable, the documents'
+    text is never kept; switching back to full text and a full scan brings it back."""
+
+    def test_names_only_then_full(self):
+        inst = Install("names")
+        try:
+            prof = os.path.join(inst.data, "profiles", "machine.json")
+            with open(prof) as f:
+                m = json.load(f)
+            m["catalogue"]["text"] = "names"
+            with open(prof, "w") as f:
+                json.dump(m, f)
+            inst.write("Notes/garden-plan.txt", "The quokkafern grows by the shed")
+            out = inst.uo("scan")
+            self.assertIn("Names only", out)
+            self.assertIn("garden-plan.txt", inst.uo("search", "garden"))
+            self.assertNotIn("garden-plan.txt", inst.uo("search", "quokkafern"), "text inside files is not kept")
+            import sqlite3
+            db = sqlite3.connect(os.path.join(inst.data, "catalogue", "catalogue.db")) if os.path.exists(
+                os.path.join(inst.data, "catalogue", "catalogue.db")) else None
+            if db:
+                self.assertEqual(db.execute("SELECT count(*) FROM fts WHERE body != ''").fetchone()[0], 0)
+                db.close()
+            m["catalogue"]["text"] = "full"
+            with open(prof, "w") as f:
+                json.dump(m, f)
+            self.assertIn("Full text is on again", inst.uo("scan", "--full"))
+            self.assertIn("garden-plan.txt", inst.uo("search", "quokkafern"))
+        finally:
+            shutil.rmtree(inst.dir, ignore_errors=True)
+
+
+class ProblemReport(unittest.TestCase):
+    def test_nothing_personal(self):
+        sys.path.insert(0, ROOT)
+        from engine.report import redact
+        t = redact("scan failed: /Users/sam/Tax 2025/Form 16 Sam.pdf: unreadable\n"
+                   r"error C:\Users\Asha\Desktop\passport scan.jpg not found" "\n"
+                   "hub https://study.local:8766 mail sam@example.com account 1234 5678 9012 moved “Asha” here")
+        for bad in ("Sam.pdf", "passport", "Asha", "study.local", "example.com", "1234", "Tax 2025"):
+            self.assertNotIn(bad, t)
+        self.assertIn("[path .pdf]", t)
+
+    def test_uo_report(self):
+        inst = Install("report")
+        try:
+            inst.write("Private/asha-passport.txt", "secret words")
+            inst.uo("scan")
+            out = inst.uo("report")
+            path = re.search(r"Problem report: (.+\.txt)", out)[1].strip()
+            with open(path, encoding="utf-8") as f:
+                text = f.read()
+            self.assertIn("Health checks", text)
+            self.assertNotIn("asha-passport", text)
+            self.assertNotIn(inst.files, text)
+        finally:
+            shutil.rmtree(inst.dir, ignore_errors=True)
+
+
 class Profiles(unittest.TestCase):
     def test_regions_and_presets(self):
         from engine import config, setup
@@ -371,6 +431,33 @@ class WhoUsedIt(unittest.TestCase):
             i.cleanup()
 
 
+def _test_key():
+    """A small RSA key for the tests only (the real one never leaves the publisher), made with nothing but Python."""
+    import random
+    rnd = random.Random(7)
+
+    def prime(bits):
+        while True:
+            c = rnd.getrandbits(bits) | (1 << (bits - 1)) | 1
+            if all(pow(rnd.randrange(2, c - 1), c - 1, c) == 1 for _ in range(24)) and all(c % q for q in (3, 5, 7, 11, 13)):
+                return c
+    e = 65537
+    while True:
+        p_, q_ = prime(512), prime(512)
+        phi = (p_ - 1) * (q_ - 1)
+        if p_ != q_ and phi % e:
+            return p_ * q_, e, pow(e, -1, phi)
+
+
+def _sign(data, key):
+    import hashlib
+    from engine import signing
+    n, e, d = key
+    k = (n.bit_length() + 7) // 8
+    em = b"\x00\x01" + b"\xff" * (k - 3 - len(signing._DIGEST_INFO) - 32) + b"\x00" + signing._DIGEST_INFO + hashlib.sha256(data).digest()
+    return pow(int.from_bytes(em, "big"), d, n).to_bytes(k, "big")
+
+
 class Updates(unittest.TestCase):
     """A fake release served from local files: the newer program is checksum-checked and installed over a copy by the
     release's own installer, the profile is kept; a download that does not match its checksum changes nothing."""
@@ -400,10 +487,16 @@ class Updates(unittest.TestCase):
                     z.write(full, os.path.relpath(full, os.path.dirname(new)))
         self.zip = buf.getvalue()
         self.sums = f"{hashlib.sha256(self.zip).hexdigest()}  universal-organiser-99.0.0.zip\n".encode()
+        from engine import signing
+        self.key = _test_key()
+        self.orig_keys = signing.PUBLIC_KEYS
+        signing.PUBLIC_KEYS = {"test": (self.key[0], self.key[1])}
+        self.sig = _sign(self.sums, self.key)
         rel = {"tag_name": "v99.0.0", "html_url": "https://example.invalid/r", "body": "notes",
                "assets": [{"name": "universal-organiser-99.0.0.zip", "browser_download_url": "zip"},
-                          {"name": "SHA256SUMS", "browser_download_url": "sums"}]}
-        self.files = {"zip": self.zip, "sums": self.sums}
+                          {"name": "SHA256SUMS", "browser_download_url": "sums"},
+                          {"name": "SHA256SUMS.sig", "browser_download_url": "sig"}]}
+        self.files = {"zip": self.zip, "sums": self.sums, "sig": self.sig}
         self.rel = rel
         self.calls = []
         self.orig = (updates._get, updates.ROOT, updates.CACHE, updates.TOKEN_FILE, os.environ.pop("UO_UPDATE_TOKEN", None))
@@ -423,6 +516,8 @@ class Updates(unittest.TestCase):
 
     def tearDown(self):
         self.U._get, self.U.ROOT, self.U.CACHE, self.U.TOKEN_FILE, env = self.orig
+        from engine import signing
+        signing.PUBLIC_KEYS = self.orig_keys
         if env is not None:
             os.environ["UO_UPDATE_TOKEN"] = env
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -450,12 +545,46 @@ class Updates(unittest.TestCase):
         self.assertIn("checksum", str(e.exception))
         self.assertEqual(self.version_of(), before)
 
+    def test_unsigned_or_forged_release_is_refused(self):
+        """Only the publisher's signature lets an update in: missing or forged, nothing changes."""
+        before = self.version_of()
+        self.files["sig"] = _sign(self.sums + b"x", self.key)  # a signature of something else
+        with self.assertRaises(SystemExit) as e:
+            self.U.install({}, log=lambda m: None)
+        self.assertIn("not valid", str(e.exception))
+        self.rel["assets"] = self.rel["assets"][:2]  # no signature at all
+        with self.assertRaises(SystemExit) as e:
+            self.U.install({}, log=lambda m: None)
+        self.assertIn("not signed", str(e.exception))
+        self.assertEqual(self.version_of(), before)
+        self.assertEqual(self.U.install({"updates": {"allow_unsigned": True}}, log=lambda m: None), "99.0.0",
+                         "allowed explicitly in the profile (an own unsigned update folder)")
+
+    def test_signed_feed(self):
+        """uo package --feed --sign with an OpenSSL key: the folder verifies with that key built in, and an update from it installs."""
+        import subprocess
+        from engine import signing
+        if not shutil.which("openssl"):
+            self.skipTest("openssl not installed")
+        pem = os.path.join(self.tmp, "k.pem")
+        subprocess.run(["openssl", "genrsa", "-out", pem, "2048"], check=True, capture_output=True)
+        mod = subprocess.run(["openssl", "rsa", "-in", pem, "-noout", "-modulus"], check=True, capture_output=True, text=True).stdout
+        signing.PUBLIC_KEYS = {"openssl-test": (int(mod.strip().split("=")[1], 16), 65537)}
+        feed = os.path.join(self.tmp, "signed")
+        self.U.write_feed(feed, "n", pem)
+        with open(os.path.join(feed, "SHA256SUMS"), "rb") as f, open(os.path.join(feed, "SHA256SUMS.sig"), "rb") as g:
+            self.assertTrue(signing.verify(f.read(), g.read()))
+        self.U.write_feed(feed, "n")  # re-written unsigned: the old signature is removed, not left to mismatch
+        self.assertFalse(os.path.exists(os.path.join(feed, "SHA256SUMS.sig")))
+
     def test_private_repository_with_token(self):
         """A saved token is sent to the GitHub API only, assets come through the API, and it is kept readable only by you."""
         self.rel["assets"] = [{"name": "universal-organiser-99.0.0.zip", "browser_download_url": "nope",
                                "url": "https://api.github.com/repos/o/r/releases/assets/zip"},
                               {"name": "SHA256SUMS", "browser_download_url": "nope",
-                               "url": "https://api.github.com/repos/o/r/releases/assets/sums"}]
+                               "url": "https://api.github.com/repos/o/r/releases/assets/sums"},
+                              {"name": "SHA256SUMS.sig", "browser_download_url": "nope",
+                               "url": "https://api.github.com/repos/o/r/releases/assets/sig"}]
         with self.assertRaises(ValueError):
             self.U.set_token({}, "not a token!")
         self.assertIn("saved", self.U.set_token({}, "github_pat_" + "a" * 40))
@@ -486,6 +615,8 @@ class Updates(unittest.TestCase):
             f.write(self.zip)
         with open(os.path.join(feed, "SHA256SUMS"), "wb") as f:
             f.write(self.sums)
+        with open(os.path.join(feed, "SHA256SUMS.sig"), "wb") as f:
+            f.write(self.sig)
         with open(os.path.join(feed, "latest.json"), "w") as f:
             json.dump({"version": "99.0.0", "zip": "universal-organiser-99.0.0.zip", "notes": "from the folder"}, f)
         cfg = {"updates": {"feed": feed}}

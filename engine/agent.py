@@ -15,7 +15,7 @@ import gzip, hashlib, json, os, platform, socket, ssl, sys, time, urllib.error, 
 from .config import DATA
 from .catalogue import LOCAL_SQL
 
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 DIR = os.path.join(DATA, "agent")
 STATE = os.path.join(DIR, "agent.json")
 CA = os.path.join(DIR, "hub-ca.crt")

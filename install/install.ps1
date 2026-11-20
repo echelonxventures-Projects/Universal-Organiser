@@ -42,8 +42,9 @@ try {
 } catch { $bl = $null }
 if ($bl -ne 1 -and $bl -ne 3) {
   Write-Host ""
-  Write-Host "Disk encryption is OFF on $env:SystemDrive. Universal Organiser will not store a catalogue on an unencrypted disk."
-  Write-Host "  Turn it on: Settings > Privacy & security > Device encryption (or BitLocker), then run this installer again."
+  Write-Host "Disk encryption is OFF on $env:SystemDrive. Universal Organiser still works, in names-only mode: it keeps file"
+  Write-Host "  names, folders and labels, never the text inside your documents, so search finds names, not words inside files."
+  Write-Host "  For full search: Settings > Privacy & security > Device encryption (or BitLocker) > On, then run:  uo scan --full"
   if (-not $Yes) { if (Ask "Open that Settings page now?") { Start-Process "ms-settings:deviceencryption" } }  # -Yes: install only, never open pages
 }
 

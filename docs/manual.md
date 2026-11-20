@@ -54,8 +54,10 @@ It installs into `~/Library/Application Support/Universal Organiser` and adds th
 1. Before unzipping, right-click the zip → *Properties* → tick **Unblock** (otherwise Windows asks “Do you want to
    run this file?” for each script). Unzip, open the folder, double-click **`install\install.cmd`**.
 2. If Python is missing, it offers to install it with winget (or get it from python.org — tick *Add to PATH*).
-3. **Disk encryption must be on** (the catalogue holds your documents' text): *Settings → Privacy & security →
-   Device encryption* (or *BitLocker*). The installer offers to open that page.
+3. **Disk encryption** (recommended; the catalogue holds your documents' text): *Settings → Privacy & security →
+   Device encryption* (or *BitLocker*). The installer offers to open that page. Without it (common on Windows Home) the
+   program still works in **names-only** mode: it keeps file names, folders and labels, never the text inside your
+   documents, so search finds names but not words inside files. Turn encryption on later and run `uo scan --full`.
 
 It installs into `%LOCALAPPDATA%\Universal Organiser`, adds a **Start menu** entry and the `uo` command.
 
@@ -266,7 +268,8 @@ If no VPN address is found, `uo doctor` and the Computers page say so.
 |---|---|
 | “Port 8765 is in use” | the page is already running: open http://127.0.0.1:8765 |
 | Forgot the password | `uo user passwd NAME` in a terminal on the computer |
-| Windows/Linux: “this disk is not encrypted” | turn on Device encryption / BitLocker, or use an encrypted disk |
+| Windows/Linux: “Names only: this disk is not encrypted” | search finds names, not words inside files. For full search turn on Device encryption / BitLocker (or use an encrypted disk), then `uo scan --full` |
+| Anything else | *Settings → Plug-ins & AI → Help → Make a problem report* (or `uo report`), read it, and send it to support |
 | Text in PDFs missing (Windows/Linux) | install Poppler's `pdftotext`; then `uo scan --full` |
 | Mac: scans/photos have no text | `uo doctor --fix` builds the macOS reader |
 | Phone shows a certificate warning | install and trust the certificate ([section 5](#5-phones-and-tablets)) |

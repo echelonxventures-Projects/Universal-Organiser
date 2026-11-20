@@ -120,7 +120,9 @@ async function draw(){const m=$("main"),C=S.choices;let h="";
    <label for="upd-feed" style="display:block;margin-top:10px;font-size:13px">Where updates come from</label>
    <input type="text" id="upd-feed" data-p="updates.feed" value="${esc(V.updates.feed)}" placeholder="leave empty for GitHub; or a folder or https:// address" style="width:100%">
    <div class="help">Empty: GitHub releases. A folder (shared folder, USB stick) or an https:// address holding what <code>uo package --feed</code> writes there. Computers paired with this one always update from this computer.</div>
-   <div id="updbox" style="margin-top:10px"></div></div></div></section>`}
+   <div id="updbox" style="margin-top:10px"></div></div>
+  <div class="card"><h3>Help</h3><p class="help">Something not working? A problem report tells support what they need: version, system, health checks and recent errors. Paths, file names, names and addresses are replaced by placeholders. You see it first, and only you send it.</p>
+   <div class="row"><button id="rep-make">Make a problem report</button></div><div id="repbox"></div></div></div></section>`}
  if(tab==="accounts"){const U=await api("/api/users");const ents=V.entities.map(e=>e.name);
   h=`<section><h2>Accounts on this computer</h2><p class="help">Family members sign in on this page with their own account. A <b>member</b> sees only the owners you tick, never sensitive files, and cannot change anything. An <b>admin</b> sees and changes everything.</p>
   <div class="tw"><table><thead><tr><th>User</th><th>Name</th><th>Role</th><th>Can see files of</th><th>New password</th><th></th></tr></thead><tbody>
@@ -174,6 +176,13 @@ async function draw(){const m=$("main"),C=S.choices;let h="";
  m.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>{const s=shade(`<h3>Restore settings?</h3><p class="help">Settings go back to how they were before ${esc(b.dataset.restore)}. Today's settings are kept as a version, so this can be reversed.</p><div class="act"><button id="c0">Cancel</button><button class="pri" id="c1">Restore</button></div>`);
   $("c0").onclick=close;$("c1").onclick=async()=>{await api("/api/settings/restore",{name:b.dataset.restore});close();await load();toast("Settings restored.");askRules()}});
  if($("rerun"))$("rerun").onclick=askRules;
+ if($("rep-make"))$("rep-make").onclick=async()=>{const R=await api("/api/report");
+   $("repbox").innerHTML=`<textarea id="rep-t" readonly rows="12" aria-label="Problem report" data-no-i18n style="width:100%;font:12px ui-monospace,monospace;margin-top:8px"></textarea>
+    <div class="row"><button id="rep-dl" class="pri">Download</button><button id="rep-cp">Copy</button>${R.email?`<a class="btn" id="rep-mail" href="#">Email support</a>`:""}${R.url?`<a href="${esc(R.url)}" target="_blank" rel="noopener noreferrer">Support page</a>`:""}</div>`;
+   $("rep-t").value=R.text;
+   $("rep-dl").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([R.text],{type:"text/plain"}));a.download="problem-report.txt";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000)};
+   $("rep-cp").onclick=async()=>{try{await navigator.clipboard.writeText(R.text);toast("Copied.")}catch(e){$("rep-t").select();toast("Select all and copy.")}};
+   if($("rep-mail"))$("rep-mail").href=`mailto:${encodeURIComponent(R.email)}?subject=${encodeURIComponent("Universal Organiser problem report")}&body=${encodeURIComponent(R.text.slice(0,1800))}`};
  if($("updbox")){const drawUpd=async(info)=>{const U=await api("/api/update");const I=info||U.info||{};
    const st=I.error?`<span style="color:var(--warn)">${esc(I.error)}</span>`:I.latest?(I.newer?`<b>Version ${esc(I.latest)} is ready.</b> Install it from Home (Update now).`:`Up to date (newest is ${esc(I.latest)}).`):"Not checked yet.";
    $("updbox").innerHTML=`<div class="help">Source: ${esc(U.source)}${I.checked?" · last checked "+new Date(I.checked*1000).toLocaleString():""}</div><div style="margin:6px 0" role="status">${st}</div>

@@ -92,6 +92,8 @@ def _relabel(cfg, cat, fid, text):
 def save(cfg, cat, row, d):
     segs = d.get("segments") or []
     text = d.get("text") or ""
+    if cat.names_only:  # a disk without encryption: spoken words are document text too, never kept
+        segs, text = [], ""
     cat.db.execute("INSERT OR REPLACE INTO transcripts VALUES(?,?,?,?,?,?,?,?)",
                    (row["id"], row["mtime"], d.get("locale"), d.get("duration"), json.dumps(segs, ensure_ascii=False),
                     len(text.split()), d.get("error") or ("partly unreadable: transcript covers the readable part" if d.get("partial") else None), time.time()))

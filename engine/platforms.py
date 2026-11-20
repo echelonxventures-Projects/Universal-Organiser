@@ -144,8 +144,20 @@ def _linux_crypt(path):
     return False, f"{fstype} on {source} is not encrypted"
 
 
+STORE = {"names_only": False, "why": None}  # what open_store decided, for the page and `uo doctor`
+
+
+def encryption_hint():
+    return ("turn on BitLocker or Device Encryption (Settings > Privacy & security > Device encryption)" if SYSTEM == "windows"
+            else "use a LUKS-encrypted disk or an encrypted home folder")
+
+
 def open_store(cfg, create=True):
-    """Folder that holds the catalogue, after checking it is protected."""
+    """Folder that holds the catalogue, after checking it is protected. On a disk without encryption the catalogue
+    keeps names, folders and labels but never the documents' text (STORE["names_only"]), unless the profile accepts
+    the risk (catalogue.allow_unencrypted_disk = true). catalogue.text = "names" asks for that everywhere."""
+    names = str(cfg["catalogue"].get("text", "full")) == "names"
+    STORE.update(names_only=names, why="chosen in the profile (catalogue.text = names)" if names else None)
     if SYSTEM == "macos":
         from . import vault
         return vault.open_vault(cfg, create=create)
@@ -154,10 +166,7 @@ def open_store(cfg, create=True):
     if cfg["catalogue"].get("encrypted", True):
         ok, how = disk_protected(d)
         if not ok and not cfg["catalogue"].get("allow_unencrypted_disk", False):
-            hint = ("Turn on BitLocker or Device Encryption (Settings > Privacy & security > Device encryption)" if SYSTEM == "windows"
-                    else "Use a LUKS-encrypted disk or an encrypted home folder")
-            raise SystemExit(f"The catalogue would hold your documents' text, but this disk is not encrypted ({how}).\n{hint}, "
-                             f"then run this again. (To accept the risk anyway: set catalogue.allow_unencrypted_disk = true in the machine profile.)")
+            STORE.update(names_only=True, why=f"this disk is not encrypted ({how})")
     return d
 
 

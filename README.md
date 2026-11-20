@@ -59,7 +59,7 @@ uo help            every command
 | Catalogue, search, owners, topics, duplicates, sorter with undo, analytics, insights, accounts | ✓ | ✓ | ✓ |
 | Text in PDFs | ✓ built in | with Poppler | with Poppler |
 | Text in scans and photos (OCR), photo labels, similar photos, speech transcripts | ✓ (on-device) | – | – |
-| Encrypted catalogue | AES-256 disk image, key in Keychain | needs BitLocker / Device encryption | needs LUKS / encrypted home |
+| Encrypted catalogue | AES-256 disk image, key in Keychain | BitLocker / Device encryption; without it: names only | LUKS / encrypted home; without it: names only |
 | Hub, agent, phones & tablets, VPN access | ✓ | ✓ | ✓ |
 
 ## Development

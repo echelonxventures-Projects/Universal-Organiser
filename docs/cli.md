@@ -18,8 +18,9 @@ another one.
 | `uo update` | brings this copy to the newest release: downloads its program zip, checks the SHA-256 against the release's `SHA256SUMS`, runs that release's installer over this copy (program files only; profile, catalogue, logs and keys stay), rebuilds the macOS reader if needed. A git copy runs `git pull --ff-only` instead. |
 | `uo update --check` | only says whether a newer release exists, and from which source (works even when the daily check is off) |
 | `uo update --token [TOKEN]` | saves a GitHub token for a private repository after checking it can read it (asks with hidden input when TOKEN is left out); `--forget-token` removes it |
+| `uo report` | `exports/problem-report-<time>.txt`: version, system, health checks, settings that matter and recent errors, with paths, file names, names, addresses and long numbers replaced by placeholders. Nothing is sent; you send it. |
 | `uo package` | `exports/universal-organiser-<version>.zip` in the data folder: program files only (never profile, catalogue, logs, keys) |
-| `uo package --feed FOLDER [--notes FILE]` | an update source in FOLDER: `latest.json`, the program zip and `SHA256SUMS` (older zips there are removed). Point `updates.feed` of other copies at it. |
+| `uo package --feed FOLDER [--notes FILE] [--sign KEY.pem]` | an update source in FOLDER: `latest.json`, the program zip and `SHA256SUMS` (older zips there are removed); `--sign` adds `SHA256SUMS.sig` with the publisher's key (needs `openssl`), which installed copies require. Point `updates.feed` of other copies at it. |
 | `uo agent updates on\|off` | on a paired computer: take new versions from the hub at each sync (on by default) |
 | `uo close` | macOS: locks (detaches) the encrypted catalogue. Elsewhere the disk's own encryption protects it. |
 

@@ -9,7 +9,7 @@ import json, os, re, shutil, socket, subprocess, sys, time
 from .config import ROOT, DATA, HOME, TOKENS, _merge, regions
 from . import platforms
 
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 PROFILE = os.path.join(DATA, "profiles", "machine.json")
 VERSIONS = os.path.join(DATA, "profiles", "versions")
 PRESETS = os.path.join(ROOT, "profiles", "presets")
@@ -338,9 +338,14 @@ def checks(cfg=None):
         except Exception as e:
             ok, how = False, str(e)
         allow = bool(cfg and cfg["catalogue"].get("allow_unencrypted_disk"))
-        add("encryption", "Disk encryption for the catalogue", ok, "required", how + (" (you allowed an unencrypted disk)" if allow and not ok else ""),
+        detail = how
+        if not ok:
+            detail += (" (you allowed an unencrypted disk: the catalogue keeps the documents' text there)" if allow else
+                       ": names only. The catalogue keeps file names, folders and labels, never the documents' text, so search"
+                       " finds names, not words inside files. Turn encryption on, then run  uo scan --full  for full search.")
+        add("encryption", "Disk encryption for the catalogue", ok, "recommended", detail,
             "Windows: Settings → Privacy & security → Device encryption (or BitLocker) → On.  Linux: use a LUKS-encrypted disk "
-            "or an encrypted home folder.", status="warn" if allow and not ok else None)
+            "or an encrypted home folder.", status="warn" if not ok else None)
         pdf = _which("pdftotext")
         fix = ("Download Poppler for Windows, unzip it and add its bin folder to PATH (see the manual)." if S == "windows"
                else "Install Poppler's pdftotext.")

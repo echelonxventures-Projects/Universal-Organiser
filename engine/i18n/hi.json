@@ -1093,5 +1093,18 @@
 "checking is off": "जाँच बंद है",
 "leave empty for GitHub; or a folder or https:// address": "GitHub के लिए खाली छोड़ें; या कोई फ़ोल्डर या https:// पता",
 "writes there. Computers paired with this one always update from this computer.": "वहाँ लिखता है। इस कंप्यूटर से जुड़े कंप्यूटर हमेशा इसी कंप्यूटर से अपडेट होते हैं।",
-"(updates at its next sync)": "(अगले सिंक पर अपडेट होगा)"
+"(updates at its next sync)": "(अगले सिंक पर अपडेट होगा)",
+"(you allowed an unencrypted disk: the catalogue keeps the documents' text there)": "(आपने बिना एन्क्रिप्शन वाली डिस्क की अनुमति दी है: कैटलॉग वहाँ दस्तावेज़ों का पाठ रखता है)",
+"Copied.": "कॉपी हो गया।",
+"Copy": "कॉपी करें",
+"Download": "डाउनलोड करें",
+"Help": "सहायता",
+"Make a problem report": "समस्या रिपोर्ट बनाएँ",
+"Problem report": "समस्या रिपोर्ट",
+"Select all and copy.": "सब चुनें और कॉपी करें।",
+"Something not working? A problem report tells support what they need: version, system, health checks and recent errors. Paths, file names, names and addresses are replaced by placeholders. You see it first, and only you send it.": "कुछ काम नहीं कर रहा? समस्या रिपोर्ट सहायता टीम को वह बताती है जो उन्हें चाहिए: संस्करण, सिस्टम, स्वास्थ्य जाँच और हाल की त्रुटियाँ। पथ, फ़ाइल नाम, लोगों के नाम और पते प्लेसहोल्डर से बदल दिए जाते हैं। आप इसे पहले देखते हैं, और इसे केवल आप ही भेजते हैं।",
+"The release is not signed by the publisher, so it was not installed. Nothing was changed. (Your own unsigned update folder: set updates.allow_unsigned = true, or sign it with uo package --sign.)": "यह रिलीज़ प्रकाशक द्वारा हस्ताक्षरित नहीं है, इसलिए इंस्टॉल नहीं की गई। कुछ भी नहीं बदला गया। (आपका अपना बिना हस्ताक्षर वाला अपडेट फ़ोल्डर: updates.allow_unsigned = true सेट करें, या uo package --sign से हस्ताक्षर करें।)",
+"The release's signature is not valid: it was not signed by the publisher. Nothing was changed.": "रिलीज़ का हस्ताक्षर मान्य नहीं है: इस पर प्रकाशक के हस्ताक्षर नहीं हैं। कुछ भी नहीं बदला गया।",
+"Email support": "सहायता को ईमेल करें",
+"Support page": "सहायता पेज"
 }

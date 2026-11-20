@@ -9,9 +9,11 @@ Set up
   uo update [--check]         get the newest release (checksum-verified; your profile, catalogue and logs are not touched);
                               --check only says whether there is one
   uo update --token [TOKEN]   save a GitHub token for a private repository (asked for when left out); --forget-token
-  uo package [--feed FOLDER [--notes FILE]]
+  uo report                   a problem report for support (nothing personal in it; you send it yourself)
+  uo package [--feed FOLDER [--notes FILE] [--sign KEY.pem]]
                               zip of the program only, to copy to a computer without internet; --feed: an update
-                              source in FOLDER (shared folder, USB stick, web space) for other copies to update from
+                              source in FOLDER (shared folder, USB stick, web space) for other copies to update from;
+                              --sign: sign it with the publisher's key (copies refuse unsigned updates)
   uo version
 
 Catalogue
@@ -74,7 +76,7 @@ def package(a=()):
         if nf:
             with open(nf, encoding="utf-8") as f:
                 notes = f.read()
-        z, digest = updates.write_feed(feed, notes)
+        z, digest = updates.write_feed(feed, notes, _arg(list(a), "--sign"))
         print(f"Update source written to {os.path.dirname(z)}: latest.json, {os.path.basename(z)}, SHA256SUMS ({digest[:12]}…)\n"
               f"  Point other copies at it: Settings → Updates → Where updates come from, or profile  updates.feed")
         return
@@ -192,6 +194,15 @@ def main():
         return package(a)
     if cmd == "update":
         return update(a)
+    if cmd == "report":
+        from engine import report
+        try:
+            rc = Config()
+        except Exception:
+            rc = None
+        p = report.write(rc)
+        print(f"Problem report: {p}\n  Nothing personal is in it (paths, names and addresses are replaced). Read it, then send it to support yourself.")
+        return
     if cmd == "autostart":
         return autostart(a)
     cfg = Config()
@@ -223,6 +234,14 @@ def main():
         platforms.close_store(); print("catalogue locked" if platforms.SYSTEM == "macos" else "nothing to lock: the disk's own encryption protects it"); return
     folder = platforms.open_store(cfg, create=(cmd in ("scan", "serve")))
     cat = Catalogue(folder)
+    was = cat.names_only
+    cat.set_names_only(platforms.STORE["names_only"])
+    if cat.names_only and cmd in ("scan", "serve"):
+        print(f"Names only: {platforms.STORE['why']}, so the catalogue keeps file names, folders and labels but not the "
+              f"documents' text (search finds names, not words inside files). For full search {platforms.encryption_hint()}, "
+              f"then run  uo scan --full.")
+    elif was and not cat.names_only and cmd in ("scan", "serve"):
+        print("Full text is on again: run  uo scan --full  to read the documents' text back in.")
     if cmd == "scan":
         from engine.scan import scan
         log = log_to(os.path.join(DATA, "logs", time.strftime("scan-%Y%m%d-%H%M%S.log")))

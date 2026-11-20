@@ -663,6 +663,10 @@ def serve(cfg, cat, port=None, lan=False, browser=True):
                                        "entity_types": cfg.get("entity_types"), "checks": self._checks(), "version": SU.VERSION})
                 if path == "/api/doctor":
                     return self._json(self._checks())
+                if path == "/api/report":
+                    from . import report
+                    sup = cfg.get("support") or {}
+                    return self._json({"text": report.build(cfg), "email": sup.get("email") or "", "url": sup.get("url") or ""})
                 if path == "/api/activity":
                     return self._json(ACT.summary(cat, auth.list()))
                 if path == "/api/update":

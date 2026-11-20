@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.5.0
+
+- **Signed updates.** Every release is signed by the publisher (`SHA256SUMS.sig`); the program checks the signature
+  against the key built into it and refuses anything else, so a forged or altered release is never installed, even from
+  the right address. Own update folders are signed with `uo package --feed … --sign KEY`.
+- **Works without disk encryption (Windows Home).** On a Windows or Linux disk without encryption the program no longer
+  refuses to start: it runs in **names-only** mode, keeping file names, folders and labels but never the documents' text,
+  titles, snippets or transcripts. Search finds names; turn encryption on and run `uo scan --full` for full search.
+  Anyone can choose this everywhere with `catalogue.text = "names"`.
+- **Problem report.** *Settings → Plug-ins & AI → Help → Make a problem report* (or `uo report`): version, system,
+  health checks and recent errors, with paths, file names, names, addresses and long numbers replaced. You see it first
+  and send it yourself (Download, Copy, or Email support when `support.email` is set).
+
 ## 1.4.0
 
 - **Updates, complete.** Three sources: GitHub (public, or private with a GitHub token saved in *Settings → Updates* or
